@@ -12,15 +12,15 @@ const Index = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden text-white">
         <div className="absolute inset-0">
           <img
             src={heroBg}
             alt="Beautiful beach destination"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-background/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background" />
+          <div className="absolute inset-0 bg-navy/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-navy/50 via-transparent to-navy" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4 pt-20">
@@ -30,12 +30,12 @@ const Index = () => {
             transition={{ duration: 0.7 }}
             className="text-center mb-10"
           >
-            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 leading-tight">
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
               Compare. Book.
               <br />
               <span className="text-gradient-coral">Save Big.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto">
               Search hotels &amp; flights across LoveHolidays, Lastminute, Booking.com,
               Skyscanner and more — all in one place.
             </p>
@@ -53,7 +53,7 @@ const Index = () => {
               (brand) => (
                 <span
                   key={brand}
-                  className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider"
+                  className="text-xs font-medium text-white/40 uppercase tracking-wider"
                 >
                   {brand}
                 </span>

@@ -3,7 +3,7 @@ import { mockHotels } from "@/data/mockHotels";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HotelMap from "@/components/HotelMap";
-import { Star, ArrowLeft, ExternalLink, MapPin, Plane, Train, Utensils, ShoppingBag, Palmtree } from "lucide-react";
+import { Star, ArrowLeft, ExternalLink, MapPin, Plane, Train, Utensils, ShoppingBag, Palmtree, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
@@ -77,15 +77,24 @@ const HotelDetail = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 mt-3">
+                <div className="flex flex-wrap items-center gap-3 mt-3">
                   <span className="px-2.5 py-1 rounded-lg bg-teal text-teal-foreground text-sm font-bold">
                     {hotel.rating}
                   </span>
+                  <span className="text-sm font-semibold text-foreground">{hotel.reviewScore}</span>
                   <span className="text-sm text-muted-foreground">
                     {hotel.reviewCount.toLocaleString()} reviews
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-semibold">
                     {hotel.boardType}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-secondary text-secondary-foreground text-xs font-semibold flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    {hotel.accommodationType}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-secondary text-secondary-foreground text-xs font-semibold flex items-center gap-1">
+                    <Plane className="w-3 h-3" />
+                    {hotel.flightType} · {hotel.airline}
                   </span>
                 </div>
               </div>
@@ -96,7 +105,7 @@ const HotelDetail = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-card rounded-2xl border border-border p-5 shadow-card"
+              className="bg-card rounded-2xl border border-border p-5 shadow-card"
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-lg font-semibold text-foreground">
@@ -147,7 +156,7 @@ const HotelDetail = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-gradient-card rounded-2xl border border-border p-5 shadow-card"
+              className="bg-card rounded-2xl border border-border p-5 shadow-card"
             >
               <h2 className="font-display text-lg font-semibold text-foreground mb-4">
                 Amenities
@@ -171,7 +180,7 @@ const HotelDetail = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="bg-gradient-card rounded-2xl border border-border p-5 shadow-card sticky top-24"
+              className="bg-card rounded-2xl border border-border p-5 shadow-card sticky top-24"
             >
               <h2 className="font-display text-lg font-semibold text-foreground mb-1">
                 Price Comparison

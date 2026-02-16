@@ -18,6 +18,9 @@ const SearchResults = () => {
     boardType: "all",
     maxPrice: 2000,
     sortBy: "price-low",
+    accommodationType: "all",
+    flightType: "all",
+    minRating: 0,
   });
 
   const filtered = useMemo(() => {
@@ -25,6 +28,9 @@ const SearchResults = () => {
       const bestPrice = Math.min(...h.prices.map((p) => p.price));
       if (filters.minStars && h.stars < filters.minStars) return false;
       if (filters.boardType !== "all" && h.boardType !== filters.boardType) return false;
+      if (filters.accommodationType !== "all" && h.accommodationType !== filters.accommodationType) return false;
+      if (filters.flightType !== "all" && h.flightType !== filters.flightType) return false;
+      if (filters.minRating && h.rating < filters.minRating) return false;
       if (bestPrice > filters.maxPrice) return false;
       return true;
     });
