@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, Plane, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Hotel } from "@/data/mockHotels";
@@ -25,7 +25,7 @@ const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
     >
       <Link
         to={`/hotel/${hotel.id}`}
-        className="block bg-gradient-card rounded-2xl overflow-hidden border border-border shadow-card hover:border-primary/30 transition-all hover:shadow-elevated group"
+        className="block bg-card rounded-2xl overflow-hidden border border-border shadow-card hover:border-primary/30 transition-all hover:shadow-elevated group"
       >
         <div className="flex flex-col md:flex-row">
           <div className="md:w-72 h-48 md:h-auto overflow-hidden relative">
@@ -37,6 +37,10 @@ const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
             />
             <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
               {hotel.boardType}
+            </span>
+            <span className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-secondary/90 text-secondary-foreground text-[10px] font-semibold flex items-center gap-1">
+              <Building2 className="w-3 h-3" />
+              {hotel.accommodationType}
             </span>
           </div>
 
@@ -63,7 +67,11 @@ const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
               </div>
 
               <div className="flex flex-wrap gap-1.5 mb-3">
-                {hotel.amenities.slice(0, 5).map((a) => (
+                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-xs text-primary font-medium flex items-center gap-1">
+                  <Plane className="w-3 h-3" />
+                  {hotel.flightType} · {hotel.airline}
+                </span>
+                {hotel.amenities.slice(0, 4).map((a) => (
                   <span
                     key={a}
                     className="px-2 py-0.5 rounded-md bg-secondary text-xs text-secondary-foreground"
@@ -79,9 +87,12 @@ const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
                 <span className="px-2 py-1 rounded-md bg-teal text-teal-foreground text-xs font-bold">
                   {hotel.rating}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {hotel.reviewCount.toLocaleString()} reviews
-                </span>
+                <div>
+                  <span className="text-xs font-semibold text-foreground">{hotel.reviewScore}</span>
+                  <span className="text-xs text-muted-foreground ml-1">
+                    · {hotel.reviewCount.toLocaleString()} reviews
+                  </span>
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">

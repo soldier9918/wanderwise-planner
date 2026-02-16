@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Star, SlidersHorizontal } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Star, SlidersHorizontal, Plane, Building2 } from "lucide-react";
+import { boardTypes, accommodationTypes } from "@/data/mockHotels";
 
 interface FiltersProps {
   onFilterChange: (filters: FilterState) => void;
@@ -13,6 +13,9 @@ export interface FilterState {
   boardType: string;
   maxPrice: number;
   sortBy: string;
+  accommodationType: string;
+  flightType: string;
+  minRating: number;
 }
 
 const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: FiltersProps) => {
@@ -22,6 +25,9 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
     boardType: "all",
     maxPrice: 2000,
     sortBy: "price-low",
+    accommodationType: "all",
+    flightType: "all",
+    minRating: 0,
   });
 
   const update = (partial: Partial<FilterState>) => {
@@ -31,7 +37,7 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
   };
 
   return (
-    <div className="bg-gradient-card rounded-2xl border border-border p-5 shadow-card">
+    <div className="bg-card rounded-2xl border border-border p-5 shadow-card">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-primary" />
@@ -83,13 +89,13 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
 
         {/* Stars */}
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">Min Stars</label>
-          <div className="flex gap-1">
-            {[0, 3, 4, 5].map((s) => (
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">Star Rating</label>
+          <div className="flex flex-wrap gap-1">
+            {[0, 1, 2, 3, 4, 5].map((s) => (
               <button
                 key={s}
                 onClick={() => update({ minStars: s })}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 ${
+                className={`flex-1 min-w-[40px] py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-0.5 ${
                   filters.minStars === s
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -101,11 +107,76 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
           </div>
         </div>
 
+        {/* Review Score */}
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+            Min Review Score: {filters.minRating === 0 ? "Any" : `${filters.minRating}+`}
+          </label>
+          <div className="flex flex-wrap gap-1">
+            {[0, 6, 7, 8, 9].map((r) => (
+              <button
+                key={r}
+                onClick={() => update({ minRating: r })}
+                className={`flex-1 min-w-[40px] py-2 text-xs font-semibold rounded-lg transition-colors ${
+                  filters.minRating === r
+                    ? "bg-teal text-teal-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r === 0 ? "Any" : `${r}+`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Accommodation Type */}
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+            <Building2 className="w-3 h-3 inline mr-1" />
+            Accommodation Type
+          </label>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => update({ accommodationType: "all" })}
+              className={`py-2 px-3 text-xs font-medium rounded-lg text-left transition-colors ${
+                filters.accommodationType === "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Any
+            </button>
+            {accommodationTypes.map((at) => (
+              <button
+                key={at}
+                onClick={() => update({ accommodationType: at })}
+                className={`py-2 px-3 text-xs font-medium rounded-lg text-left transition-colors ${
+                  filters.accommodationType === at
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {at}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Board Type */}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-2 block">Board Type</label>
           <div className="flex flex-col gap-1">
-            {["all", "All Inclusive", "Half Board", "Bed & Breakfast", "Self Catering"].map((bt) => (
+            <button
+              onClick={() => update({ boardType: "all" })}
+              className={`py-2 px-3 text-xs font-medium rounded-lg text-left transition-colors ${
+                filters.boardType === "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Any
+            </button>
+            {boardTypes.map((bt) => (
               <button
                 key={bt}
                 onClick={() => update({ boardType: bt })}
@@ -115,7 +186,30 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {bt === "all" ? "Any" : bt}
+                {bt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Flight Type */}
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+            <Plane className="w-3 h-3 inline mr-1" />
+            Stops
+          </label>
+          <div className="flex flex-col gap-1">
+            {["all", "Direct", "1 Stop", "2+ Stops"].map((ft) => (
+              <button
+                key={ft}
+                onClick={() => update({ flightType: ft })}
+                className={`py-2 px-3 text-xs font-medium rounded-lg text-left transition-colors ${
+                  filters.flightType === ft
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {ft === "all" ? "Any" : ft}
               </button>
             ))}
           </div>
