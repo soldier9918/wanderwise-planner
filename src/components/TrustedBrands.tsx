@@ -21,7 +21,7 @@ const TrustedBrands = () => {
       transition={{ delay: 0.6, duration: 0.6 }}
       className="mt-8"
     >
-      <p className="text-white/50 text-xs font-semibold uppercase tracking-widest text-center mb-4">
+      <p className="text-white/80 text-base md:text-lg font-medium text-center mb-5">
         Search hotels & flights across all your favourite brands — all in one place.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
