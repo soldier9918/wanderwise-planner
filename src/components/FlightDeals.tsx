@@ -136,8 +136,8 @@ const FlightDeals = () => {
           ))}
         </div>
 
-        <div className="mt-10">
-          <button className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-navy text-white font-semibold text-sm hover:bg-navy/90 transition-colors">
+        <div className="mt-10 text-center">
+          <button className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-navy text-white font-semibold text-sm hover:bg-navy/90 transition-colors">
             See more deals <ArrowRight className="w-4 h-4" />
           </button>
         </div>
