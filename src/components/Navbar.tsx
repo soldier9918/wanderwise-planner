@@ -8,7 +8,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 const navItems = [
   { label: "Flights + Hotels", path: "/" },
   { label: "Flights", path: "/flights" },
-  { label: "Hotels", path: "/results" },
+  { label: "Hotels", path: "/hotels" },
   { label: "Trending Destinations", path: "/#trending-destinations" },
   { label: "Deals", path: "/results" },
   { label: "How It Works", path: "/#how-it-works" },
