@@ -45,17 +45,17 @@ const PackageSearchForm = () => {
       onSubmit={handleSearch}
       className="w-full max-w-5xl mx-auto"
     >
-      <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-3 shadow-elevated border border-white/10">
+      <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-4 shadow-elevated border border-white/10">
         <div className="flex items-stretch rounded-xl overflow-hidden">
           {/* From */}
           <div className="relative flex-1 bg-card border-r border-border">
-            <label className="absolute left-4 top-2.5 text-xs font-bold text-muted-foreground">From</label>
+            <label className="absolute left-5 top-3 text-sm font-bold text-foreground">From</label>
             <input
               type="text"
               placeholder="City or airport"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:ring-2 focus:ring-primary/50 focus:ring-inset"
+              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:ring-2 focus:ring-primary/50 focus:ring-inset"
             />
           </div>
 
@@ -63,21 +63,21 @@ const PackageSearchForm = () => {
           <button
             type="button"
             onClick={swapCities}
-            className="flex items-center justify-center w-10 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
+            className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
             title="Swap cities"
           >
-            <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+            <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
           </button>
 
           {/* To */}
           <div className="relative flex-1 bg-card border-r border-border">
-            <label className="absolute left-4 top-2.5 text-xs font-bold text-muted-foreground">To</label>
+            <label className="absolute left-5 top-3 text-sm font-bold text-foreground">To</label>
             <input
               type="text"
               placeholder="City or airport"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:ring-2 focus:ring-primary/50 focus:ring-inset"
+              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:ring-2 focus:ring-primary/50 focus:ring-inset"
             />
           </div>
 
@@ -86,10 +86,10 @@ const PackageSearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left flex-1 px-4 pt-7 pb-2.5 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
+                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-xs font-bold text-muted-foreground">Depart</span>
-                <span className={cn("text-base flex items-center gap-1.5", depart ? "text-foreground" : "text-muted-foreground")}>
+                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Depart</span>
+                <span className={cn("text-lg flex items-center gap-1.5", depart ? "text-foreground" : "text-muted-foreground")}>
                   {depart ? format(depart, "dd/MM/yyyy") : "Add date"}
                 </span>
               </button>
@@ -111,10 +111,10 @@ const PackageSearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left flex-1 px-4 pt-7 pb-2.5 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
+                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-xs font-bold text-muted-foreground">Return</span>
-                <span className={cn("text-base flex items-center gap-1.5", returnDate ? "text-foreground" : "text-muted-foreground")}>
+                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Return</span>
+                <span className={cn("text-lg flex items-center gap-1.5", returnDate ? "text-foreground" : "text-muted-foreground")}>
                   {returnDate ? format(returnDate, "dd/MM/yyyy") : "Add date"}
                 </span>
               </button>
@@ -136,10 +136,10 @@ const PackageSearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative text-left flex-1 border-r border-border px-4 pt-7 pb-2.5 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
+                className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-xs font-bold text-muted-foreground">Travellers</span>
-                <span className="text-base text-foreground flex items-center gap-1.5">
+                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Travellers</span>
+                <span className="text-lg text-foreground flex items-center gap-1.5">
                   {totalTravellers} {totalTravellers === 1 ? "traveller" : "travellers"}
                 </span>
               </button>
@@ -232,7 +232,7 @@ const PackageSearchForm = () => {
           {/* Search */}
           <button
             type="submit"
-            className="px-8 bg-primary text-primary-foreground font-semibold text-base hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0 rounded-r-xl"
+            className="px-10 bg-primary text-primary-foreground font-semibold text-lg hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0 rounded-r-xl"
           >
             Search
           </button>
