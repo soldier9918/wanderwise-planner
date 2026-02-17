@@ -110,9 +110,10 @@ const FeaturedDestinations = () => {
             <button
               key={i}
               onClick={() => setPage(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                i === page ? "bg-coral" : "bg-muted-foreground/30"
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                i === page ? "bg-primary w-6" : "bg-border hover:bg-muted-foreground"
               }`}
+              aria-label={`Show destinations set ${i + 1}`}
             />
           ))}
         </div>
