@@ -153,7 +153,7 @@ const allDeals: FlightDeal[] = [
   {
     city: "Budapest",
     country: "Hungary",
-    image: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1551867633-194f125bddfa?w=600&h=400&fit=crop",
     legs: [
       { date: "Fri, 7 Mar", route: "LTN – BUD", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
       { date: "Tue, 11 Mar", route: "BUD – LTN", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
@@ -163,7 +163,7 @@ const allDeals: FlightDeal[] = [
   {
     city: "Krakow",
     country: "Poland",
-    image: "https://images.unsplash.com/photo-1562124638-724e13052daf?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1558370781-d6196949e317?w=600&h=400&fit=crop",
     legs: [
       { date: "Sat, 1 Mar", route: "LTN – KRK", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
       { date: "Wed, 5 Mar", route: "KRK – LTN", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
