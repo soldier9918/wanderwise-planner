@@ -1,35 +1,24 @@
 import { motion } from "framer-motion";
-import bookingLogo from "@/assets/logos/booking.png";
+import tripcomLogo from "@/assets/logos/tripcom.png";
+import easyjetLogo from "@/assets/logos/easyjet.png";
+import jet2Logo from "@/assets/logos/jet2holidays.png";
+import loveholidaysLogo from "@/assets/logos/loveholidays.png";
+import lastminuteLogo from "@/assets/logos/lastminute.png";
+import onthebeachLogo from "@/assets/logos/onthebeach.png";
 import tuiLogo from "@/assets/logos/tui.png";
 import expediaLogo from "@/assets/logos/expedia.png";
+import bookingLogo from "@/assets/logos/booking.png";
 
-const imageBrands = [
-  { name: "Booking.com", src: bookingLogo },
+const brands = [
+  { name: "Trip.com", src: tripcomLogo },
+  { name: "easyJet holidays", src: easyjetLogo },
+  { name: "Jet2holidays", src: jet2Logo },
+  { name: "loveholidays", src: loveholidaysLogo },
+  { name: "lastminute.com", src: lastminuteLogo },
+  { name: "On the Beach", src: onthebeachLogo },
   { name: "TUI", src: tuiLogo },
   { name: "Expedia", src: expediaLogo },
-];
-
-const svgBrands = [
-  { name: "Trip.com", color: "#2872F0", fontWeight: 800 },
-  { name: "easyJet holidays", color: "#FF6600", fontWeight: 700 },
-  { name: "Jet2holidays", color: "#F7D417", fontWeight: 800, stroke: "#D4145A" },
-  { name: "loveholidays", color: "#E91E8C", fontWeight: 700 },
-  { name: "lastminute.com", color: "#E40087", fontWeight: 700 },
-  { name: "On the Beach", color: "#FFD700", fontWeight: 700 },
-  { name: "Skyscanner", color: "#0770E3", fontWeight: 700 },
-];
-
-const allBrands = [
-  { type: "svg" as const, name: "Trip.com" },
-  { type: "svg" as const, name: "easyJet holidays" },
-  { type: "svg" as const, name: "Jet2holidays" },
-  { type: "svg" as const, name: "loveholidays" },
-  { type: "svg" as const, name: "lastminute.com" },
-  { type: "svg" as const, name: "On the Beach" },
-  { type: "img" as const, name: "TUI" },
-  { type: "img" as const, name: "Expedia" },
-  { type: "img" as const, name: "Booking.com" },
-  { type: "svg" as const, name: "Skyscanner" },
+  { name: "Booking.com", src: bookingLogo },
 ];
 
 const TrustedBrands = () => {
@@ -43,41 +32,18 @@ const TrustedBrands = () => {
       <p className="text-white/80 text-base md:text-lg font-medium text-center mb-5">
         Search hotels & flights across all your favourite brands — all in one place.
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-5 md:gap-8">
-        {allBrands.map((brand, i) => {
-          if (brand.type === "img") {
-            const imgBrand = imageBrands.find((b) => b.name === brand.name);
-            return (
-              <motion.img
-                key={brand.name}
-                src={imgBrand?.src}
-                alt={brand.name}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 + i * 0.05, duration: 0.3 }}
-                className="h-7 md:h-9 object-contain brightness-0 invert opacity-90 hover:opacity-100 transition-opacity"
-              />
-            );
-          }
-
-          const svgBrand = svgBrands.find((b) => b.name === brand.name);
-          return (
-            <motion.span
-              key={brand.name}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 + i * 0.05, duration: 0.3 }}
-              className="text-sm md:text-base font-bold opacity-90 hover:opacity-100 transition-opacity cursor-default select-none"
-              style={{
-                color: svgBrand?.color,
-                fontWeight: svgBrand?.fontWeight,
-                textShadow: "0 1px 4px rgba(0,0,0,0.3)",
-              }}
-            >
-              {brand.name}
-            </motion.span>
-          );
-        })}
+      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
+        {brands.map((brand, i) => (
+          <motion.img
+            key={brand.name}
+            src={brand.src}
+            alt={brand.name}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 + i * 0.05, duration: 0.3 }}
+            className="h-10 md:h-14 object-contain hover:scale-105 transition-transform cursor-default"
+          />
+        ))}
       </div>
     </motion.div>
   );
