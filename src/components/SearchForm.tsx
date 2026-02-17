@@ -32,30 +32,6 @@ const SearchForm = () => {
           <h3 className="font-display text-lg font-semibold text-foreground">
             Find your perfect trip
           </h3>
-          <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
-            <button
-              type="button"
-              onClick={() => setDistanceUnit("km")}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                distanceUnit === "km"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              KM
-            </button>
-            <button
-              type="button"
-              onClick={() => setDistanceUnit("mi")}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                distanceUnit === "mi"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Miles
-            </button>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
