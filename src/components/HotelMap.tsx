@@ -1,9 +1,10 @@
-import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from "@react-google-maps/api";
 
 interface HotelMapProps {
   lat: number;
   lng: number;
   name: string;
+  destination?: { lat: number; lng: number; name: string } | null;
 }
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyBVtwVPrEBuROA_uKOlHYr9qLmBlvbFb4s";
@@ -18,7 +19,7 @@ const mapStyles = [
   { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#d4edda" }] },
 ];
 
-const HotelMap = ({ lat, lng, name }: HotelMapProps) => {
+const HotelMap = ({ lat, lng, name, destination }: HotelMapProps) => {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     id: "google-map-script",
@@ -32,11 +33,21 @@ const HotelMap = ({ lat, lng, name }: HotelMapProps) => {
     );
   }
 
+  // If destination is set, fit both points
+  const center = destination
+    ? {
+        lat: (lat + destination.lat) / 2,
+        lng: (lng + destination.lng) / 2,
+      }
+    : { lat, lng };
+
+  const zoom = destination ? 10 : 14;
+
   return (
     <GoogleMap
       mapContainerStyle={{ width: "100%", height: "100%" }}
-      center={{ lat, lng }}
-      zoom={14}
+      center={center}
+      zoom={zoom}
       options={{
         styles: mapStyles,
         disableDefaultUI: false,
@@ -47,6 +58,29 @@ const HotelMap = ({ lat, lng, name }: HotelMapProps) => {
       }}
     >
       <MarkerF position={{ lat, lng }} title={name} />
+      {destination && (
+        <>
+          <MarkerF
+            position={{ lat: destination.lat, lng: destination.lng }}
+            title={destination.name}
+            icon={{
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            }}
+          />
+          <PolylineF
+            path={[
+              { lat, lng },
+              { lat: destination.lat, lng: destination.lng },
+            ]}
+            options={{
+              strokeColor: "#2563eb",
+              strokeOpacity: 0.8,
+              strokeWeight: 3,
+              geodesic: true,
+            }}
+          />
+        </>
+      )}
     </GoogleMap>
   );
 };
