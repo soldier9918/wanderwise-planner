@@ -1,6 +1,4 @@
-import { useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 
 interface HotelMapProps {
   lat: number;
@@ -8,34 +6,49 @@ interface HotelMapProps {
   name: string;
 }
 
+const GOOGLE_MAPS_API_KEY = "AIzaSyBVtwVPrEBuROA_uKOlHYr9qLmBlvbFb4s";
+
+const mapStyles = [
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9e7f2" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#e0e0e0" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#d4edda" }] },
+];
+
 const HotelMap = ({ lat, lng, name }: HotelMapProps) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    id: "google-map-script",
+  });
 
-  useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return;
+  if (!isLoaded) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-secondary rounded-xl">
+        <p className="text-muted-foreground text-sm">Loading map...</p>
+      </div>
+    );
+  }
 
-    mapInstance.current = L.map(mapRef.current).setView([lat, lng], 14);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(mapInstance.current);
-
-    const icon = L.divIcon({
-      html: `<div style="background: hsl(12, 100%, 64%); width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
-      iconSize: [24, 24],
-      className: "",
-    });
-
-    L.marker([lat, lng], { icon }).addTo(mapInstance.current).bindPopup(name);
-
-    return () => {
-      mapInstance.current?.remove();
-      mapInstance.current = null;
-    };
-  }, [lat, lng, name]);
-
-  return <div ref={mapRef} className="w-full h-full" />;
+  return (
+    <GoogleMap
+      mapContainerStyle={{ width: "100%", height: "100%" }}
+      center={{ lat, lng }}
+      zoom={14}
+      options={{
+        styles: mapStyles,
+        disableDefaultUI: false,
+        zoomControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+      }}
+    >
+      <MarkerF position={{ lat, lng }} title={name} />
+    </GoogleMap>
+  );
 };
 
 export default HotelMap;
