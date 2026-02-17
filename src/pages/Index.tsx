@@ -36,10 +36,6 @@ const Index = () => {
               <br />
               <span className="text-gradient-coral">Save Big.</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/80 font-medium max-w-2xl mx-auto">
-              Search hotels &amp; flights across LoveHolidays, Lastminute, Booking.com,
-              Skyscanner and more — all in one place.
-            </p>
           </motion.div>
 
           <TrustedBrands />
