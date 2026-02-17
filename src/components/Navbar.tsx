@@ -7,7 +7,7 @@ const navItems = [
   { label: "Search", path: "/" },
   { label: "Flights", path: "/results" },
   { label: "Hotels", path: "/results" },
-  { label: "Packages", path: "/results" },
+  
   { label: "Trending Destinations", path: "/results" },
   { label: "Deals", path: "/results" },
   { label: "How It Works", path: "/#how-it-works" },
