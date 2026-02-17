@@ -48,6 +48,27 @@ const shoppingMalls: POILocation[] = [
   { label: "Teguise Market", name: "Teguise Market", distance: 12.0, lat: 29.0600, lng: -13.5600 },
 ];
 
+// All airports in Spain (sorted by distance from hotel - Lanzarote)
+const spainAirports: POILocation[] = [
+  { label: "ACE – Lanzarote", name: "César Manrique–Lanzarote Airport (ACE)", distance: 18.7, lat: 28.9453, lng: -13.6052 },
+  { label: "FUE – Fuerteventura", name: "Fuerteventura Airport (FUE)", distance: 60.0, lat: 28.4527, lng: -13.8638 },
+  { label: "SPC – La Palma", name: "La Palma Airport (SPC)", distance: 210.0, lat: 28.6265, lng: -17.7556 },
+  { label: "TFN – Tenerife North", name: "Tenerife North Airport (TFN)", distance: 270.0, lat: 28.4827, lng: -16.3415 },
+  { label: "TFS – Tenerife South", name: "Tenerife South Airport (TFS)", distance: 290.0, lat: 28.0445, lng: -16.5725 },
+  { label: "LPA – Gran Canaria", name: "Gran Canaria Airport (LPA)", distance: 180.0, lat: 27.9319, lng: -15.3866 },
+  { label: "GMZ – La Gomera", name: "La Gomera Airport (GMZ)", distance: 300.0, lat: 28.0296, lng: -17.2146 },
+  { label: "VDE – El Hierro", name: "El Hierro Airport (VDE)", distance: 350.0, lat: 27.8148, lng: -17.8871 },
+  { label: "MAD – Madrid Barajas", name: "Madrid Barajas Airport (MAD)", distance: 1950.0, lat: 40.4983, lng: -3.5676 },
+  { label: "BCN – Barcelona", name: "Barcelona El Prat Airport (BCN)", distance: 2700.0, lat: 41.2971, lng: 2.0785 },
+  { label: "AGP – Málaga", name: "Málaga Airport (AGP)", distance: 1800.0, lat: 36.6749, lng: -4.4991 },
+  { label: "ALC – Alicante", name: "Alicante Airport (ALC)", distance: 2100.0, lat: 38.2822, lng: -0.5582 },
+  { label: "PMI – Palma de Mallorca", name: "Palma de Mallorca Airport (PMI)", distance: 2500.0, lat: 39.5517, lng: 2.7388 },
+  { label: "SVQ – Seville", name: "Seville Airport (SVQ)", distance: 1750.0, lat: 37.4180, lng: -5.8931 },
+  { label: "VLC – Valencia", name: "Valencia Airport (VLC)", distance: 2200.0, lat: 39.4893, lng: -0.4816 },
+  { label: "BIO – Bilbao", name: "Bilbao Airport (BIO)", distance: 2300.0, lat: 43.3011, lng: -2.9106 },
+  { label: "IBZ – Ibiza", name: "Ibiza Airport (IBZ)", distance: 2400.0, lat: 38.8729, lng: 1.3731 },
+];
+
 const spaFitness: POILocation = {
   label: "SPA / Fitness", name: "FitLife Gym", distance: 0.9, lat: 28.9580, lng: -13.6050,
 };
@@ -55,7 +76,8 @@ const spaFitness: POILocation = {
 const estimateTime = (km: number) => {
   if (km <= 1) return `${Math.max(1, Math.round(km * 12))} min walk`;
   if (km <= 3) return `${Math.max(1, Math.round(km * 3))} min drive`;
-  return `${Math.max(1, Math.round(km * 1.5))} min drive`;
+  if (km <= 50) return `${Math.max(1, Math.round(km * 1.5))} min drive`;
+  return `${Math.round(km / 80 * 60)} min flight`;
 };
 
 const getTransportIcon = (label: string) => {
@@ -64,10 +86,11 @@ const getTransportIcon = (label: string) => {
   return Car;
 };
 
-type DropdownKey = "transport" | "hotspot" | "restaurant" | "shopping";
+type DropdownKey = "airport" | "transport" | "hotspot" | "restaurant" | "shopping";
 
 const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activePOI }: NearbyPOIsProps) => {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
+  const [selectedAirport, setSelectedAirport] = useState<POILocation>(spainAirports[0]);
   const [selectedTransport, setSelectedTransport] = useState<POILocation>(publicTransport[0]);
   const [selectedHotspot, setSelectedHotspot] = useState<POILocation>(touristHotspots[0]);
   const [selectedRestaurant, setSelectedRestaurant] = useState<POILocation>(restaurants[0]);
@@ -119,7 +142,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
         </button>
       </button>
       {openDropdown === key && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-elevated z-50 py-1 max-h-48 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-elevated z-50 py-1 max-h-56 overflow-y-auto">
           {items.map((item) => (
             <button
               key={item.name}
@@ -128,7 +151,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
                 selected.name === item.name ? "bg-primary/5 text-primary font-semibold" : "text-foreground"
               }`}
             >
-              <span className="truncate">{item.name}</span>
+              <span className="truncate">{item.label}</span>
               <span className="text-xs text-muted-foreground shrink-0 ml-2">{dist(item.distance)} · {estimateTime(item.distance)}</span>
             </button>
           ))}
@@ -139,24 +162,15 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {/* Nearest Airport - fixed */}
-      <button
-        onClick={() => handleClick({ label: "Nearest Airport", name: "ACE Airport", distance: 18.7, lat: 28.9453, lng: -13.6052 })}
-        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-          isActive({ label: "Nearest Airport", name: "ACE Airport", distance: 18.7, lat: 28.9453, lng: -13.6052 })
-            ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
-            : "bg-secondary hover:bg-secondary/80"
-        }`}
-      >
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-          <Plane className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Nearest Airport</p>
-          <p className="text-sm font-medium text-foreground">ACE Airport</p>
-          <p className="text-xs text-primary font-semibold">{dist(18.7)} · {estimateTime(18.7)}</p>
-        </div>
-      </button>
+      {/* Airport Dropdown */}
+      {renderDropdown(
+        "airport",
+        <Plane className="w-4 h-4 text-primary" />,
+        "Airports",
+        selectedAirport,
+        spainAirports,
+        setSelectedAirport,
+      )}
 
       {/* Public Transport Dropdown */}
       {renderDropdown(

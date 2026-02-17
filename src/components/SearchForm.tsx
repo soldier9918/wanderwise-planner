@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftRight, CalendarIcon, ChevronDown, Plus, X } from "lucide-react";
+import { ArrowLeftRight, CalendarIcon, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -24,8 +24,12 @@ const SearchForm = () => {
   const [departureCity, setDepartureCity] = useState("");
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
-  const [guests, setGuests] = useState("2");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [travellersOpen, setTravellersOpen] = useState(false);
+  const [multiTravellersOpen, setMultiTravellersOpen] = useState(false);
   const [cabinClass, setCabinClass] = useState("Economy");
+  const totalTravellers = adults + children;
   const [tripType, setTripType] = useState("Return");
   const [nearbyFrom, setNearbyFrom] = useState(false);
   const [nearbyTo, setNearbyTo] = useState(false);
@@ -40,7 +44,7 @@ const SearchForm = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(
-      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${guests}&unit=${distanceUnit}&cabin=${cabinClass}&direct=${directFlights}`
+      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${totalTravellers}&unit=${distanceUnit}&cabin=${cabinClass}&direct=${directFlights}`
     );
   };
 
@@ -238,7 +242,7 @@ const SearchForm = () => {
               )}
 
               {/* Travellers & Cabin Class */}
-              <Popover>
+              <Popover open={multiTravellersOpen} onOpenChange={setMultiTravellersOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
@@ -246,38 +250,42 @@ const SearchForm = () => {
                   >
                     <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers & cabin class</span>
                     <span className="text-lg text-foreground">
-                      {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
+                      {totalTravellers} {totalTravellers === 1 ? "traveller" : "travellers"}, {cabinClass}
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-4" align="end">
-                  <div className="space-y-4">
+                <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+                  <div className="p-5 space-y-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-base font-semibold text-foreground">Adults</p>
+                        <p className="text-sm text-muted-foreground">Aged 18+</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Minus className="w-4 h-4" /></button>
+                        <span className="text-base font-semibold text-foreground w-6 text-center">{adults}</span>
+                        <button type="button" onClick={() => setAdults(Math.min(9, adults + 1))} disabled={adults >= 9} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Plus className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-base font-semibold text-foreground">Children</p>
+                        <p className="text-sm text-muted-foreground">Aged 0 to 17</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Minus className="w-4 h-4" /></button>
+                        <span className="text-base font-semibold text-foreground w-6 text-center">{children}</span>
+                        <button type="button" onClick={() => setChildren(Math.min(6, children + 1))} disabled={children >= 6} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Plus className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Your age at time of travel must be valid for the age category booked. Airlines have restrictions on under 18s travelling alone.</p>
                     <div>
-                      <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
-                      <select
-                        value={guests}
-                        onChange={(e) => setGuests(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                          <option key={n} value={n}>
-                            {n} {n === 1 ? "Adult" : "Adults"}
-                          </option>
-                        ))}
+                      <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin Class</label>
+                      <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="w-full px-3 py-2.5 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none">
+                        {["Economy", "Premium Economy", "Business", "First"].map((c) => (<option key={c} value={c}>{c}</option>))}
                       </select>
                     </div>
-                    <div>
-                      <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
-                      <select
-                        value={cabinClass}
-                        onChange={(e) => setCabinClass(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                      >
-                        {["Economy", "Premium Economy", "Business", "First"].map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <button type="button" onClick={() => setMultiTravellersOpen(false)} className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors">Apply</button>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -383,7 +391,7 @@ const SearchForm = () => {
             )}
 
             {/* Travellers & Cabin Class */}
-            <Popover>
+            <Popover open={travellersOpen} onOpenChange={setTravellersOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -391,38 +399,42 @@ const SearchForm = () => {
                 >
                   <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers & cabin class</span>
                   <span className="text-lg text-foreground">
-                    {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
+                    {totalTravellers} {totalTravellers === 1 ? "traveller" : "travellers"}, {cabinClass}
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-4" align="end">
-                <div className="space-y-4">
+              <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+                <div className="p-5 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-base font-semibold text-foreground">Adults</p>
+                      <p className="text-sm text-muted-foreground">Aged 18+</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Minus className="w-4 h-4" /></button>
+                      <span className="text-base font-semibold text-foreground w-6 text-center">{adults}</span>
+                      <button type="button" onClick={() => setAdults(Math.min(9, adults + 1))} disabled={adults >= 9} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Plus className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-base font-semibold text-foreground">Children</p>
+                      <p className="text-sm text-muted-foreground">Aged 0 to 17</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Minus className="w-4 h-4" /></button>
+                      <span className="text-base font-semibold text-foreground w-6 text-center">{children}</span>
+                      <button type="button" onClick={() => setChildren(Math.min(6, children + 1))} disabled={children >= 6} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Plus className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">Your age at time of travel must be valid for the age category booked. Airlines have restrictions on under 18s travelling alone.</p>
                   <div>
-                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
-                    <select
-                      value={guests}
-                      onChange={(e) => setGuests(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                        <option key={n} value={n}>
-                          {n} {n === 1 ? "Adult" : "Adults"}
-                        </option>
-                      ))}
+                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin Class</label>
+                    <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="w-full px-3 py-2.5 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none">
+                      {["Economy", "Premium Economy", "Business", "First"].map((c) => (<option key={c} value={c}>{c}</option>))}
                     </select>
                   </div>
-                  <div>
-                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
-                    <select
-                      value={cabinClass}
-                      onChange={(e) => setCabinClass(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                    >
-                      {["Economy", "Premium Economy", "Business", "First"].map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <button type="button" onClick={() => setTravellersOpen(false)} className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors">Apply</button>
                 </div>
               </PopoverContent>
             </Popover>
