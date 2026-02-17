@@ -5,6 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { label: "Search", path: "/" },
+  { label: "Flights", path: "/results" },
+  { label: "Hotels", path: "/results" },
+  { label: "Packages", path: "/results" },
+  { label: "Trending Destinations", path: "/results" },
   { label: "Deals", path: "/results" },
   { label: "How It Works", path: "/#how-it-works" },
 ];
@@ -15,8 +19,8 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy border-b border-navy-lighter">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="container mx-auto px-4 h-16 flex items-center gap-6">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
             <Plane className="w-5 h-5 text-primary-foreground" />
           </div>
@@ -28,10 +32,10 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-1">
           {navItems.map((item) => (
             <Link
-              key={item.path}
+              key={item.label}
               to={item.path}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === item.path
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                location.pathname === item.path && item.label === "Search"
                   ? "text-primary bg-primary/10"
                   : "text-white/70 hover:text-white hover:bg-navy-lighter"
               }`}
@@ -41,17 +45,8 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/results"
-            className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-coral-light transition-colors"
-          >
-            Compare Now
-          </Link>
-        </div>
-
         <button
-          className="md:hidden text-white"
+          className="md:hidden text-white ml-auto"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
