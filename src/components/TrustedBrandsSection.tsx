@@ -11,8 +11,8 @@ const TrustedBrandsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-10"
         >
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Holiday packages from your favourite travel brands
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
+            One search. Every top travel brand. The best price.
           </h2>
         </motion.div>
 
