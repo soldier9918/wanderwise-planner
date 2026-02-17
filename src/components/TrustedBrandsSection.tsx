@@ -36,18 +36,22 @@ const TrustedBrandsSection = () => {
           </h2>
         </motion.div>
 
-        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-6 md:gap-8 items-center">
           {brands.map((brand, i) => (
-            <motion.img
+            <motion.div
               key={brand.name}
-              src={brand.src}
-              alt={brand.name}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05, duration: 0.3 }}
-              className="h-12 md:h-16 object-contain"
-            />
+              className="flex items-center justify-center h-16"
+            >
+              <img
+                src={brand.src}
+                alt={brand.name}
+                className="max-h-12 max-w-full object-contain"
+              />
+            </motion.div>
           ))}
         </div>
       </div>
