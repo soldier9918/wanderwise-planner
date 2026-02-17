@@ -45,7 +45,7 @@ const SearchForm = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.6 }}
       onSubmit={handleSearch}
-      className="w-full max-w-5xl mx-auto"
+      className="w-full max-w-6xl mx-auto"
     >
       <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-4 shadow-elevated border border-white/10">
        <div className="bg-card rounded-xl p-6">
