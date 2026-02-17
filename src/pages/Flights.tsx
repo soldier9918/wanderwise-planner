@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import heroBg from "@/assets/hero-bg.jpg";
+import flightsHeroBg from "@/assets/flights-hero-bg.jpg";
 import SearchForm from "@/components/SearchForm";
 import FlightDeals from "@/components/FlightDeals";
 import Navbar from "@/components/Navbar";
@@ -14,7 +14,7 @@ const Flights = () => {
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden text-white">
         <div className="absolute inset-0">
           <img
-            src={heroBg}
+            src={flightsHeroBg}
             alt="Beautiful beach destination"
             className="w-full h-full object-cover"
           />
