@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import SearchForm from "@/components/SearchForm";
-import TrustedBrands from "@/components/TrustedBrands";
+
 import FeaturedDestinations from "@/components/FeaturedDestinations";
 import HowItWorks from "@/components/HowItWorks";
 import Navbar from "@/components/Navbar";
@@ -38,7 +38,7 @@ const Index = () => {
             </h1>
           </motion.div>
 
-          <TrustedBrands />
+          
 
           <SearchForm />
         </div>
