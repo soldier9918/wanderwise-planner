@@ -36,6 +36,9 @@ const Index = () => {
               <br />
               <span className="text-gradient-coral">Save Big.</span>
             </h1>
+            <p className="text-white/80 text-base md:text-lg font-medium mt-4">
+              Search hotels & flights across all your favourite brands — all in one place.
+            </p>
           </motion.div>
 
           
