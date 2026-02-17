@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import SearchForm from "@/components/SearchForm";
+import FlightDeals from "@/components/FlightDeals";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -42,6 +43,7 @@ const Flights = () => {
         </div>
       </section>
 
+      <FlightDeals />
       <Footer />
     </div>
   );
