@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, CalendarIcon } from "lucide-react";
+import { ArrowRight, ArrowLeftRight, CalendarIcon, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -18,13 +19,24 @@ const SearchForm = () => {
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [guests, setGuests] = useState("2");
+  const [cabinClass, setCabinClass] = useState("Economy");
+  const [tripType, setTripType] = useState("Return");
+  const [nearbyFrom, setNearbyFrom] = useState(false);
+  const [nearbyTo, setNearbyTo] = useState(false);
+  const [directFlights, setDirectFlights] = useState(false);
+  const [addHotel, setAddHotel] = useState(true);
   const [distanceUnit] = useState<"km" | "mi">("km");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(
-      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${guests}&unit=${distanceUnit}`
+      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${guests}&unit=${distanceUnit}&cabin=${cabinClass}&direct=${directFlights}`
     );
+  };
+
+  const swapCities = () => {
+    setDepartureCity(destination);
+    setDestination(departureCity);
   };
 
   return (
@@ -42,8 +54,42 @@ const SearchForm = () => {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 border border-border rounded-xl overflow-hidden">
-          <div className="relative lg:col-span-1 border-r border-border">
+        {/* Trip Type Selector */}
+        <div className="mb-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+              >
+                {tripType}
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-36 p-1" align="start">
+              {["Return", "One way", "Multi-city"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setTripType(type)}
+                  className={cn(
+                    "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                    tripType === type
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "text-foreground hover:bg-secondary"
+                  )}
+                >
+                  {type}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Main Search Row */}
+        <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
+          {/* From */}
+          <div className="relative flex-1 border-r border-border">
             <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">From</label>
             <input
               type="text"
@@ -53,11 +99,23 @@ const SearchForm = () => {
               className="w-full px-4 pt-8 pb-3 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:bg-primary/5"
             />
           </div>
-          <div className="relative lg:col-span-1 border-r border-border">
+
+          {/* Swap Button */}
+          <button
+            type="button"
+            onClick={swapCities}
+            className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
+            title="Swap cities"
+          >
+            <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          {/* To */}
+          <div className="relative flex-1 border-r border-border">
             <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">To</label>
             <input
               type="text"
-              placeholder="City or airport"
+              placeholder="Country, city or airport"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               className="w-full px-4 pt-8 pb-3 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:bg-primary/5"
@@ -69,12 +127,12 @@ const SearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left w-full px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative border-r border-border text-left flex-1 px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Depart</span>
                 <span className={cn("text-base flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
                   <CalendarIcon className="w-4 h-4" />
-                  {checkIn ? format(checkIn, "dd/MM/yyyy") : "Select date"}
+                  {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
                 </span>
               </button>
             </PopoverTrigger>
@@ -91,57 +149,129 @@ const SearchForm = () => {
           </Popover>
 
           {/* Return */}
+          {tripType !== "One way" && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="relative border-r border-border text-left flex-1 px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                >
+                  <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Return</span>
+                  <span className={cn("text-base flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                    <CalendarIcon className="w-4 h-4" />
+                    {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={checkOut}
+                  onSelect={setCheckOut}
+                  disabled={(date) => date < (checkIn || new Date())}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {/* Travellers & Cabin Class */}
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left w-full px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative text-left flex-1 px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Return</span>
-                <span className={cn("text-base flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
-                  <CalendarIcon className="w-4 h-4" />
-                  {checkOut ? format(checkOut, "dd/MM/yyyy") : "Select date"}
+                <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Travellers & cabin class</span>
+                <span className="text-base text-foreground">
+                  {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={checkOut}
-                onSelect={setCheckOut}
-                disabled={(date) => date < (checkIn || new Date())}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
+            <PopoverContent className="w-64 p-4" align="end">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
+                  <select
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      <option key={n} value={n}>
+                        {n} {n === 1 ? "Adult" : "Adults"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
+                  <select
+                    value={cabinClass}
+                    onChange={(e) => setCabinClass(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                  >
+                    {["Economy", "Premium Economy", "Business", "First"].map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
 
-          <div className="relative flex">
-            <div className="relative flex-1">
-              <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Travellers</label>
-              <select
-                value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                className="w-full px-4 pt-8 pb-3 bg-card text-foreground text-base outline-none transition-all focus:bg-primary/5 appearance-none"
-              >
-                {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <option key={n} value={n}>
-                    {n} {n === 1 ? "traveller" : "travellers"}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-4">
+          {/* Search Button */}
           <button
             type="submit"
-            className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-coral-light transition-colors flex items-center gap-2"
+            className="px-8 bg-primary text-primary-foreground font-semibold text-base hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
           >
             Search
-            <ArrowRight className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Checkboxes Row */}
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 mt-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="nearbyFrom"
+              checked={nearbyFrom}
+              onCheckedChange={(v) => setNearbyFrom(v === true)}
+            />
+            <label htmlFor="nearbyFrom" className="text-sm text-foreground cursor-pointer">
+              Add nearby airports
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="nearbyTo"
+              checked={nearbyTo}
+              onCheckedChange={(v) => setNearbyTo(v === true)}
+            />
+            <label htmlFor="nearbyTo" className="text-sm text-foreground cursor-pointer">
+              Add nearby airports
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="directFlights"
+              checked={directFlights}
+              onCheckedChange={(v) => setDirectFlights(v === true)}
+            />
+            <label htmlFor="directFlights" className="text-sm text-foreground cursor-pointer">
+              Direct flights
+            </label>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <Checkbox
+              id="addHotel"
+              checked={addHotel}
+              onCheckedChange={(v) => setAddHotel(v === true)}
+            />
+            <label htmlFor="addHotel" className="text-sm font-medium text-foreground cursor-pointer">
+              Add a hotel
+            </label>
+          </div>
         </div>
       </div>
     </motion.form>
