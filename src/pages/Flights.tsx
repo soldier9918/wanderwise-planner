@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
-import PackageSearchForm from "@/components/PackageSearchForm";
-import FeaturedDestinations from "@/components/FeaturedDestinations";
-import HowItWorks from "@/components/HowItWorks";
+import SearchForm from "@/components/SearchForm";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const Index = () => {
+const Flights = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -31,24 +29,22 @@ const Index = () => {
             className="text-center mb-10"
           >
             <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
-              Find your perfect
+              Search & Compare
               <br />
-              <span className="text-gradient-coral">package holiday</span>
+              <span className="text-gradient-coral">Flights</span>
             </h1>
             <p className="text-white/80 text-base md:text-lg font-medium mt-4">
-              Search hotels & flights across all your favourite brands — all in one place.
+              Find the cheapest flights across all major airlines and booking sites.
             </p>
           </motion.div>
 
-          <PackageSearchForm />
+          <SearchForm />
         </div>
       </section>
 
-      <FeaturedDestinations />
-      <HowItWorks />
       <Footer />
     </div>
   );
 };
 
-export default Index;
+export default Flights;
