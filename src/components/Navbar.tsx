@@ -1,7 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Plane, Menu, X } from "lucide-react";
+import { Plane, Menu, X, Globe } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import CurrencySelector from "@/components/CurrencySelector";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const navItems = [
   { label: "Flights + Hotels", path: "/" },
@@ -15,6 +17,7 @@ const navItems = [
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currency } = useCurrency();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleNavClick = (e: React.MouseEvent, path: string) => {
@@ -62,6 +65,21 @@ const Navbar = () => {
           ))}
         </div>
 
+        <div className="hidden md:flex items-center gap-2 ml-auto">
+          <CurrencySelector>
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-navy-lighter transition-colors">
+              <Globe className="w-4 h-4" />
+              {currency.symbol} {currency.code}
+            </button>
+          </CurrencySelector>
+          <Link
+            to="/login"
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Log In
+          </Link>
+        </div>
+
         <button
           className="md:hidden text-white ml-auto"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -89,12 +107,18 @@ const Navbar = () => {
                   {item.label}
                 </Link>
               ))}
+              <CurrencySelector>
+                <button className="px-4 py-3 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-navy-lighter transition-colors text-left flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Currency: {currency.symbol} {currency.code}
+                </button>
+              </CurrencySelector>
               <Link
-                to="/results"
+                to="/login"
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold text-center"
               >
-                Compare Now
+                Log In
               </Link>
             </div>
           </motion.div>
