@@ -47,7 +47,8 @@ const SearchForm = () => {
       onSubmit={handleSearch}
       className="w-full max-w-5xl mx-auto"
     >
-      <div className="bg-gradient-card rounded-2xl p-6 shadow-elevated border border-border">
+      <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-4 shadow-elevated border border-white/10">
+       <div className="bg-card rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-display text-xl font-semibold text-foreground">
             Find your perfect trip
@@ -273,6 +274,7 @@ const SearchForm = () => {
             </label>
           </div>
         </div>
+       </div>
       </div>
     </motion.form>
   );
