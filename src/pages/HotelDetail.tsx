@@ -3,7 +3,8 @@ import { mockHotels } from "@/data/mockHotels";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HotelMap from "@/components/HotelMap";
-import { Star, ArrowLeft, ExternalLink, MapPin, Plane, Train, Utensils, ShoppingBag, Palmtree, Building2 } from "lucide-react";
+import NearbyPOIs, { POILocation } from "@/components/NearbyPOIs";
+import { Star, ArrowLeft, ExternalLink, MapPin, Building2, Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -13,7 +14,7 @@ const HotelDetail = () => {
   const { id } = useParams();
   const hotel = mockHotels.find((h) => h.id === id);
   const [distanceUnit, setDistanceUnit] = useState<"km" | "mi">("km");
-
+  const [activePOI, setActivePOI] = useState<POILocation | null>(null);
   if (!hotel) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -28,13 +29,9 @@ const HotelDetail = () => {
 
   const bestPrice = Math.min(...hotel.prices.map((p) => p.price));
 
-  const nearbyPOIs = [
-    { icon: Plane, label: "Nearest Airport", distance: hotel.distanceToAirport, name: "ACE Airport" },
-    { icon: Train, label: "Public Transport", distance: 0.6, name: "Bus Stop L1" },
-    { icon: Palmtree, label: "Tourist Hotspot", distance: 1.2, name: "Timanfaya National Park" },
-    { icon: Utensils, label: "Restaurants", distance: 0.3, name: "La Tegala, El Golfo" },
-    { icon: ShoppingBag, label: "Shopping", distance: 0.8, name: "Biosfera Shopping Centre" },
-  ];
+  const mapDestination = activePOI
+    ? { lat: activePOI.lat, lng: activePOI.lng, name: activePOI.name }
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,26 +128,17 @@ const HotelDetail = () => {
               </div>
 
               <div className="rounded-xl overflow-hidden mb-4 h-72">
-                <HotelMap lat={hotel.lat} lng={hotel.lng} name={hotel.name} />
+                <HotelMap lat={hotel.lat} lng={hotel.lng} name={hotel.name} destination={mapDestination} />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {nearbyPOIs.map((poi) => (
-                  <div
-                    key={poi.label}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-secondary"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <poi.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{poi.label}</p>
-                      <p className="text-sm font-medium text-foreground">{poi.name}</p>
-                      <p className="text-xs text-primary font-semibold">{dist(poi.distance)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <NearbyPOIs
+                hotelLat={hotel.lat}
+                hotelLng={hotel.lng}
+                distanceUnit={distanceUnit}
+                dist={dist}
+                onSelectPOI={setActivePOI}
+                activePOI={activePOI}
+              />
             </motion.div>
 
             {/* Amenities */}
