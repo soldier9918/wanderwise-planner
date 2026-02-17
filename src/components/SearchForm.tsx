@@ -34,68 +34,71 @@ const SearchForm = () => {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="relative lg:col-span-1">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 border border-border rounded-xl overflow-hidden">
+          <div className="relative lg:col-span-1 border-r border-border">
+            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">From</label>
             <input
               type="text"
-              placeholder="Flying from..."
+              placeholder="City or airport"
               value={departureCity}
               onChange={(e) => setDepartureCity(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-sm outline-none transition-all focus:bg-primary/5"
             />
           </div>
-          <div className="relative lg:col-span-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="relative lg:col-span-1 border-r border-border">
+            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">To</label>
             <input
               type="text"
-              placeholder="Going to..."
+              placeholder="City or airport"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-sm outline-none transition-all focus:bg-primary/5"
             />
           </div>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="relative border-r border-border">
+            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Depart</label>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-secondary text-foreground text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground text-sm outline-none transition-all focus:bg-primary/5"
             />
           </div>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="relative border-r border-border">
+            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Return</label>
             <input
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-secondary text-foreground text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground text-sm outline-none transition-all focus:bg-primary/5"
             />
           </div>
-          <div className="relative flex gap-2">
+          <div className="relative flex">
             <div className="relative flex-1">
-              <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Travellers</label>
               <select
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
-                className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-secondary text-foreground text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all appearance-none"
+                className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground text-sm outline-none transition-all focus:bg-primary/5 appearance-none"
               >
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <option key={n} value={n}>
-                    {n} {n === 1 ? "Guest" : "Guests"}
+                    {n} {n === 1 ? "traveller" : "travellers"}
                   </option>
                 ))}
               </select>
             </div>
-            <button
-              type="submit"
-              className="px-6 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-coral-light transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              Search
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
+        </div>
+
+        <div className="flex justify-end mt-4">
+          <button
+            type="submit"
+            className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-coral-light transition-colors flex items-center gap-2"
+          >
+            Search
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </motion.form>
