@@ -8,7 +8,7 @@ const navItems = [
   { label: "Flights", path: "/results" },
   { label: "Hotels", path: "/results" },
   
-  { label: "Trending Destinations", path: "/results" },
+  { label: "Trending Destinations", path: "/#trending-destinations" },
   { label: "Deals", path: "/results" },
   { label: "How It Works", path: "/#how-it-works" },
 ];
