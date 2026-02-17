@@ -1,17 +1,5 @@
 import { motion } from "framer-motion";
-
-const brands = [
-  { name: "Trip.com", bg: "#003580", text: "#fff", accent: "#FF6B00" },
-  { name: "easyJet holidays", bg: "#FF6600", text: "#fff" },
-  { name: "Jet2holidays", bg: "#F7D417", text: "#D4145A" },
-  { name: "loveholidays", bg: "#E91E8C", text: "#fff" },
-  { name: "lastminute.com", bg: "#E40087", text: "#fff" },
-  { name: "On the Beach", bg: "#FFD700", text: "#1A1A2E" },
-  { name: "TUI", bg: "#D40E14", text: "#fff" },
-  { name: "Expedia", bg: "#FBCC33", text: "#1A1A2E" },
-  { name: "Booking.com", bg: "#003580", text: "#fff" },
-  { name: "Skyscanner", bg: "#0770E3", text: "#fff" },
-];
+import brandLogos from "@/assets/brand-logos.png";
 
 const TrustedBrands = () => {
   return (
@@ -24,23 +12,12 @@ const TrustedBrands = () => {
       <p className="text-white/80 text-base md:text-lg font-medium text-center mb-5">
         Search hotels & flights across all your favourite brands — all in one place.
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        {brands.map((brand, i) => (
-          <motion.div
-            key={brand.name}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 + i * 0.05, duration: 0.3 }}
-            whileHover={{ scale: 1.08, y: -2 }}
-            className="px-4 py-2 rounded-lg text-xs md:text-sm font-bold shadow-lg cursor-default select-none backdrop-blur-sm"
-            style={{
-              backgroundColor: brand.bg,
-              color: brand.text,
-            }}
-          >
-            {brand.name}
-          </motion.div>
-        ))}
+      <div className="flex justify-center">
+        <img
+          src={brandLogos}
+          alt="Trip.com, easyJet holidays, Jet2holidays, loveholidays, lastminute.com, On the Beach, TUI, Expedia"
+          className="max-w-full h-10 md:h-12 object-contain"
+        />
       </div>
     </motion.div>
   );
