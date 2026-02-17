@@ -45,21 +45,21 @@ const FeaturedDestinations = () => {
                   loading="lazy"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <div className="flex items-end justify-between">
                   <div>
-                    <h3 className="font-display text-xl font-bold text-foreground">
+                    <h3 className="font-display text-xl font-extrabold text-white drop-shadow-md">
                       {dest.name}
                     </h3>
-                    <p className="text-muted-foreground text-sm">{dest.country}</p>
+                    <p className="text-white/80 text-sm font-semibold">{dest.country}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">From</p>
-                    <p className="font-display text-xl font-bold text-primary">
+                    <p className="text-xs text-white/70 font-medium">From</p>
+                    <p className="font-display text-xl font-extrabold text-white drop-shadow-md">
                       {dest.price}
                     </p>
-                    <p className="text-xs text-muted-foreground">per person</p>
+                    <p className="text-xs text-white/70 font-medium">per person</p>
                   </div>
                 </div>
               </div>

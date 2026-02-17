@@ -35,7 +35,7 @@ const Index = () => {
               <br />
               <span className="text-gradient-coral">Save Big.</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-white/80 font-medium max-w-2xl mx-auto">
               Search hotels &amp; flights across LoveHolidays, Lastminute, Booking.com,
               Skyscanner and more — all in one place.
             </p>
@@ -53,7 +53,7 @@ const Index = () => {
               (brand) => (
                 <span
                   key={brand}
-                  className="text-xs font-medium text-white/40 uppercase tracking-wider"
+                  className="text-xs font-semibold text-white/60 uppercase tracking-wider"
                 >
                   {brand}
                 </span>

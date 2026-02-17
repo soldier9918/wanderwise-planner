@@ -58,7 +58,7 @@ const HowItWorks = () => {
               <h3 className="font-display text-lg font-semibold text-foreground mb-2">
                 {feat.title}
               </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed font-medium">
                 {feat.description}
               </p>
             </motion.div>
