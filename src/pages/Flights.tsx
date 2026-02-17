@@ -29,12 +29,12 @@ const Flights = () => {
             transition={{ duration: 0.7 }}
             className="text-center mb-10"
           >
-            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
               Search & Compare
               <br />
-              <span className="text-gradient-coral">Flights</span>
+              <span className="text-coral">Flights</span>
             </h1>
-            <p className="text-white/80 text-base md:text-lg font-medium mt-4">
+            <p className="text-white/90 text-lg md:text-xl font-medium mt-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Find the cheapest flights across all major airlines and booking sites.
             </p>
           </motion.div>
