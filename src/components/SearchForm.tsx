@@ -37,30 +37,30 @@ const SearchForm = () => {
     >
       <div className="bg-gradient-card rounded-2xl p-6 shadow-elevated border border-border">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-display text-lg font-semibold text-foreground">
+          <h3 className="font-display text-xl font-semibold text-foreground">
             Find your perfect trip
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 border border-border rounded-xl overflow-hidden">
           <div className="relative lg:col-span-1 border-r border-border">
-            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">From</label>
+            <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">From</label>
             <input
               type="text"
               placeholder="City or airport"
               value={departureCity}
               onChange={(e) => setDepartureCity(e.target.value)}
-              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-sm outline-none transition-all focus:bg-primary/5"
+              className="w-full px-4 pt-8 pb-3 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:bg-primary/5"
             />
           </div>
           <div className="relative lg:col-span-1 border-r border-border">
-            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">To</label>
+            <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">To</label>
             <input
               type="text"
               placeholder="City or airport"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-sm outline-none transition-all focus:bg-primary/5"
+              className="w-full px-4 pt-8 pb-3 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:bg-primary/5"
             />
           </div>
 
@@ -69,10 +69,10 @@ const SearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left w-full px-4 pt-7 pb-2.5 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative border-r border-border text-left w-full px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Depart</span>
-                <span className={cn("text-sm flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Depart</span>
+                <span className={cn("text-base flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
                   <CalendarIcon className="w-4 h-4" />
                   {checkIn ? format(checkIn, "dd/MM/yyyy") : "Select date"}
                 </span>
@@ -95,10 +95,10 @@ const SearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left w-full px-4 pt-7 pb-2.5 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative border-r border-border text-left w-full px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Return</span>
-                <span className={cn("text-sm flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Return</span>
+                <span className={cn("text-base flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
                   <CalendarIcon className="w-4 h-4" />
                   {checkOut ? format(checkOut, "dd/MM/yyyy") : "Select date"}
                 </span>
@@ -118,11 +118,11 @@ const SearchForm = () => {
 
           <div className="relative flex">
             <div className="relative flex-1">
-              <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Travellers</label>
+              <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Travellers</label>
               <select
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
-                className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground text-sm outline-none transition-all focus:bg-primary/5 appearance-none"
+                className="w-full px-4 pt-8 pb-3 bg-card text-foreground text-base outline-none transition-all focus:bg-primary/5 appearance-none"
               >
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <option key={n} value={n}>
