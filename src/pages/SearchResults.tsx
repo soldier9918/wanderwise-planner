@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HotelCard from "@/components/HotelCard";
 import SearchFilters, { FilterState } from "@/components/SearchFilters";
+import SearchResultsMap from "@/components/SearchResultsMap";
 import { mockHotels } from "@/data/mockHotels";
 import { motion } from "framer-motion";
 
@@ -52,7 +53,7 @@ const SearchResults = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 pt-24 pb-16">
+      <div className="px-4 lg:px-6 pt-24 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -66,8 +67,9 @@ const SearchResults = () => {
           </p>
         </motion.div>
 
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-64 shrink-0">
+        <div className="flex gap-6">
+          {/* Filters */}
+          <div className="w-64 shrink-0 hidden md:block">
             <SearchFilters
               onFilterChange={setFilters}
               distanceUnit={distanceUnit}
@@ -75,7 +77,8 @@ const SearchResults = () => {
             />
           </div>
 
-          <div className="flex-1 space-y-4">
+          {/* Hotel list */}
+          <div className="flex-1 min-w-0 space-y-4">
             {filtered.map((hotel, i) => (
               <HotelCard
                 key={hotel.id}
@@ -92,6 +95,11 @@ const SearchResults = () => {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Map */}
+          <div className="w-[420px] shrink-0 hidden lg:block sticky top-24 self-start h-[calc(100vh-8rem)]">
+            <SearchResultsMap hotels={filtered} />
           </div>
         </div>
       </div>
