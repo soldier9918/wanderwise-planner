@@ -12,6 +12,7 @@ import heroBg2 from "@/assets/hero-bg-2.jpg";
 import heroBg3 from "@/assets/hero-bg-3.jpg";
 import heroMachuPicchu from "@/assets/hero-dest-machupicchu.jpg";
 import HotelSearchForm from "@/components/HotelSearchForm";
+import HotelDeals from "@/components/HotelDeals";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -73,6 +74,7 @@ const Hotels = () => {
         </div>
       </section>
 
+      <HotelDeals />
       <Footer />
     </div>
   );
