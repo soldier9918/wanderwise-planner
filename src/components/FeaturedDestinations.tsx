@@ -3,13 +3,6 @@ import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
-// Approximate conversion rates from GBP
-const conversionRates: Record<string, number> = {
-  GBP: 1, EUR: 1.17, USD: 1.27, AED: 4.67, AUD: 1.94,
-  CAD: 1.72, CHF: 1.12, JPY: 190.5, THB: 44.2, TRY: 38.5,
-  INR: 105.8, SEK: 13.4,
-};
-
 const allDestinations = [
   { name: "Lanzarote", country: "Spain", priceGBP: 289, image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=400&h=300&fit=crop&q=80" },
   { name: "Bali", country: "Indonesia", priceGBP: 549, image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&h=300&fit=crop&q=80" },
@@ -35,8 +28,7 @@ const VISIBLE_COUNT = 6;
 
 const FeaturedDestinations = () => {
   const [page, setPage] = useState(0);
-  const { currency } = useCurrency();
-  const rate = conversionRates[currency.code] || 1;
+  const { formatPrice } = useCurrency();
   const totalPages = Math.ceil(allDestinations.length / VISIBLE_COUNT);
 
   useEffect(() => {
@@ -101,7 +93,7 @@ const FeaturedDestinations = () => {
                     <div className="text-right">
                       <p className="text-xs text-white/70 font-medium">From</p>
                       <p className="font-display text-xl font-extrabold text-white drop-shadow-md">
-                        {currency.symbol}{Math.round(dest.priceGBP * rate).toLocaleString()}
+                        {formatPrice(dest.priceGBP)}
                       </p>
                       <p className="text-xs text-white/70 font-medium">per person</p>
                     </div>

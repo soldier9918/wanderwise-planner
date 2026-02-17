@@ -6,8 +6,10 @@ import HotelMap from "@/components/HotelMap";
 import { Star, ArrowLeft, ExternalLink, MapPin, Plane, Train, Utensils, ShoppingBag, Palmtree, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const HotelDetail = () => {
+  const { formatPrice } = useCurrency();
   const { id } = useParams();
   const hotel = mockHotels.find((h) => h.id === id);
   const [distanceUnit, setDistanceUnit] = useState<"km" | "mi">("km");
@@ -220,7 +222,7 @@ const HotelDetail = () => {
                             i === 0 ? "text-primary" : "text-foreground"
                           }`}
                         >
-                          £{p.price}
+                          {formatPrice(p.price)}
                         </span>
                         <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
                       </div>
@@ -231,7 +233,7 @@ const HotelDetail = () => {
               <div className="mt-5 pt-4 border-t border-border text-center">
                 <p className="text-xs text-muted-foreground mb-1">You could save</p>
                 <p className="font-display text-2xl font-bold text-primary">
-                  £{Math.max(...hotel.prices.map((p) => p.price)) - bestPrice}
+                  {formatPrice(Math.max(...hotel.prices.map((p) => p.price)) - bestPrice)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   vs. most expensive option
