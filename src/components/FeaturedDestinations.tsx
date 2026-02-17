@@ -9,7 +9,7 @@ const allDestinations = [
   { name: "Dubai", country: "UAE", price: "£479", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop&q=80" },
   { name: "Maldives", country: "Maldives", price: "£899", image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&h=300&fit=crop&q=80" },
   { name: "New York", country: "USA", price: "£529", image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop&q=80" },
-  { name: "Tenerife", country: "Spain", price: "£319", image: "https://images.unsplash.com/photo-1574177556859-1362f72ed6f9?w=400&h=300&fit=crop&q=80" },
+  { name: "Tenerife", country: "Spain", price: "£319", image: "https://images.unsplash.com/photo-1609340667498-5d0a920f3925?w=400&h=300&fit=crop&q=80" },
   { name: "Cancún", country: "Mexico", price: "£649", image: "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=400&h=300&fit=crop&q=80" },
   { name: "Phuket", country: "Thailand", price: "£499", image: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=400&h=300&fit=crop&q=80" },
   { name: "Majorca", country: "Spain", price: "£259", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop&q=80" },
@@ -20,7 +20,7 @@ const allDestinations = [
   { name: "Marrakech", country: "Morocco", price: "£229", image: "https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=400&h=300&fit=crop&q=80" },
   { name: "Rome", country: "Italy", price: "£309", image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=300&fit=crop&q=80" },
   { name: "Antalya", country: "Turkey", price: "£269", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop&q=80" },
-  { name: "Lisbon", country: "Portugal", price: "£299", image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop&q=80" },
+  { name: "Lisbon", country: "Portugal", price: "£299", image: "https://images.unsplash.com/photo-1513735492284-ecf18d81de76?w=400&h=300&fit=crop&q=80" },
 ];
 
 const VISIBLE_COUNT = 6;
