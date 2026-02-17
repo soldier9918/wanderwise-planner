@@ -182,7 +182,7 @@ const SearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative text-left flex-1 px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative text-left flex-1 border-r border-border px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Travellers & cabin class</span>
                 <span className="text-base text-foreground">
