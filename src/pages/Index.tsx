@@ -33,7 +33,7 @@ const Index = () => {
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
               Find Your Perfect
               <br />
-              <span className="text-gradient-coral">Package Holiday</span>
+              <span className="text-gradient-coral" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>Package Holiday</span>
             </h1>
             <p className="text-white/90 text-lg md:text-xl font-medium mt-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Search hotels & flights across all your favourite brands — all in one place.
