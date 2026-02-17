@@ -44,12 +44,12 @@ const TrustedBrandsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05, duration: 0.3 }}
-              className="flex items-center justify-center h-16"
+              className="flex items-center justify-center h-16 md:h-20"
             >
               <img
                 src={brand.src}
                 alt={brand.name}
-                className="max-h-12 max-w-full object-contain"
+                className="max-h-12 md:max-h-16 max-w-full object-contain"
               />
             </motion.div>
           ))}
