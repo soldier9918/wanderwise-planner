@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -72,7 +72,8 @@ const SearchForm = () => {
                 className="relative border-r border-border text-left w-full px-4 pt-7 pb-2.5 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Depart</span>
-                <span className={cn("text-sm", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("text-sm flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                  <CalendarIcon className="w-4 h-4" />
                   {checkIn ? format(checkIn, "dd/MM/yyyy") : "Select date"}
                 </span>
               </button>
@@ -97,7 +98,8 @@ const SearchForm = () => {
                 className="relative border-r border-border text-left w-full px-4 pt-7 pb-2.5 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Return</span>
-                <span className={cn("text-sm", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("text-sm flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                  <CalendarIcon className="w-4 h-4" />
                   {checkOut ? format(checkOut, "dd/MM/yyyy") : "Select date"}
                 </span>
               </button>
