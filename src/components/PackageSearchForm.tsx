@@ -49,7 +49,7 @@ const PackageSearchForm = () => {
         <div className="flex items-stretch rounded-xl overflow-hidden">
           {/* From */}
           <div className="relative flex-1 bg-card border-r border-border">
-            <label className="absolute left-5 top-3 text-sm font-bold text-foreground">From</label>
+            <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
             <input
               type="text"
               placeholder="City or airport"
@@ -71,7 +71,7 @@ const PackageSearchForm = () => {
 
           {/* To */}
           <div className="relative flex-1 bg-card border-r border-border">
-            <label className="absolute left-5 top-3 text-sm font-bold text-foreground">To</label>
+            <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
             <input
               type="text"
               placeholder="City or airport"
@@ -88,7 +88,7 @@ const PackageSearchForm = () => {
                 type="button"
                 className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
               >
-                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Depart</span>
+                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
                 <span className={cn("text-lg flex items-center gap-1.5", depart ? "text-foreground" : "text-muted-foreground")}>
                   {depart ? format(depart, "dd/MM/yyyy") : "Add date"}
                 </span>
@@ -113,7 +113,7 @@ const PackageSearchForm = () => {
                 type="button"
                 className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
               >
-                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Return</span>
+                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
                 <span className={cn("text-lg flex items-center gap-1.5", returnDate ? "text-foreground" : "text-muted-foreground")}>
                   {returnDate ? format(returnDate, "dd/MM/yyyy") : "Add date"}
                 </span>
@@ -138,7 +138,7 @@ const PackageSearchForm = () => {
                 type="button"
                 className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
               >
-                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Travellers</span>
+                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers</span>
                 <span className="text-lg text-foreground flex items-center gap-1.5">
                   {totalTravellers} {totalTravellers === 1 ? "traveller" : "travellers"}
                 </span>
