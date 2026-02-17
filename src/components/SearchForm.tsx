@@ -1,21 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Calendar, Users, MapPin, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const SearchForm = () => {
   const navigate = useNavigate();
   const [destination, setDestination] = useState("");
   const [departureCity, setDepartureCity] = useState("");
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
+  const [checkIn, setCheckIn] = useState<Date>();
+  const [checkOut, setCheckOut] = useState<Date>();
   const [guests, setGuests] = useState("2");
-  const [distanceUnit, setDistanceUnit] = useState<"km" | "mi">("km");
+  const [distanceUnit] = useState<"km" | "mi">("km");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(
-      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&unit=${distanceUnit}`
+      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${guests}&unit=${distanceUnit}`
     );
   };
 
@@ -55,24 +63,57 @@ const SearchForm = () => {
               className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground placeholder:text-muted-foreground text-sm outline-none transition-all focus:bg-primary/5"
             />
           </div>
-          <div className="relative border-r border-border">
-            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Depart</label>
-            <input
-              type="date"
-              value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
-              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground text-sm outline-none transition-all focus:bg-primary/5"
-            />
-          </div>
-          <div className="relative border-r border-border">
-            <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Return</label>
-            <input
-              type="date"
-              value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full px-4 pt-7 pb-2.5 bg-card text-foreground text-sm outline-none transition-all focus:bg-primary/5"
-            />
-          </div>
+
+          {/* Depart */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="relative border-r border-border text-left w-full px-4 pt-7 pb-2.5 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+              >
+                <span className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Depart</span>
+                <span className={cn("text-sm", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                  {checkIn ? format(checkIn, "dd/MM/yyyy") : "Select date"}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={checkIn}
+                onSelect={setCheckIn}
+                disabled={(date) => date < new Date()}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Return */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="relative border-r border-border text-left w-full px-4 pt-7 pb-2.5 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+              >
+                <span className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Return</span>
+                <span className={cn("text-sm", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                  {checkOut ? format(checkOut, "dd/MM/yyyy") : "Select date"}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={checkOut}
+                onSelect={setCheckOut}
+                disabled={(date) => date < (checkIn || new Date())}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
           <div className="relative flex">
             <div className="relative flex-1">
               <label className="absolute left-4 top-2.5 text-xs font-bold text-foreground">Travellers</label>
