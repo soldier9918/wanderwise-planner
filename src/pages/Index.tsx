@@ -19,8 +19,8 @@ const Index = () => {
             alt="Beautiful beach destination"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-navy/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-navy/50 via-transparent to-navy" />
+          <div className="absolute inset-0 bg-navy/10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-navy/20 via-transparent to-navy/40" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4 pt-20">
