@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ArrowLeftRight, CalendarIcon, ChevronDown } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeftRight, CalendarIcon, ChevronDown, Plus, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -11,6 +11,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
+interface FlightLeg {
+  from: string;
+  to: string;
+  depart: Date | undefined;
+}
 
 const SearchForm = () => {
   const navigate = useNavigate();
@@ -26,6 +32,10 @@ const SearchForm = () => {
   const [directFlights, setDirectFlights] = useState(false);
   const [addHotel, setAddHotel] = useState(false);
   const [distanceUnit] = useState<"km" | "mi">("km");
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightLeg[]>([
+    { from: "", to: "", depart: undefined },
+    { from: "", to: "", depart: undefined },
+  ]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +48,37 @@ const SearchForm = () => {
     setDepartureCity(destination);
     setDestination(departureCity);
   };
+
+  const swapMultiCityCities = (index: number) => {
+    setMultiCityLegs((prev) => {
+      const updated = [...prev];
+      const temp = updated[index].from;
+      updated[index] = { ...updated[index], from: updated[index].to, to: temp };
+      return updated;
+    });
+  };
+
+  const updateLeg = (index: number, field: keyof FlightLeg, value: string | Date | undefined) => {
+    setMultiCityLegs((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const addLeg = () => {
+    if (multiCityLegs.length < 6) {
+      setMultiCityLegs((prev) => [...prev, { from: "", to: "", depart: undefined }]);
+    }
+  };
+
+  const removeLeg = (index: number) => {
+    if (multiCityLegs.length > 2) {
+      setMultiCityLegs((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const isMultiCity = tripType === "Multi-city";
 
   return (
     <motion.form
@@ -87,149 +128,314 @@ const SearchForm = () => {
           </Popover>
         </div>
 
-        {/* Main Search Row */}
-        <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
-          {/* From */}
-          <div className="relative flex-1 border-r border-border">
-            <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
-            <input
-              type="text"
-              placeholder="City or airport"
-              value={departureCity}
-              onChange={(e) => setDepartureCity(e.target.value)}
-              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
-            />
-          </div>
+        {/* Multi-city Legs */}
+        {isMultiCity ? (
+          <div className="space-y-3">
+            <AnimatePresence initial={false}>
+              {multiCityLegs.map((leg, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
+                    {/* Flight number label */}
+                    <div className="flex items-center justify-center w-10 bg-secondary text-xs font-bold text-muted-foreground shrink-0">
+                      {index + 1}
+                    </div>
 
-          {/* Swap Button */}
-          <button
-            type="button"
-            onClick={swapCities}
-            className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
-            title="Swap cities"
-          >
-            <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
-          </button>
+                    {/* From */}
+                    <div className="relative flex-1 border-r border-border">
+                      <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
+                      <input
+                        type="text"
+                        placeholder="City or airport"
+                        value={leg.from}
+                        onChange={(e) => updateLeg(index, "from", e.target.value)}
+                        className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
+                      />
+                    </div>
 
-          {/* To */}
-          <div className="relative flex-1 border-r border-border">
-            <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
-            <input
-              type="text"
-              placeholder="Country, city or airport"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
-            />
-          </div>
+                    {/* Swap */}
+                    <button
+                      type="button"
+                      onClick={() => swapMultiCityCities(index)}
+                      className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
+                      title="Swap cities"
+                    >
+                      <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
+                    </button>
 
-          {/* Depart */}
-          <Popover>
-            <PopoverTrigger asChild>
+                    {/* To */}
+                    <div className="relative flex-1 border-r border-border">
+                      <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
+                      <input
+                        type="text"
+                        placeholder="Country, city or airport"
+                        value={leg.to}
+                        onChange={(e) => updateLeg(index, "to", e.target.value)}
+                        className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
+                      />
+                    </div>
+
+                    {/* Depart */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                        >
+                          <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
+                          <span className={cn("text-lg flex items-center gap-2", leg.depart ? "text-foreground" : "text-muted-foreground")}>
+                            <CalendarIcon className="w-4 h-4" />
+                            {leg.depart ? format(leg.depart, "dd/MM/yyyy") : "Add date"}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={leg.depart}
+                          onSelect={(d) => updateLeg(index, "depart", d)}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Remove leg button (only if more than 2 legs) */}
+                    {multiCityLegs.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLeg(index)}
+                        className="flex items-center justify-center w-12 bg-card hover:bg-destructive/10 transition-colors shrink-0"
+                        title="Remove flight"
+                      >
+                        <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* Add flight + Travellers + Search row */}
+            <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
+              {/* Add another flight */}
+              {multiCityLegs.length < 6 && (
+                <button
+                  type="button"
+                  onClick={addLeg}
+                  className="flex items-center gap-2 px-5 py-4 bg-card hover:bg-primary/5 transition-colors border-r border-border text-primary font-semibold text-sm shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add another flight
+                </button>
+              )}
+
+              {/* Travellers & Cabin Class */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="relative text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer border-r border-border"
+                  >
+                    <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers & cabin class</span>
+                    <span className="text-lg text-foreground">
+                      {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-4" align="end">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
+                      <select
+                        value={guests}
+                        onChange={(e) => setGuests(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                          <option key={n} value={n}>
+                            {n} {n === 1 ? "Adult" : "Adults"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
+                      <select
+                        value={cabinClass}
+                        onChange={(e) => setCabinClass(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                      >
+                        {["Economy", "Premium Economy", "Business", "First"].map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Search Button */}
               <button
-                type="button"
-                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                type="submit"
+                className="px-10 bg-primary text-primary-foreground font-bold text-xl hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
               >
-                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
-                <span className={cn("text-lg flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
-                  <CalendarIcon className="w-4 h-4" />
-                  {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
-                </span>
+                Search
               </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={checkIn}
-                onSelect={setCheckIn}
-                disabled={(date) => date < new Date()}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
+            </div>
+          </div>
+        ) : (
+          /* Standard single-row layout */
+          <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
+            {/* From */}
+            <div className="relative flex-1 border-r border-border">
+              <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
+              <input
+                type="text"
+                placeholder="City or airport"
+                value={departureCity}
+                onChange={(e) => setDepartureCity(e.target.value)}
+                className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
               />
-            </PopoverContent>
-          </Popover>
+            </div>
 
-          {/* Return */}
-          {tripType !== "One way" && (
+            {/* Swap Button */}
+            <button
+              type="button"
+              onClick={swapCities}
+              className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
+              title="Swap cities"
+            >
+              <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+
+            {/* To */}
+            <div className="relative flex-1 border-r border-border">
+              <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
+              <input
+                type="text"
+                placeholder="Country, city or airport"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
+              />
+            </div>
+
+            {/* Depart */}
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                 >
-                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
-                  <span className={cn("text-lg flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
+                  <span className={cn("text-lg flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
                     <CalendarIcon className="w-4 h-4" />
-                    {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
+                    {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
                   </span>
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={checkOut}
-                  onSelect={setCheckOut}
-                  disabled={(date) => date < (checkIn || new Date())}
+                  selected={checkIn}
+                  onSelect={setCheckIn}
+                  disabled={(date) => date < new Date()}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
-          )}
 
-          {/* Travellers & Cabin Class */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-              >
-                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers & cabin class</span>
-                <span className="text-lg text-foreground">
-                  {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-4" align="end">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+            {/* Return */}
+            {tripType !== "One way" && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n}>
-                        {n} {n === 1 ? "Adult" : "Adults"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
-                  <select
-                    value={cabinClass}
-                    onChange={(e) => setCabinClass(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                  >
-                    {["Economy", "Premium Economy", "Business", "First"].map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+                    <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
+                    <span className={cn("text-lg flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                      <CalendarIcon className="w-4 h-4" />
+                      {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={checkOut}
+                    onSelect={setCheckOut}
+                    disabled={(date) => date < (checkIn || new Date())}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
 
-          {/* Search Button */}
-          <button
-            type="submit"
-            className="px-10 bg-primary text-primary-foreground font-bold text-xl hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
-          >
-            Search
-          </button>
-        </div>
+            {/* Travellers & Cabin Class */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                >
+                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers & cabin class</span>
+                  <span className="text-lg text-foreground">
+                    {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-4" align="end">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
+                    <select
+                      value={guests}
+                      onChange={(e) => setGuests(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        <option key={n} value={n}>
+                          {n} {n === 1 ? "Adult" : "Adults"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
+                    <select
+                      value={cabinClass}
+                      onChange={(e) => setCabinClass(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                    >
+                      {["Economy", "Premium Economy", "Business", "First"].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Search Button */}
+            <button
+              type="submit"
+              className="px-10 bg-primary text-primary-foreground font-bold text-xl hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
+            >
+              Search
+            </button>
+          </div>
+        )}
 
         {/* Checkboxes Row */}
         <div className="flex flex-wrap items-center gap-x-8 gap-y-2 mt-4">
