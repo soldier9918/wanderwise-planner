@@ -22,7 +22,7 @@ const TrustedBrands = () => {
       className="mt-8"
     >
       <p className="text-white/50 text-xs font-semibold uppercase tracking-widest text-center mb-4">
-        Comparing prices from your favourite brands
+        Search hotels & flights across all your favourite brands — all in one place.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         {brands.map((brand, i) => (
