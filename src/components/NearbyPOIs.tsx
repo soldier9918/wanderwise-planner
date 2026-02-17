@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plane, Train, Utensils, ShoppingBag, Palmtree, Dumbbell, ChevronDown } from "lucide-react";
+import { Plane, Train, Bus, Car, Utensils, ShoppingBag, Palmtree, Dumbbell, ChevronDown } from "lucide-react";
 
 export interface POILocation {
   label: string;
@@ -27,6 +27,12 @@ const touristHotspots: POILocation[] = [
   { label: "César Manrique Foundation", name: "César Manrique Foundation", distance: 8.3, lat: 29.0408, lng: -13.5903 },
 ];
 
+const publicTransport: POILocation[] = [
+  { label: "Train / Metro Station", name: "Arrecife Metro Station", distance: 5.2, lat: 28.9630, lng: -13.5500 },
+  { label: "Bus Stop", name: "Bus Stop L1", distance: 0.6, lat: 28.9595, lng: -13.6020 },
+  { label: "Taxi Stand", name: "Taxi Rank Puerto del Carmen", distance: 0.4, lat: 28.9560, lng: -13.6060 },
+];
+
 const spaFitness: POILocation[] = [
   { label: "Lanzarote Wellness Spa", name: "Lanzarote Wellness Spa", distance: 1.8, lat: 28.9650, lng: -13.6200 },
   { label: "FitLife Gym", name: "FitLife Gym", distance: 0.9, lat: 28.9580, lng: -13.6050 },
@@ -34,22 +40,35 @@ const spaFitness: POILocation[] = [
 
 const fixedPOIs: { icon: typeof Plane; label: string; poi: POILocation }[] = [
   { icon: Plane, label: "Nearest Airport", poi: { label: "Nearest Airport", name: "ACE Airport", distance: 18.7, lat: 28.9453, lng: -13.6052 } },
-  { icon: Train, label: "Public Transport", poi: { label: "Public Transport", name: "Bus Stop L1", distance: 0.6, lat: 28.9595, lng: -13.6020 } },
   { icon: Utensils, label: "Restaurants", poi: { label: "Restaurants", name: "La Tegala, El Golfo", distance: 0.3, lat: 28.9570, lng: -13.6080 } },
   { icon: ShoppingBag, label: "Shopping", poi: { label: "Shopping", name: "Biosfera Shopping Centre", distance: 0.8, lat: 28.9620, lng: -13.5950 } },
 ];
 
 const estimateTime = (km: number) => {
-    if (km <= 1) return `${Math.max(1, Math.round(km * 12))} min walk`;
-    if (km <= 3) return `${Math.max(1, Math.round(km * 3))} min drive`;
-    return `${Math.max(1, Math.round(km * 1.5))} min drive`;
-  };
+  if (km <= 1) return `${Math.max(1, Math.round(km * 12))} min walk`;
+  if (km <= 3) return `${Math.max(1, Math.round(km * 3))} min drive`;
+  return `${Math.max(1, Math.round(km * 1.5))} min drive`;
+};
+
+const getTransportIcon = (label: string) => {
+  if (label.includes("Train")) return Train;
+  if (label.includes("Bus")) return Bus;
+  return Car;
+};
 
 const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activePOI }: NearbyPOIsProps) => {
   const [hotspotOpen, setHotspotOpen] = useState(false);
   const [selectedHotspot, setSelectedHotspot] = useState<POILocation>(touristHotspots[0]);
   const [spaOpen, setSpaOpen] = useState(false);
   const [selectedSpa, setSelectedSpa] = useState<POILocation>(spaFitness[0]);
+  const [transportOpen, setTransportOpen] = useState(false);
+  const [selectedTransport, setSelectedTransport] = useState<POILocation>(publicTransport[0]);
+
+  const closeAllDropdowns = () => {
+    setHotspotOpen(false);
+    setSpaOpen(false);
+    setTransportOpen(false);
+  };
 
   const isActive = (poi: POILocation) =>
     activePOI?.name === poi.name && activePOI?.lat === poi.lat;
@@ -57,6 +76,8 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
   const handleClick = (poi: POILocation) => {
     onSelectPOI(isActive(poi) ? null : poi);
   };
+
+  const TransportIcon = getTransportIcon(selectedTransport.label);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -81,6 +102,57 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
         </button>
       ))}
 
+      {/* Public Transport Dropdown */}
+      <div className="relative">
+        <button
+          onClick={() => handleClick(selectedTransport)}
+          className={`flex items-center gap-3 p-3 rounded-xl w-full text-left transition-all ${
+            isActive(selectedTransport)
+              ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
+              : "bg-secondary hover:bg-secondary/80"
+          }`}
+        >
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <TransportIcon className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Public Transport</p>
+            <p className="text-sm font-medium text-foreground truncate">{selectedTransport.name}</p>
+            <p className="text-xs text-primary font-semibold">{dist(selectedTransport.distance)} · {estimateTime(selectedTransport.distance)}</p>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              closeAllDropdowns();
+              setTransportOpen(!transportOpen);
+            }}
+            className="p-1 rounded-md hover:bg-background/50 transition-colors"
+          >
+            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${transportOpen ? "rotate-180" : ""}`} />
+          </button>
+        </button>
+        {transportOpen && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-elevated z-50 py-1 max-h-48 overflow-y-auto">
+            {publicTransport.map((pt) => (
+              <button
+                key={pt.name}
+                onClick={() => {
+                  setSelectedTransport(pt);
+                  setTransportOpen(false);
+                  onSelectPOI(pt);
+                }}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors flex justify-between items-center ${
+                  selectedTransport.name === pt.name ? "bg-primary/5 text-primary font-semibold" : "text-foreground"
+                }`}
+              >
+                <span className="truncate">{pt.name}</span>
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">{dist(pt.distance)} · {estimateTime(pt.distance)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Tourist Hotspots Dropdown */}
       <div className="relative">
         <button
@@ -102,8 +174,8 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
           <button
             onClick={(e) => {
               e.stopPropagation();
+              closeAllDropdowns();
               setHotspotOpen(!hotspotOpen);
-              setSpaOpen(false);
             }}
             className="p-1 rounded-md hover:bg-background/50 transition-colors"
           >
@@ -153,8 +225,8 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
           <button
             onClick={(e) => {
               e.stopPropagation();
+              closeAllDropdowns();
               setSpaOpen(!spaOpen);
-              setHotspotOpen(false);
             }}
             className="p-1 rounded-md hover:bg-background/50 transition-colors"
           >
