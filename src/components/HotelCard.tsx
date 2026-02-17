@@ -2,6 +2,7 @@ import { Star, Plane, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Hotel } from "@/data/mockHotels";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface HotelCardProps {
   hotel: Hotel;
@@ -12,6 +13,7 @@ interface HotelCardProps {
 const toMiles = (km: number) => (km * 0.621371).toFixed(1);
 
 const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
+  const { formatPrice } = useCurrency();
   const bestPrice = Math.min(...hotel.prices.map((p) => p.price));
   const bestProvider = hotel.prices.find((p) => p.price === bestPrice)!;
   const dist = (km: number) =>
@@ -99,7 +101,7 @@ const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
                   Best: {bestProvider.provider}
                 </p>
                 <p className="font-display text-2xl font-bold text-primary">
-                  £{bestPrice}
+                  {formatPrice(bestPrice)}
                 </p>
                 <p className="text-xs text-muted-foreground">per person</p>
               </div>

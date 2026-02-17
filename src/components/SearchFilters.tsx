@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Star, SlidersHorizontal, Plane, Building2 } from "lucide-react";
 import { boardTypes, accommodationTypes } from "@/data/mockHotels";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface FiltersProps {
   onFilterChange: (filters: FilterState) => void;
@@ -19,6 +20,7 @@ export interface FilterState {
 }
 
 const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: FiltersProps) => {
+  const { formatPrice } = useCurrency();
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     minStars: 0,
@@ -218,7 +220,7 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
         {/* Max Price */}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-2 block">
-            Max Price: £{filters.maxPrice}
+            Max Price: {formatPrice(filters.maxPrice)}
           </label>
           <input
             type="range"

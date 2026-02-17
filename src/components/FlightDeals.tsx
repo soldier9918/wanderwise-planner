@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface FlightLeg {
   date: string;
@@ -13,7 +14,7 @@ interface FlightDeal {
   country: string;
   image: string;
   legs: FlightLeg[];
-  priceFrom: string;
+  priceFromGBP: number;
 }
 
 const deals: FlightDeal[] = [
@@ -25,7 +26,7 @@ const deals: FlightDeal[] = [
       { date: "Fri, 28 Feb", route: "STN – AGP", airline: "Ryanair", airlineLogo: "✈", type: "Direct" },
       { date: "Fri, 7 Mar", route: "AGP – STN", airline: "Ryanair", airlineLogo: "✈", type: "Direct" },
     ],
-    priceFrom: "£29",
+    priceFromGBP: 29,
   },
   {
     city: "Alicante",
@@ -35,7 +36,7 @@ const deals: FlightDeal[] = [
       { date: "Tue, 4 Mar", route: "LTN – ALC", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
       { date: "Tue, 11 Mar", route: "ALC – LTN", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
     ],
-    priceFrom: "£24",
+    priceFromGBP: 24,
   },
   {
     city: "Milan",
@@ -45,7 +46,7 @@ const deals: FlightDeal[] = [
       { date: "Sat, 22 Feb", route: "STN – BGY", airline: "Ryanair", airlineLogo: "✈", type: "Direct" },
       { date: "Thu, 6 Mar", route: "MXP – STN", airline: "Ryanair", airlineLogo: "✈", type: "Direct" },
     ],
-    priceFrom: "£26",
+    priceFromGBP: 26,
   },
   {
     city: "Lisbon",
@@ -55,7 +56,7 @@ const deals: FlightDeal[] = [
       { date: "Wed, 26 Feb", route: "LGW – LIS", airline: "easyJet", airlineLogo: "🟠", type: "Direct" },
       { date: "Wed, 5 Mar", route: "LIS – LGW", airline: "easyJet", airlineLogo: "🟠", type: "Direct" },
     ],
-    priceFrom: "£35",
+    priceFromGBP: 35,
   },
   {
     city: "Dublin",
@@ -65,7 +66,7 @@ const deals: FlightDeal[] = [
       { date: "Mon, 24 Feb", route: "STN – DUB", airline: "Ryanair", airlineLogo: "✈", type: "Direct" },
       { date: "Fri, 28 Feb", route: "DUB – STN", airline: "Ryanair", airlineLogo: "✈", type: "Direct" },
     ],
-    priceFrom: "£19",
+    priceFromGBP: 19,
   },
   {
     city: "Barcelona",
@@ -75,11 +76,12 @@ const deals: FlightDeal[] = [
       { date: "Thu, 27 Feb", route: "LGW – BCN", airline: "Vueling", airlineLogo: "V", type: "Direct" },
       { date: "Thu, 6 Mar", route: "BCN – LGW", airline: "Vueling", airlineLogo: "V", type: "Direct" },
     ],
-    priceFrom: "£32",
+    priceFromGBP: 32,
   },
 ];
 
 const FlightDeals = () => {
+  const { formatPrice } = useCurrency();
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
@@ -128,7 +130,7 @@ const FlightDeals = () => {
 
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-end">
                   <span className="text-primary font-bold text-base flex items-center gap-1">
-                    from {deal.priceFrom} <ArrowRight className="w-4 h-4" />
+                    from {formatPrice(deal.priceFromGBP)} <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>
               </div>
