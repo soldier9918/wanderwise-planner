@@ -91,13 +91,13 @@ const SearchForm = () => {
         <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
           {/* From */}
           <div className="relative flex-1 border-r border-border">
-            <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">From</label>
+            <label className="absolute left-5 top-3 text-sm font-bold text-foreground">From</label>
             <input
               type="text"
               placeholder="City or airport"
               value={departureCity}
               onChange={(e) => setDepartureCity(e.target.value)}
-              className="w-full px-4 pt-8 pb-3 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:bg-primary/5"
+              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
             />
           </div>
 
@@ -108,18 +108,18 @@ const SearchForm = () => {
             className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
             title="Swap cities"
           >
-            <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+            <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
           </button>
 
           {/* To */}
           <div className="relative flex-1 border-r border-border">
-            <label className="absolute left-4 top-2.5 text-sm font-bold text-foreground">To</label>
+            <label className="absolute left-5 top-3 text-sm font-bold text-foreground">To</label>
             <input
               type="text"
               placeholder="Country, city or airport"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="w-full px-4 pt-8 pb-3 bg-card text-foreground placeholder:text-muted-foreground text-base outline-none transition-all focus:bg-primary/5"
+              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
             />
           </div>
 
@@ -128,10 +128,10 @@ const SearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left flex-1 px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Depart</span>
-                <span className={cn("text-base flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Depart</span>
+                <span className={cn("text-lg flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
                   <CalendarIcon className="w-4 h-4" />
                   {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
                 </span>
@@ -155,10 +155,10 @@ const SearchForm = () => {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="relative border-r border-border text-left flex-1 px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                  className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                 >
-                  <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Return</span>
-                  <span className={cn("text-base flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                  <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Return</span>
+                  <span className={cn("text-lg flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
                     <CalendarIcon className="w-4 h-4" />
                     {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
                   </span>
@@ -182,10 +182,10 @@ const SearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative text-left flex-1 border-r border-border px-4 pt-8 pb-3 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
-                <span className="absolute left-4 top-2.5 text-sm font-bold text-foreground">Travellers & cabin class</span>
-                <span className="text-base text-foreground">
+                <span className="absolute left-5 top-3 text-sm font-bold text-foreground">Travellers & cabin class</span>
+                <span className="text-lg text-foreground">
                   {guests} {Number(guests) === 1 ? "Adult" : "Adults"}, {cabinClass}
                 </span>
               </button>
@@ -225,7 +225,7 @@ const SearchForm = () => {
           {/* Search Button */}
           <button
             type="submit"
-            className="px-8 bg-primary text-primary-foreground font-semibold text-base hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
+            className="px-10 bg-primary text-primary-foreground font-semibold text-lg hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
           >
             Search
           </button>
