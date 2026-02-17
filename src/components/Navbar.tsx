@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Plane, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,7 +7,6 @@ const navItems = [
   { label: "Search", path: "/" },
   { label: "Flights", path: "/results" },
   { label: "Hotels", path: "/results" },
-  
   { label: "Trending Destinations", path: "/#trending-destinations" },
   { label: "Deals", path: "/results" },
   { label: "How It Works", path: "/#how-it-works" },
@@ -15,7 +14,24 @@ const navItems = [
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleNavClick = (e: React.MouseEvent, path: string) => {
+    if (path.includes("#")) {
+      e.preventDefault();
+      const hash = path.split("#")[1];
+      if (location.pathname === "/") {
+        document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        navigate("/");
+        setTimeout(() => {
+          document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+      setMobileOpen(false);
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy border-b border-navy-lighter">
@@ -34,6 +50,7 @@ const Navbar = () => {
             <Link
               key={item.label}
               to={item.path}
+              onClick={(e) => handleNavClick(e, item.path)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 location.pathname === item.path && item.label === "Search"
                   ? "text-primary bg-primary/10"
@@ -64,9 +81,9 @@ const Navbar = () => {
             <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {navItems.map((item) => (
                 <Link
-                  key={item.path}
+                  key={item.label}
                   to={item.path}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => { handleNavClick(e, item.path); setMobileOpen(false); }}
                   className="px-4 py-3 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-navy-lighter transition-colors"
                 >
                   {item.label}
