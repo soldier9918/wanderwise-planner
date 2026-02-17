@@ -163,7 +163,7 @@ const allDeals: FlightDeal[] = [
   {
     city: "Krakow",
     country: "Poland",
-    image: "https://images.unsplash.com/photo-1574375927938-d5a98e8d6f2b?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1526285849717-482a34323f8b?w=600&h=400&fit=crop",
     legs: [
       { date: "Sat, 1 Mar", route: "LTN – KRK", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
       { date: "Wed, 5 Mar", route: "KRK – LTN", airline: "Wizz Air UK", airlineLogo: "W", type: "Direct" },
