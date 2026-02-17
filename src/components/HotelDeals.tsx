@@ -1,27 +1,39 @@
 import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, MapPin, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
-const allDeals = [
-  { city: "Lanzarote", country: "Spain", pricePerNightGBP: 42, image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=600&h=400&fit=crop" },
-  { city: "Bali", country: "Indonesia", pricePerNightGBP: 28, image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&h=400&fit=crop" },
-  { city: "Santorini", country: "Greece", pricePerNightGBP: 65, image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=600&h=400&fit=crop" },
-  { city: "Dubai", country: "UAE", pricePerNightGBP: 55, image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&h=400&fit=crop" },
-  { city: "London", country: "United Kingdom", pricePerNightGBP: 39, image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&h=400&fit=crop" },
-  { city: "Dublin", country: "Ireland", pricePerNightGBP: 18, image: "https://images.unsplash.com/photo-1549918864-48ac978761a4?w=600&h=400&fit=crop" },
-  { city: "Paris", country: "France", pricePerNightGBP: 48, image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&h=400&fit=crop" },
-  { city: "Rome", country: "Italy", pricePerNightGBP: 35, image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=400&fit=crop" },
-  { city: "Barcelona", country: "Spain", pricePerNightGBP: 31, image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=600&h=400&fit=crop" },
-  { city: "Marrakech", country: "Morocco", pricePerNightGBP: 14, image: "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=600&h=400&fit=crop" },
-  { city: "Amsterdam", country: "Netherlands", pricePerNightGBP: 52, image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=600&h=400&fit=crop" },
-  { city: "Lisbon", country: "Portugal", pricePerNightGBP: 22, image: "https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=600&h=400&fit=crop" },
-  { city: "Prague", country: "Czech Republic", pricePerNightGBP: 19, image: "https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=600&h=400&fit=crop" },
-  { city: "New York", country: "USA", pricePerNightGBP: 72, image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&h=400&fit=crop" },
-  { city: "Maldives", country: "Maldives", pricePerNightGBP: 95, image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=600&h=400&fit=crop" },
-  { city: "Bangkok", country: "Thailand", pricePerNightGBP: 12, image: "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=600&h=400&fit=crop" },
-  { city: "Tokyo", country: "Japan", pricePerNightGBP: 45, image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop" },
-  { city: "Vienna", country: "Austria", pricePerNightGBP: 38, image: "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=600&h=400&fit=crop" },
+interface HotelDeal {
+  name: string;
+  location: string;
+  country: string;
+  stars: number;
+  rating: number;
+  reviewCount: number;
+  reviewLabel: string;
+  pricePerNightGBP: number;
+  image: string;
+}
+
+const allDeals: HotelDeal[] = [
+  { name: "Hotel Lanzarote Village", location: "Puerto del Carmen, Spain", country: "Spain", stars: 4, rating: 8.4, reviewCount: 2341, reviewLabel: "Very Good", pricePerNightGBP: 67, image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop" },
+  { name: "Seaside Los Jameos Playa", location: "Puerto del Carmen, Spain", country: "Spain", stars: 4, rating: 8.9, reviewCount: 1876, reviewLabel: "Excellent", pricePerNightGBP: 85, image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop" },
+  { name: "Santorini Palace Hotel", location: "Fira, Greece", country: "Greece", stars: 5, rating: 9.2, reviewCount: 1057, reviewLabel: "Exceptional", pricePerNightGBP: 178, image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=600&h=400&fit=crop" },
+  { name: "Jumeirah Beach Residence", location: "Dubai Marina, UAE", country: "UAE", stars: 5, rating: 9.0, reviewCount: 3420, reviewLabel: "Exceptional", pricePerNightGBP: 145, image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&h=400&fit=crop" },
+  { name: "The Strand Palace", location: "London, United Kingdom", country: "UK", stars: 4, rating: 8.1, reviewCount: 4512, reviewLabel: "Very Good", pricePerNightGBP: 39, image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&h=400&fit=crop" },
+  { name: "The Shelbourne Hotel", location: "Dublin, Ireland", country: "Ireland", stars: 5, rating: 9.1, reviewCount: 2890, reviewLabel: "Exceptional", pricePerNightGBP: 94, image: "https://images.unsplash.com/photo-1549918864-48ac978761a4?w=600&h=400&fit=crop" },
+  { name: "Hôtel Plaza Athénée", location: "Paris, France", country: "France", stars: 5, rating: 9.4, reviewCount: 1823, reviewLabel: "Exceptional", pricePerNightGBP: 210, image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&h=400&fit=crop" },
+  { name: "Hotel Artemide", location: "Rome, Italy", country: "Italy", stars: 4, rating: 8.7, reviewCount: 3156, reviewLabel: "Excellent", pricePerNightGBP: 52, image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=400&fit=crop" },
+  { name: "Hotel Arts Barcelona", location: "Barcelona, Spain", country: "Spain", stars: 5, rating: 9.0, reviewCount: 2764, reviewLabel: "Exceptional", pricePerNightGBP: 115, image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=600&h=400&fit=crop" },
+  { name: "Riad Kniza", location: "Marrakech, Morocco", country: "Morocco", stars: 4, rating: 8.8, reviewCount: 987, reviewLabel: "Excellent", pricePerNightGBP: 34, image: "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=600&h=400&fit=crop" },
+  { name: "Waldorf Astoria Amsterdam", location: "Amsterdam, Netherlands", country: "Netherlands", stars: 5, rating: 9.3, reviewCount: 1654, reviewLabel: "Exceptional", pricePerNightGBP: 165, image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=600&h=400&fit=crop" },
+  { name: "Bairro Alto Hotel", location: "Lisbon, Portugal", country: "Portugal", stars: 4, rating: 8.5, reviewCount: 2103, reviewLabel: "Very Good", pricePerNightGBP: 48, image: "https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=600&h=400&fit=crop" },
+  { name: "The Grand Mark Prague", location: "Prague, Czech Republic", country: "Czech Republic", stars: 5, rating: 9.1, reviewCount: 1432, reviewLabel: "Exceptional", pricePerNightGBP: 72, image: "https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=600&h=400&fit=crop" },
+  { name: "The Plaza Hotel", location: "New York, USA", country: "USA", stars: 5, rating: 9.2, reviewCount: 5678, reviewLabel: "Exceptional", pricePerNightGBP: 195, image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&h=400&fit=crop" },
+  { name: "Soneva Fushi Resort", location: "Baa Atoll, Maldives", country: "Maldives", stars: 5, rating: 9.5, reviewCount: 876, reviewLabel: "Exceptional", pricePerNightGBP: 320, image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=600&h=400&fit=crop" },
+  { name: "Mandarin Oriental Bangkok", location: "Bangkok, Thailand", country: "Thailand", stars: 5, rating: 9.3, reviewCount: 3245, reviewLabel: "Exceptional", pricePerNightGBP: 58, image: "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=600&h=400&fit=crop" },
+  { name: "Park Hyatt Tokyo", location: "Tokyo, Japan", country: "Japan", stars: 5, rating: 9.1, reviewCount: 2890, reviewLabel: "Exceptional", pricePerNightGBP: 142, image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop" },
+  { name: "Hotel Sacher Wien", location: "Vienna, Austria", country: "Austria", stars: 5, rating: 9.0, reviewCount: 1987, reviewLabel: "Exceptional", pricePerNightGBP: 125, image: "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=600&h=400&fit=crop" },
 ];
 
 const VISIBLE_COUNT = 6;
@@ -64,27 +76,48 @@ const HotelDeals = () => {
           >
             {visibleDeals.map((deal) => (
               <div
-                key={deal.city}
+                key={deal.name}
                 className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
               >
-                <div className="h-44 overflow-hidden">
+                {/* Image with location overlay and Hotel badge */}
+                <div className="relative h-48 overflow-hidden">
                   <img
                     src={deal.image}
-                    alt={deal.city}
+                    alt={deal.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {/* Hotel badge */}
+                  <span className="absolute top-3 right-3 bg-foreground/80 text-background text-xs font-semibold px-3 py-1 rounded-md">
+                    Hotel
+                  </span>
+                  {/* Location overlay */}
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1 text-white text-sm font-medium">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {deal.location}
+                  </div>
                 </div>
+
+                {/* Info */}
                 <div className="p-4">
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold text-foreground">{deal.city}</h3>
-                      <p className="text-sm text-muted-foreground">{deal.country}</p>
+                  <h3 className="text-base font-bold text-foreground mb-1.5 truncate">{deal.name}</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: deal.stars }).map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      ))}
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">From</p>
-                      <p className="text-xl font-bold text-foreground">{formatPrice(deal.pricePerNightGBP)}</p>
-                      <p className="text-xs text-muted-foreground">a night</p>
-                    </div>
+                    <span className="bg-primary text-primary-foreground text-xs font-bold px-1.5 py-0.5 rounded">
+                      {deal.rating}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {deal.reviewLabel} ({deal.reviewCount.toLocaleString()})
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm text-muted-foreground">from</span>
+                    <span className="text-2xl font-bold text-foreground">{formatPrice(deal.pricePerNightGBP)}</span>
+                    <span className="text-sm text-muted-foreground">per night</span>
                   </div>
                 </div>
               </div>
