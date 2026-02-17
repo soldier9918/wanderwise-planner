@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plane, Train, Bus, Car, Utensils, ShoppingBag, Palmtree, Dumbbell, ChevronDown, Cross, Waves } from "lucide-react";
 
 export interface POILocation {
@@ -18,68 +18,73 @@ interface NearbyPOIsProps {
   activePOI: POILocation | null;
 }
 
-const touristHotspots: POILocation[] = [
-  { label: "Timanfaya National Park", name: "Timanfaya National Park", distance: 1.2, lat: 29.0167, lng: -13.7500 },
-  { label: "Cueva de los Verdes", name: "Cueva de los Verdes", distance: 18.5, lat: 29.1583, lng: -13.4333 },
-  { label: "Playa de Papagayo", name: "Playa de Papagayo", distance: 12.4, lat: 28.8472, lng: -13.7833 },
-  { label: "César Manrique Foundation", name: "César Manrique Foundation", distance: 8.3, lat: 29.0408, lng: -13.5903 },
-  { label: "Mirador del Río", name: "Mirador del Río", distance: 25.0, lat: 29.2136, lng: -13.4811 },
-];
-
-const publicTransport: POILocation[] = [
-  { label: "Train / Metro Station", name: "Arrecife Metro Station", distance: 5.2, lat: 28.9630, lng: -13.5500 },
-  { label: "Bus Stop", name: "Bus Stop L1", distance: 0.6, lat: 28.9595, lng: -13.6020 },
-  { label: "Taxi Stand", name: "Taxi Rank Puerto del Carmen", distance: 0.4, lat: 28.9560, lng: -13.6060 },
-];
-
-const restaurants: POILocation[] = [
-  { label: "La Tegala", name: "La Tegala", distance: 0.3, lat: 28.9570, lng: -13.6080 },
-  { label: "El Golfo Restaurant", name: "El Golfo Restaurant", distance: 0.5, lat: 28.9555, lng: -13.6095 },
-  { label: "Casa Roja", name: "Casa Roja", distance: 0.8, lat: 28.9610, lng: -13.6010 },
-  { label: "Pizzeria Capri", name: "Pizzeria Capri", distance: 1.1, lat: 28.9625, lng: -13.5980 },
-  { label: "Lani's Beach Bar", name: "Lani's Beach Bar", distance: 1.4, lat: 28.9540, lng: -13.6120 },
-];
-
-const shoppingMalls: POILocation[] = [
-  { label: "Biosfera Shopping Centre", name: "Biosfera Shopping Centre", distance: 0.8, lat: 28.9620, lng: -13.5950 },
-  { label: "Deiland Plaza", name: "Deiland Plaza", distance: 2.1, lat: 28.9580, lng: -13.5870 },
-  { label: "Marina Rubicón Market", name: "Marina Rubicón Market", distance: 4.5, lat: 28.8600, lng: -13.8100 },
-  { label: "Arrecife Gran Hotel Mall", name: "Arrecife Gran Hotel Mall", distance: 6.3, lat: 28.9640, lng: -13.5500 },
-  { label: "Teguise Market", name: "Teguise Market", distance: 12.0, lat: 29.0600, lng: -13.5600 },
-];
-
-// All airports in Spain (sorted by distance from hotel - Lanzarote)
-const spainAirports: POILocation[] = [
-  { label: "ACE – Lanzarote", name: "César Manrique–Lanzarote Airport (ACE)", distance: 18.7, lat: 28.9453, lng: -13.6052 },
-  { label: "FUE – Fuerteventura", name: "Fuerteventura Airport (FUE)", distance: 60.0, lat: 28.4527, lng: -13.8638 },
-  { label: "SPC – La Palma", name: "La Palma Airport (SPC)", distance: 210.0, lat: 28.6265, lng: -17.7556 },
-  { label: "TFN – Tenerife North", name: "Tenerife North Airport (TFN)", distance: 270.0, lat: 28.4827, lng: -16.3415 },
-  { label: "TFS – Tenerife South", name: "Tenerife South Airport (TFS)", distance: 290.0, lat: 28.0445, lng: -16.5725 },
-  { label: "LPA – Gran Canaria", name: "Gran Canaria Airport (LPA)", distance: 180.0, lat: 27.9319, lng: -15.3866 },
-  { label: "GMZ – La Gomera", name: "La Gomera Airport (GMZ)", distance: 300.0, lat: 28.0296, lng: -17.2146 },
-  { label: "VDE – El Hierro", name: "El Hierro Airport (VDE)", distance: 350.0, lat: 27.8148, lng: -17.8871 },
-  { label: "MAD – Madrid Barajas", name: "Madrid Barajas Airport (MAD)", distance: 1950.0, lat: 40.4983, lng: -3.5676 },
-  { label: "BCN – Barcelona", name: "Barcelona El Prat Airport (BCN)", distance: 2700.0, lat: 41.2971, lng: 2.0785 },
-  { label: "AGP – Málaga", name: "Málaga Airport (AGP)", distance: 1800.0, lat: 36.6749, lng: -4.4991 },
-  { label: "ALC – Alicante", name: "Alicante Airport (ALC)", distance: 2100.0, lat: 38.2822, lng: -0.5582 },
-  { label: "PMI – Palma de Mallorca", name: "Palma de Mallorca Airport (PMI)", distance: 2500.0, lat: 39.5517, lng: 2.7388 },
-  { label: "SVQ – Seville", name: "Seville Airport (SVQ)", distance: 1750.0, lat: 37.4180, lng: -5.8931 },
-  { label: "VLC – Valencia", name: "Valencia Airport (VLC)", distance: 2200.0, lat: 39.4893, lng: -0.4816 },
-  { label: "BIO – Bilbao", name: "Bilbao Airport (BIO)", distance: 2300.0, lat: 43.3011, lng: -2.9106 },
-  { label: "IBZ – Ibiza", name: "Ibiza Airport (IBZ)", distance: 2400.0, lat: 38.8729, lng: 1.3731 },
-];
-
-const nearestHospital: POILocation = {
-  label: "Nearest Hospital", name: "Hospital José Molina Orosa", distance: 12.5, lat: 28.9580, lng: -13.5520,
+// Haversine formula – returns distance in km between two lat/lng points
+const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const nearestBeach: POILocation = {
-  label: "Nearest Beach", name: "Playa de la Garita", distance: 0.7, lat: 28.9530, lng: -13.6100,
-};
+// Raw POI data (without distance — computed dynamically)
+interface RawPOI { label: string; name: string; lat: number; lng: number }
 
-const spaFitness: POILocation = {
-  label: "SPA / Fitness", name: "FitLife Gym", distance: 0.9, lat: 28.9580, lng: -13.6050,
-};
+const rawTouristHotspots: RawPOI[] = [
+  { label: "Timanfaya National Park", name: "Timanfaya National Park", lat: 29.0167, lng: -13.7500 },
+  { label: "Cueva de los Verdes", name: "Cueva de los Verdes", lat: 29.1583, lng: -13.4333 },
+  { label: "Playa de Papagayo", name: "Playa de Papagayo", lat: 28.8472, lng: -13.7833 },
+  { label: "César Manrique Foundation", name: "César Manrique Foundation", lat: 29.0408, lng: -13.5903 },
+  { label: "Mirador del Río", name: "Mirador del Río", lat: 29.2136, lng: -13.4811 },
+];
+
+const rawPublicTransport: RawPOI[] = [
+  { label: "Train / Metro Station", name: "Arrecife Intercambiador", lat: 28.9630, lng: -13.5500 },
+  { label: "Bus Stop", name: "Nearest Bus Stop", lat: 28.9595, lng: -13.6020 },
+  { label: "Taxi Stand", name: "Taxi Rank", lat: 28.9560, lng: -13.6060 },
+];
+
+const rawRestaurants: RawPOI[] = [
+  { label: "La Tegala", name: "La Tegala", lat: 28.9570, lng: -13.6080 },
+  { label: "El Golfo Restaurant", name: "El Golfo Restaurant", lat: 28.9555, lng: -13.6095 },
+  { label: "Casa Roja", name: "Casa Roja", lat: 28.9610, lng: -13.6010 },
+  { label: "Pizzeria Capri", name: "Pizzeria Capri", lat: 28.9625, lng: -13.5980 },
+  { label: "Lani's Beach Bar", name: "Lani's Beach Bar", lat: 28.9540, lng: -13.6120 },
+];
+
+const rawShoppingMalls: RawPOI[] = [
+  { label: "Biosfera Shopping Centre", name: "Biosfera Shopping Centre", lat: 28.9620, lng: -13.5950 },
+  { label: "Deiland Plaza", name: "Deiland Plaza", lat: 28.9580, lng: -13.5870 },
+  { label: "Marina Rubicón Market", name: "Marina Rubicón Market", lat: 28.8600, lng: -13.8100 },
+  { label: "Arrecife Gran Hotel Mall", name: "Arrecife Gran Hotel Mall", lat: 28.9640, lng: -13.5500 },
+  { label: "Teguise Market", name: "Teguise Market", lat: 29.0600, lng: -13.5600 },
+];
+
+const rawSpainAirports: RawPOI[] = [
+  { label: "ACE – Lanzarote", name: "César Manrique–Lanzarote Airport (ACE)", lat: 28.9453, lng: -13.6052 },
+  { label: "FUE – Fuerteventura", name: "Fuerteventura Airport (FUE)", lat: 28.4527, lng: -13.8638 },
+  { label: "LPA – Gran Canaria", name: "Gran Canaria Airport (LPA)", lat: 27.9319, lng: -15.3866 },
+  { label: "SPC – La Palma", name: "La Palma Airport (SPC)", lat: 28.6265, lng: -17.7556 },
+  { label: "TFN – Tenerife North", name: "Tenerife North Airport (TFN)", lat: 28.4827, lng: -16.3415 },
+  { label: "TFS – Tenerife South", name: "Tenerife South Airport (TFS)", lat: 28.0445, lng: -16.5725 },
+  { label: "GMZ – La Gomera", name: "La Gomera Airport (GMZ)", lat: 28.0296, lng: -17.2146 },
+  { label: "VDE – El Hierro", name: "El Hierro Airport (VDE)", lat: 27.8148, lng: -17.8871 },
+  { label: "MAD – Madrid Barajas", name: "Madrid Barajas Airport (MAD)", lat: 40.4983, lng: -3.5676 },
+  { label: "BCN – Barcelona", name: "Barcelona El Prat Airport (BCN)", lat: 41.2971, lng: 2.0785 },
+  { label: "AGP – Málaga", name: "Málaga Airport (AGP)", lat: 36.6749, lng: -4.4991 },
+  { label: "ALC – Alicante", name: "Alicante Airport (ALC)", lat: 38.2822, lng: -0.5582 },
+  { label: "PMI – Palma de Mallorca", name: "Palma de Mallorca Airport (PMI)", lat: 39.5517, lng: 2.7388 },
+  { label: "SVQ – Seville", name: "Seville Airport (SVQ)", lat: 37.4180, lng: -5.8931 },
+  { label: "VLC – Valencia", name: "Valencia Airport (VLC)", lat: 39.4893, lng: -0.4816 },
+  { label: "BIO – Bilbao", name: "Bilbao Airport (BIO)", lat: 43.3011, lng: -2.9106 },
+  { label: "IBZ – Ibiza", name: "Ibiza Airport (IBZ)", lat: 38.8729, lng: 1.3731 },
+];
+
+const rawHospital: RawPOI = { label: "Nearest Hospital", name: "Hospital José Molina Orosa", lat: 28.9580, lng: -13.5520 };
+const rawBeach: RawPOI = { label: "Nearest Beach", name: "Playa de la Garita", lat: 28.9530, lng: -13.6100 };
+const rawSpaFitness: RawPOI = { label: "SPA / Fitness", name: "FitLife Gym", lat: 28.9580, lng: -13.6050 };
 
 const estimateTime = (km: number) => {
   if (km <= 1) return `${Math.max(1, Math.round(km * 12))} min walk`;
@@ -94,15 +99,46 @@ const getTransportIcon = (label: string) => {
   return Car;
 };
 
+// Helper: compute distance and attach to raw POI, then sort by distance
+const withDistance = (hotelLat: number, hotelLng: number, pois: RawPOI[]): POILocation[] =>
+  pois
+    .map((p) => ({
+      ...p,
+      distance: Math.round(haversineKm(hotelLat, hotelLng, p.lat, p.lng) * 10) / 10,
+    }))
+    .sort((a, b) => a.distance - b.distance);
+
+const singleWithDistance = (hotelLat: number, hotelLng: number, poi: RawPOI): POILocation => ({
+  ...poi,
+  distance: Math.round(haversineKm(hotelLat, hotelLng, poi.lat, poi.lng) * 10) / 10,
+});
+
 type DropdownKey = "airport" | "transport" | "hotspot" | "restaurant" | "shopping";
 
 const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activePOI }: NearbyPOIsProps) => {
+  // Compute all distances dynamically from the hotel's actual coordinates
+  const airports = useMemo(() => withDistance(hotelLat, hotelLng, rawSpainAirports), [hotelLat, hotelLng]);
+  const transport = useMemo(() => withDistance(hotelLat, hotelLng, rawPublicTransport), [hotelLat, hotelLng]);
+  const hotspots = useMemo(() => withDistance(hotelLat, hotelLng, rawTouristHotspots), [hotelLat, hotelLng]);
+  const restaurantList = useMemo(() => withDistance(hotelLat, hotelLng, rawRestaurants), [hotelLat, hotelLng]);
+  const shopping = useMemo(() => withDistance(hotelLat, hotelLng, rawShoppingMalls), [hotelLat, hotelLng]);
+  const hospital = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawHospital), [hotelLat, hotelLng]);
+  const beach = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawBeach), [hotelLat, hotelLng]);
+  const spa = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawSpaFitness), [hotelLat, hotelLng]);
+
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
-  const [selectedAirport, setSelectedAirport] = useState<POILocation>(spainAirports[0]);
-  const [selectedTransport, setSelectedTransport] = useState<POILocation>(publicTransport[0]);
-  const [selectedHotspot, setSelectedHotspot] = useState<POILocation>(touristHotspots[0]);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<POILocation>(restaurants[0]);
-  const [selectedShopping, setSelectedShopping] = useState<POILocation>(shoppingMalls[0]);
+  const [selectedAirport, setSelectedAirport] = useState<POILocation | null>(null);
+  const [selectedTransport, setSelectedTransport] = useState<POILocation | null>(null);
+  const [selectedHotspot, setSelectedHotspot] = useState<POILocation | null>(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<POILocation | null>(null);
+  const [selectedShopping, setSelectedShopping] = useState<POILocation | null>(null);
+
+  // Use selected or default to first (nearest)
+  const activeAirport = selectedAirport ?? airports[0];
+  const activeTransport = selectedTransport ?? transport[0];
+  const activeHotspot = selectedHotspot ?? hotspots[0];
+  const activeRestaurant = selectedRestaurant ?? restaurantList[0];
+  const activeShopping = selectedShopping ?? shopping[0];
 
   const isActive = (poi: POILocation) =>
     activePOI?.name === poi.name && activePOI?.lat === poi.lat;
@@ -115,7 +151,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
     setOpenDropdown(prev => prev === key ? null : key);
   };
 
-  const TransportIcon = getTransportIcon(selectedTransport.label);
+  const TransportIcon = getTransportIcon(activeTransport.label);
 
   const renderDropdown = (
     key: DropdownKey,
@@ -168,114 +204,36 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
     </div>
   );
 
+  const renderFixed = (poi: POILocation, label: string, icon: React.ReactNode) => (
+    <button
+      onClick={() => handleClick(poi)}
+      className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+        isActive(poi)
+          ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
+          : "bg-secondary hover:bg-secondary/80"
+      }`}
+    >
+      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-foreground">{poi.name}</p>
+        <p className="text-xs text-primary font-semibold">{dist(poi.distance)} · {estimateTime(poi.distance)}</p>
+      </div>
+    </button>
+  );
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {/* Airport Dropdown */}
-      {renderDropdown(
-        "airport",
-        <Plane className="w-4 h-4 text-primary" />,
-        "Airports",
-        selectedAirport,
-        spainAirports,
-        setSelectedAirport,
-      )}
-
-      {/* Public Transport Dropdown */}
-      {renderDropdown(
-        "transport",
-        <TransportIcon className="w-4 h-4 text-primary" />,
-        "Public Transport",
-        selectedTransport,
-        publicTransport,
-        setSelectedTransport,
-      )}
-
-      {/* Restaurants Dropdown */}
-      {renderDropdown(
-        "restaurant",
-        <Utensils className="w-4 h-4 text-primary" />,
-        "Restaurants",
-        selectedRestaurant,
-        restaurants,
-        setSelectedRestaurant,
-      )}
-
-      {/* Shopping Dropdown */}
-      {renderDropdown(
-        "shopping",
-        <ShoppingBag className="w-4 h-4 text-primary" />,
-        "Shopping",
-        selectedShopping,
-        shoppingMalls,
-        setSelectedShopping,
-      )}
-
-      {/* Tourist Hotspots Dropdown */}
-      {renderDropdown(
-        "hotspot",
-        <Palmtree className="w-4 h-4 text-primary" />,
-        "Tourist Hotspot",
-        selectedHotspot,
-        touristHotspots,
-        setSelectedHotspot,
-      )}
-
-      {/* Nearest Hospital - fixed */}
-      <button
-        onClick={() => handleClick(nearestHospital)}
-        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-          isActive(nearestHospital)
-            ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
-            : "bg-secondary hover:bg-secondary/80"
-        }`}
-      >
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-          <Cross className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Nearest Hospital</p>
-          <p className="text-sm font-medium text-foreground">{nearestHospital.name}</p>
-          <p className="text-xs text-primary font-semibold">{dist(nearestHospital.distance)} · {estimateTime(nearestHospital.distance)}</p>
-        </div>
-      </button>
-
-      {/* Nearest Beach - fixed */}
-      <button
-        onClick={() => handleClick(nearestBeach)}
-        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-          isActive(nearestBeach)
-            ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
-            : "bg-secondary hover:bg-secondary/80"
-        }`}
-      >
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-          <Waves className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Nearest Beach</p>
-          <p className="text-sm font-medium text-foreground">{nearestBeach.name}</p>
-          <p className="text-xs text-primary font-semibold">{dist(nearestBeach.distance)} · {estimateTime(nearestBeach.distance)}</p>
-        </div>
-      </button>
-
-      {/* SPA / Fitness - fixed, nearest 1 */}
-      <button
-        onClick={() => handleClick(spaFitness)}
-        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-          isActive(spaFitness)
-            ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
-            : "bg-secondary hover:bg-secondary/80"
-        }`}
-      >
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-          <Dumbbell className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">SPA / Fitness</p>
-          <p className="text-sm font-medium text-foreground">{spaFitness.name}</p>
-          <p className="text-xs text-primary font-semibold">{dist(spaFitness.distance)} · {estimateTime(spaFitness.distance)}</p>
-        </div>
-      </button>
+      {renderDropdown("airport", <Plane className="w-4 h-4 text-primary" />, "Airports", activeAirport, airports, setSelectedAirport)}
+      {renderDropdown("transport", <TransportIcon className="w-4 h-4 text-primary" />, "Public Transports", activeTransport, transport, setSelectedTransport)}
+      {renderDropdown("restaurant", <Utensils className="w-4 h-4 text-primary" />, "Restaurants", activeRestaurant, restaurantList, setSelectedRestaurant)}
+      {renderDropdown("shopping", <ShoppingBag className="w-4 h-4 text-primary" />, "Shopping", activeShopping, shopping, setSelectedShopping)}
+      {renderDropdown("hotspot", <Palmtree className="w-4 h-4 text-primary" />, "Tourist Hotspots", activeHotspot, hotspots, setSelectedHotspot)}
+      {renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
+      {renderFixed(beach, "Nearest Beach", <Waves className="w-4 h-4 text-primary" />)}
+      {renderFixed(spa, "SPA / Fitness", <Dumbbell className="w-4 h-4 text-primary" />)}
     </div>
   );
 };
