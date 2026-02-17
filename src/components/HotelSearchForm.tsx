@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarIcon, ChevronDown } from "lucide-react";
+import { CalendarIcon, ChevronDown, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -16,13 +16,17 @@ const HotelSearchForm = () => {
   const [destination, setDestination] = useState("");
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
-  const [adults, setAdults] = useState("2");
-  const [rooms, setRooms] = useState("1");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [rooms, setRooms] = useState(1);
+  const [travellersOpen, setTravellersOpen] = useState(false);
+
+  const totalGuests = adults + children;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(
-      `/results?destination=${encodeURIComponent(destination)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${adults}&rooms=${rooms}`
+      `/results?destination=${encodeURIComponent(destination)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${totalGuests}&rooms=${rooms}`
     );
   };
 
@@ -111,48 +115,107 @@ const HotelSearchForm = () => {
             </Popover>
 
             {/* Guests and Rooms */}
-            <Popover>
+            <Popover open={travellersOpen} onOpenChange={setTravellersOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                 >
-                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Guests and rooms</span>
+                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Guests & rooms</span>
                   <span className="text-lg text-foreground">
-                    {adults} {Number(adults) === 1 ? "adult" : "adults"}, {rooms} {Number(rooms) === 1 ? "room" : "rooms"}
+                    {totalGuests} {totalGuests === 1 ? "guest" : "guests"}, {rooms} {rooms === 1 ? "room" : "rooms"}
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-4" align="end">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Adults</label>
-                    <select
-                      value={adults}
-                      onChange={(e) => setAdults(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                        <option key={n} value={n}>
-                          {n} {n === 1 ? "Adult" : "Adults"}
-                        </option>
-                      ))}
-                    </select>
+              <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+                <div className="p-5 space-y-5">
+                  {/* Adults */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-base font-semibold text-foreground">Adults</p>
+                      <p className="text-sm text-muted-foreground">Aged 18+</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAdults(Math.max(1, adults - 1))}
+                        disabled={adults <= 1}
+                        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-base font-semibold text-foreground w-6 text-center">{adults}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAdults(Math.min(9, adults + 1))}
+                        disabled={adults >= 9}
+                        className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Rooms</label>
-                    <select
-                      value={rooms}
-                      onChange={(e) => setRooms(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                    >
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <option key={n} value={n}>
-                          {n} {n === 1 ? "Room" : "Rooms"}
-                        </option>
-                      ))}
-                    </select>
+
+                  {/* Children */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-base font-semibold text-foreground">Children</p>
+                      <p className="text-sm text-muted-foreground">Aged 0 to 17</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setChildren(Math.max(0, children - 1))}
+                        disabled={children <= 0}
+                        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-base font-semibold text-foreground w-6 text-center">{children}</span>
+                      <button
+                        type="button"
+                        onClick={() => setChildren(Math.min(6, children + 1))}
+                        disabled={children >= 6}
+                        className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Rooms */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-base font-semibold text-foreground">Rooms</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setRooms(Math.max(1, rooms - 1))}
+                        disabled={rooms <= 1}
+                        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-base font-semibold text-foreground w-6 text-center">{rooms}</span>
+                      <button
+                        type="button"
+                        onClick={() => setRooms(Math.min(5, rooms + 1))}
+                        disabled={rooms >= 5}
+                        className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setTravellersOpen(false)}
+                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+                  >
+                    Apply
+                  </button>
                 </div>
               </PopoverContent>
             </Popover>
