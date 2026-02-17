@@ -1,32 +1,42 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useCurrency } from "@/contexts/CurrencyContext";
+
+// Approximate conversion rates from GBP
+const conversionRates: Record<string, number> = {
+  GBP: 1, EUR: 1.17, USD: 1.27, AED: 4.67, AUD: 1.94,
+  CAD: 1.72, CHF: 1.12, JPY: 190.5, THB: 44.2, TRY: 38.5,
+  INR: 105.8, SEK: 13.4,
+};
 
 const allDestinations = [
-  { name: "Lanzarote", country: "Spain", price: "£289", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=400&h=300&fit=crop&q=80" },
-  { name: "Bali", country: "Indonesia", price: "£549", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&h=300&fit=crop&q=80" },
-  { name: "Santorini", country: "Greece", price: "£399", image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400&h=300&fit=crop&q=80" },
-  { name: "Dubai", country: "UAE", price: "£479", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop&q=80" },
-  { name: "Maldives", country: "Maldives", price: "£899", image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&h=300&fit=crop&q=80" },
-  { name: "New York", country: "USA", price: "£529", image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop&q=80" },
-  { name: "Tenerife", country: "Spain", price: "£319", image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=400&h=300&fit=crop&q=80" },
-  { name: "Cancún", country: "Mexico", price: "£649", image: "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=400&h=300&fit=crop&q=80" },
-  { name: "Phuket", country: "Thailand", price: "£499", image: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=400&h=300&fit=crop&q=80" },
-  { name: "Majorca", country: "Spain", price: "£259", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop&q=80" },
-  { name: "Tokyo", country: "Japan", price: "£699", image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop&q=80" },
-  { name: "Crete", country: "Greece", price: "£349", image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&h=300&fit=crop&q=80" },
-  { name: "Cape Town", country: "South Africa", price: "£579", image: "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=400&h=300&fit=crop&q=80" },
-  { name: "Barcelona", country: "Spain", price: "£279", image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop&q=80" },
-  { name: "Marrakech", country: "Morocco", price: "£229", image: "https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=400&h=300&fit=crop&q=80" },
-  { name: "Rome", country: "Italy", price: "£309", image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=300&fit=crop&q=80" },
-  { name: "Antalya", country: "Turkey", price: "£269", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop&q=80" },
-  { name: "Lisbon", country: "Portugal", price: "£299", image: "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400&h=300&fit=crop&q=80" },
+  { name: "Lanzarote", country: "Spain", priceGBP: 289, image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=400&h=300&fit=crop&q=80" },
+  { name: "Bali", country: "Indonesia", priceGBP: 549, image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&h=300&fit=crop&q=80" },
+  { name: "Santorini", country: "Greece", priceGBP: 399, image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400&h=300&fit=crop&q=80" },
+  { name: "Dubai", country: "UAE", priceGBP: 479, image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop&q=80" },
+  { name: "Maldives", country: "Maldives", priceGBP: 899, image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&h=300&fit=crop&q=80" },
+  { name: "New York", country: "USA", priceGBP: 529, image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop&q=80" },
+  { name: "Tenerife", country: "Spain", priceGBP: 319, image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=400&h=300&fit=crop&q=80" },
+  { name: "Cancún", country: "Mexico", priceGBP: 649, image: "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=400&h=300&fit=crop&q=80" },
+  { name: "Phuket", country: "Thailand", priceGBP: 499, image: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=400&h=300&fit=crop&q=80" },
+  { name: "Majorca", country: "Spain", priceGBP: 259, image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop&q=80" },
+  { name: "Tokyo", country: "Japan", priceGBP: 699, image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop&q=80" },
+  { name: "Crete", country: "Greece", priceGBP: 349, image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&h=300&fit=crop&q=80" },
+  { name: "Cape Town", country: "South Africa", priceGBP: 579, image: "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=400&h=300&fit=crop&q=80" },
+  { name: "Barcelona", country: "Spain", priceGBP: 279, image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop&q=80" },
+  { name: "Marrakech", country: "Morocco", priceGBP: 229, image: "https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=400&h=300&fit=crop&q=80" },
+  { name: "Rome", country: "Italy", priceGBP: 309, image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=300&fit=crop&q=80" },
+  { name: "Antalya", country: "Turkey", priceGBP: 269, image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop&q=80" },
+  { name: "Lisbon", country: "Portugal", priceGBP: 299, image: "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400&h=300&fit=crop&q=80" },
 ];
 
 const VISIBLE_COUNT = 6;
 
 const FeaturedDestinations = () => {
   const [page, setPage] = useState(0);
+  const { currency } = useCurrency();
+  const rate = conversionRates[currency.code] || 1;
   const totalPages = Math.ceil(allDestinations.length / VISIBLE_COUNT);
 
   useEffect(() => {
@@ -91,7 +101,7 @@ const FeaturedDestinations = () => {
                     <div className="text-right">
                       <p className="text-xs text-white/70 font-medium">From</p>
                       <p className="font-display text-xl font-extrabold text-white drop-shadow-md">
-                        {dest.price}
+                        {currency.symbol}{Math.round(dest.priceGBP * rate).toLocaleString()}
                       </p>
                       <p className="text-xs text-white/70 font-medium">per person</p>
                     </div>
