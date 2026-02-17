@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
-  { label: "Search", path: "/" },
+  { label: "Search All", path: "/" },
   { label: "Flights", path: "/results" },
   { label: "Hotels", path: "/results" },
   { label: "Trending Destinations", path: "/#trending-destinations" },
@@ -52,7 +52,7 @@ const Navbar = () => {
               to={item.path}
               onClick={(e) => handleNavClick(e, item.path)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                location.pathname === item.path && item.label === "Search"
+                location.pathname === item.path && item.label === "Search All"
                   ? "text-primary bg-primary/10"
                   : "text-white/70 hover:text-white hover:bg-navy-lighter"
               }`}
