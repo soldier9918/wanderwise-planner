@@ -12,11 +12,11 @@ const TrustedBrands = () => {
       <p className="text-white/80 text-base md:text-lg font-medium text-center mb-5">
         Search hotels & flights across all your favourite brands — all in one place.
       </p>
-      <div className="flex justify-center">
+      <div className="flex justify-center bg-white/90 rounded-2xl px-6 py-4 mx-auto max-w-4xl">
         <img
           src={brandLogos}
           alt="Trip.com, easyJet holidays, Jet2holidays, loveholidays, lastminute.com, On the Beach, TUI, Expedia"
-          className="max-w-full h-10 md:h-12 object-contain"
+          className="max-w-full h-12 md:h-16 object-contain"
         />
       </div>
     </motion.div>
