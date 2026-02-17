@@ -39,6 +39,12 @@ const fixedPOIs: { icon: typeof Plane; label: string; poi: POILocation }[] = [
   { icon: ShoppingBag, label: "Shopping", poi: { label: "Shopping", name: "Biosfera Shopping Centre", distance: 0.8, lat: 28.9620, lng: -13.5950 } },
 ];
 
+const estimateTime = (km: number) => {
+    if (km <= 1) return `${Math.max(1, Math.round(km * 12))} min walk`;
+    if (km <= 3) return `${Math.max(1, Math.round(km * 3))} min drive`;
+    return `${Math.max(1, Math.round(km * 1.5))} min drive`;
+  };
+
 const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activePOI }: NearbyPOIsProps) => {
   const [hotspotOpen, setHotspotOpen] = useState(false);
   const [selectedHotspot, setSelectedHotspot] = useState<POILocation>(touristHotspots[0]);
@@ -70,7 +76,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
           <div>
             <p className="text-xs text-muted-foreground">{label}</p>
             <p className="text-sm font-medium text-foreground">{poi.name}</p>
-            <p className="text-xs text-primary font-semibold">{dist(poi.distance)}</p>
+            <p className="text-xs text-primary font-semibold">{dist(poi.distance)} · {estimateTime(poi.distance)}</p>
           </div>
         </button>
       ))}
@@ -91,7 +97,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">Tourist Hotspot</p>
             <p className="text-sm font-medium text-foreground truncate">{selectedHotspot.name}</p>
-            <p className="text-xs text-primary font-semibold">{dist(selectedHotspot.distance)}</p>
+            <p className="text-xs text-primary font-semibold">{dist(selectedHotspot.distance)} · {estimateTime(selectedHotspot.distance)}</p>
           </div>
           <button
             onClick={(e) => {
@@ -119,7 +125,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
                 }`}
               >
                 <span className="truncate">{hs.name}</span>
-                <span className="text-xs text-muted-foreground shrink-0 ml-2">{dist(hs.distance)}</span>
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">{dist(hs.distance)} · {estimateTime(hs.distance)}</span>
               </button>
             ))}
           </div>
@@ -142,7 +148,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">SPA / Fitness</p>
             <p className="text-sm font-medium text-foreground truncate">{selectedSpa.name}</p>
-            <p className="text-xs text-primary font-semibold">{dist(selectedSpa.distance)}</p>
+            <p className="text-xs text-primary font-semibold">{dist(selectedSpa.distance)} · {estimateTime(selectedSpa.distance)}</p>
           </div>
           <button
             onClick={(e) => {
@@ -170,7 +176,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
                 }`}
               >
                 <span className="truncate">{sp.name}</span>
-                <span className="text-xs text-muted-foreground shrink-0 ml-2">{dist(sp.distance)}</span>
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">{dist(sp.distance)} · {estimateTime(sp.distance)}</span>
               </button>
             ))}
           </div>
