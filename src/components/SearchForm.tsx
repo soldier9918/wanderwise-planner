@@ -262,13 +262,13 @@ const SearchForm = () => {
               Direct flights
             </label>
           </div>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2">
             <Checkbox
               id="addHotel"
               checked={addHotel}
               onCheckedChange={(v) => setAddHotel(v === true)}
             />
-            <label htmlFor="addHotel" className="text-sm font-medium text-foreground cursor-pointer">
+            <label htmlFor="addHotel" className="text-sm text-foreground cursor-pointer">
               Add a hotel
             </label>
           </div>
