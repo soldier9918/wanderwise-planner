@@ -7,6 +7,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import Index from "./pages/Index";
 import Flights from "./pages/Flights";
+import Hotels from "./pages/Hotels";
 import SearchResults from "./pages/SearchResults";
 import HotelDetail from "./pages/HotelDetail";
 import Help from "./pages/Help";
@@ -33,6 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/flights" element={<Flights />} />
+            <Route path="/hotels" element={<Hotels />} />
             <Route path="/results" element={<SearchResults />} />
             <Route path="/hotel/:id" element={<HotelDetail />} />
             <Route path="/help" element={<Help />} />
