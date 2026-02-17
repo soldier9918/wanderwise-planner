@@ -1,5 +1,8 @@
-import { motion } from "framer-motion";
-import heroBg from "@/assets/hero-bg.jpg";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import heroBg1 from "@/assets/hero-bg.jpg";
+import heroBg2 from "@/assets/hero-bg-2.jpg";
+import heroBg3 from "@/assets/hero-bg-3.jpg";
 import PackageSearchForm from "@/components/PackageSearchForm";
 import FeaturedDestinations from "@/components/FeaturedDestinations";
 import TrustedBrandsSection from "@/components/TrustedBrandsSection";
@@ -8,7 +11,18 @@ import FAQ from "@/components/FAQ";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+const heroImages = [heroBg1, heroBg2, heroBg3];
+
 const Index = () => {
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -16,11 +30,18 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden text-white">
         <div className="absolute inset-0">
-          <img
-            src={heroBg}
-            alt="Beautiful beach destination"
-            className="w-full h-full object-cover"
-          />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentImage}
+              src={heroImages[currentImage]}
+              alt="Beautiful travel destination"
+              className="w-full h-full object-cover absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2 }}
+            />
+          </AnimatePresence>
           <div className="absolute inset-0 bg-navy/35" />
           <div className="absolute inset-0 bg-gradient-to-b from-navy/40 via-transparent to-navy/50" />
         </div>
