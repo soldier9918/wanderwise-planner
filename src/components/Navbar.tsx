@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { label: "Search All", path: "/" },
-  { label: "Flights", path: "/results" },
+  { label: "Flights", path: "/flights" },
   { label: "Hotels", path: "/results" },
   { label: "Trending Destinations", path: "/#trending-destinations" },
   { label: "Deals", path: "/results" },
