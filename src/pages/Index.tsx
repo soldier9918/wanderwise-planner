@@ -2,7 +2,9 @@ import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import PackageSearchForm from "@/components/PackageSearchForm";
 import FeaturedDestinations from "@/components/FeaturedDestinations";
+import TrustedBrandsSection from "@/components/TrustedBrandsSection";
 import HowItWorks from "@/components/HowItWorks";
+import FAQ from "@/components/FAQ";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -45,7 +47,9 @@ const Index = () => {
       </section>
 
       <FeaturedDestinations />
+      <TrustedBrandsSection />
       <HowItWorks />
+      <FAQ />
       <Footer />
     </div>
   );
