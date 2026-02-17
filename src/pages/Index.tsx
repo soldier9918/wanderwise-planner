@@ -42,29 +42,12 @@ const Index = () => {
             </p>
           </motion.div>
 
-          <SearchForm />
+          <TrustedBrands />
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="flex items-center justify-center gap-6 mt-8 flex-wrap"
-          >
-            {["LoveHolidays", "Lastminute.com", "Booking.com", "Skyscanner", "TUI", "Jet2"].map(
-              (brand) => (
-                <span
-                  key={brand}
-                  className="text-xs font-semibold text-white/60 uppercase tracking-wider"
-                >
-                  {brand}
-                </span>
-              )
-            )}
-          </motion.div>
+          <SearchForm />
         </div>
       </section>
 
-      <TrustedBrands />
       <FeaturedDestinations />
       <HowItWorks />
       <Footer />
