@@ -24,7 +24,7 @@ const SearchForm = () => {
   const [nearbyFrom, setNearbyFrom] = useState(false);
   const [nearbyTo, setNearbyTo] = useState(false);
   const [directFlights, setDirectFlights] = useState(false);
-  const [addHotel, setAddHotel] = useState(true);
+  const [addHotel, setAddHotel] = useState(false);
   const [distanceUnit] = useState<"km" | "mi">("km");
 
   const handleSearch = (e: React.FormEvent) => {
