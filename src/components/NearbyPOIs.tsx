@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plane, Train, Bus, Car, Utensils, ShoppingBag, Palmtree, Dumbbell, ChevronDown } from "lucide-react";
+import { Plane, Train, Bus, Car, Utensils, ShoppingBag, Palmtree, Dumbbell, ChevronDown, Cross, Waves } from "lucide-react";
 
 export interface POILocation {
   label: string;
@@ -68,6 +68,14 @@ const spainAirports: POILocation[] = [
   { label: "BIO – Bilbao", name: "Bilbao Airport (BIO)", distance: 2300.0, lat: 43.3011, lng: -2.9106 },
   { label: "IBZ – Ibiza", name: "Ibiza Airport (IBZ)", distance: 2400.0, lat: 38.8729, lng: 1.3731 },
 ];
+
+const nearestHospital: POILocation = {
+  label: "Nearest Hospital", name: "Hospital José Molina Orosa", distance: 12.5, lat: 28.9580, lng: -13.5520,
+};
+
+const nearestBeach: POILocation = {
+  label: "Nearest Beach", name: "Playa de la Garita", distance: 0.7, lat: 28.9530, lng: -13.6100,
+};
 
 const spaFitness: POILocation = {
   label: "SPA / Fitness", name: "FitLife Gym", distance: 0.9, lat: 28.9580, lng: -13.6050,
@@ -211,6 +219,44 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
         touristHotspots,
         setSelectedHotspot,
       )}
+
+      {/* Nearest Hospital - fixed */}
+      <button
+        onClick={() => handleClick(nearestHospital)}
+        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+          isActive(nearestHospital)
+            ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
+            : "bg-secondary hover:bg-secondary/80"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Cross className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Nearest Hospital</p>
+          <p className="text-sm font-medium text-foreground">{nearestHospital.name}</p>
+          <p className="text-xs text-primary font-semibold">{dist(nearestHospital.distance)} · {estimateTime(nearestHospital.distance)}</p>
+        </div>
+      </button>
+
+      {/* Nearest Beach - fixed */}
+      <button
+        onClick={() => handleClick(nearestBeach)}
+        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+          isActive(nearestBeach)
+            ? "bg-primary/10 border border-primary/30 ring-1 ring-primary/20"
+            : "bg-secondary hover:bg-secondary/80"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Waves className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Nearest Beach</p>
+          <p className="text-sm font-medium text-foreground">{nearestBeach.name}</p>
+          <p className="text-xs text-primary font-semibold">{dist(nearestBeach.distance)} · {estimateTime(nearestBeach.distance)}</p>
+        </div>
+      </button>
 
       {/* SPA / Fitness - fixed, nearest 1 */}
       <button
