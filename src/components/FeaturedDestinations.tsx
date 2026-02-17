@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 const destinations = [
   { name: "Lanzarote", country: "Spain", price: "£289", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=400&h=300&fit=crop" },
@@ -65,6 +66,12 @@ const FeaturedDestinations = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <button className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-navy text-white font-semibold text-sm hover:bg-navy/90 transition-colors">
+            See more deals <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </section>
