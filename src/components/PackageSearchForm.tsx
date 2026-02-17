@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftRight, CalendarIcon, ChevronDown } from "lucide-react";
+import { ArrowLeftRight, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -17,13 +17,17 @@ const PackageSearchForm = () => {
   const [to, setTo] = useState("");
   const [depart, setDepart] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
-  const [guests, setGuests] = useState("2");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
   const [cabinClass, setCabinClass] = useState("Economy");
+  const [travellersOpen, setTravellersOpen] = useState(false);
+
+  const totalTravellers = adults + children;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(
-      `/results?from=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}&checkIn=${depart ? format(depart, "yyyy-MM-dd") : ""}&checkOut=${returnDate ? format(returnDate, "yyyy-MM-dd") : ""}&guests=${guests}&cabin=${cabinClass}`
+      `/results?from=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}&checkIn=${depart ? format(depart, "yyyy-MM-dd") : ""}&checkOut=${returnDate ? format(returnDate, "yyyy-MM-dd") : ""}&guests=${totalTravellers}&cabin=${cabinClass}`
     );
   };
 
@@ -128,7 +132,7 @@ const PackageSearchForm = () => {
           </Popover>
 
           {/* Travellers */}
-          <Popover>
+          <Popover open={travellersOpen} onOpenChange={setTravellersOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
@@ -136,38 +140,91 @@ const PackageSearchForm = () => {
               >
                 <span className="absolute left-4 top-2.5 text-xs font-bold text-muted-foreground">Travellers</span>
                 <span className="text-base text-foreground flex items-center gap-1.5">
-                  {guests} {Number(guests) === 1 ? "traveller" : "travellers"}
+                  {totalTravellers} {totalTravellers === 1 ? "traveller" : "travellers"}
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-4" align="end">
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Travellers</label>
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n}>
-                        {n} {n === 1 ? "Traveller" : "Travellers"}
-                      </option>
-                    ))}
-                  </select>
+            <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+              <div className="p-5 space-y-5">
+                {/* Adults */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-foreground">Adults</p>
+                    <p className="text-sm text-muted-foreground">Aged 18+</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAdults(Math.max(1, adults - 1))}
+                      disabled={adults <= 1}
+                      className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-base font-semibold text-foreground w-6 text-center">{adults}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAdults(Math.min(9, adults + 1))}
+                      disabled={adults >= 9}
+                      className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+
+                {/* Children */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-foreground">Children</p>
+                    <p className="text-sm text-muted-foreground">Aged 0 to 17</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setChildren(Math.max(0, children - 1))}
+                      disabled={children <= 0}
+                      className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-base font-semibold text-foreground w-6 text-center">{children}</span>
+                    <button
+                      type="button"
+                      onClick={() => setChildren(Math.min(6, children + 1))}
+                      disabled={children >= 6}
+                      className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your age at time of travel must be valid for the age category booked. Airlines have restrictions on under 18s travelling alone.
+                </p>
+
+                {/* Cabin Class */}
                 <div>
-                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin class</label>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin Class</label>
                   <select
                     value={cabinClass}
                     onChange={(e) => setCabinClass(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
+                    className="w-full px-3 py-2.5 rounded-lg bg-secondary text-foreground text-sm border border-border outline-none"
                   >
                     {["Economy", "Premium Economy", "Business", "First"].map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setTravellersOpen(false)}
+                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+                >
+                  Apply
+                </button>
               </div>
             </PopoverContent>
           </Popover>
