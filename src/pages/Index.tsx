@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import heroBg1 from "@/assets/hero-bg.jpg";
 import heroBg2 from "@/assets/hero-bg-2.jpg";
 import heroBg3 from "@/assets/hero-bg-3.jpg";
+import heroSantorini from "@/assets/hero-dest-santorini.jpg";
+import heroBali from "@/assets/hero-dest-bali.jpg";
+import heroDubai from "@/assets/hero-dest-dubai.jpg";
+import heroMachuPicchu from "@/assets/hero-dest-machupicchu.jpg";
+import heroMaldives from "@/assets/hero-dest-maldives.jpg";
+import heroNewYork from "@/assets/hero-dest-newyork.jpg";
+import heroPhuket from "@/assets/hero-dest-phuket.jpg";
+import heroParis from "@/assets/hero-dest-paris.jpg";
 import PackageSearchForm from "@/components/PackageSearchForm";
 import FeaturedDestinations from "@/components/FeaturedDestinations";
 import TrustedBrandsSection from "@/components/TrustedBrandsSection";
@@ -11,7 +19,10 @@ import FAQ from "@/components/FAQ";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const heroImages = [heroBg1, heroBg2, heroBg3];
+const heroImages = [
+  heroBg1, heroSantorini, heroBg2, heroBali, heroDubai,
+  heroMachuPicchu, heroBg3, heroMaldives, heroNewYork, heroPhuket, heroParis,
+];
 
 const Index = () => {
   const [currentImage, setCurrentImage] = useState(0);
@@ -30,18 +41,18 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden text-white">
         <div className="absolute inset-0">
-          <AnimatePresence mode="wait">
+          {/* Crossfade: all images stacked, only active one is visible */}
+          {heroImages.map((src, index) => (
             <motion.img
-              key={currentImage}
-              src={heroImages[currentImage]}
-              alt="Beautiful travel destination"
+              key={index}
+              src={src}
+              alt="Travel destination"
               className="w-full h-full object-cover absolute inset-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2 }}
+              initial={false}
+              animate={{ opacity: index === currentImage ? 1 : 0 }}
+              transition={{ duration: 2, ease: "easeInOut" }}
             />
-          </AnimatePresence>
+          ))}
           <div className="absolute inset-0 bg-navy/35" />
           <div className="absolute inset-0 bg-gradient-to-b from-navy/40 via-transparent to-navy/50" />
         </div>
