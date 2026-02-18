@@ -43,9 +43,18 @@ const SearchForm = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(
-      `/results?destination=${encodeURIComponent(destination)}&from=${encodeURIComponent(departureCity)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${totalTravellers}&unit=${distanceUnit}&cabin=${cabinClass}&direct=${directFlights}`
-    );
+    // Navigate to flight results with IATA-style params for the Amadeus edge function
+    const params = new URLSearchParams({
+      from: departureCity.trim().toUpperCase().slice(0, 3),
+      to: destination.trim().toUpperCase().slice(0, 3),
+      depart: checkIn ? format(checkIn, "yyyy-MM-dd") : "",
+      adults: String(adults),
+      children: String(children),
+      cabin: cabinClass,
+      direct: String(directFlights),
+    });
+    if (checkOut) params.set("return", format(checkOut, "yyyy-MM-dd"));
+    navigate(`/flight-results?${params.toString()}`);
   };
 
   const swapCities = () => {
