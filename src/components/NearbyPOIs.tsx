@@ -42,17 +42,64 @@ const rawTouristHotspots: RawPOI[] = [
 ];
 
 const rawPublicTransport: RawPOI[] = [
-  { label: "Train / Metro Station", name: "Arrecife Intercambiador", lat: 28.9630, lng: -13.5500 },
-  { label: "Bus Stop", name: "Nearest Bus Stop", lat: 28.9595, lng: -13.6020 },
-  { label: "Taxi Stand", name: "Taxi Rank", lat: 28.9560, lng: -13.6060 },
+  // Arrecife / Puerto del Carmen
+  { label: "Bus Stop", name: "Arrecife Bus Station", lat: 28.9630, lng: -13.5500 },
+  { label: "Bus Stop", name: "Puerto del Carmen Bus Stop", lat: 28.9595, lng: -13.6020 },
+  { label: "Taxi Stand", name: "Puerto del Carmen Taxi Rank", lat: 28.9560, lng: -13.6060 },
+  { label: "Taxi Stand", name: "Arrecife Taxi Rank", lat: 28.9640, lng: -13.5480 },
+  // Costa Teguise
+  { label: "Bus Stop", name: "Costa Teguise Bus Stop", lat: 28.9990, lng: -13.5010 },
+  { label: "Taxi Stand", name: "Costa Teguise Taxi Rank", lat: 29.0000, lng: -13.4990 },
+  // Tinajo / inland centre
+  { label: "Bus Stop", name: "Tinajo Bus Stop", lat: 29.0640, lng: -13.6830 },
+  { label: "Taxi Stand", name: "Tinajo Taxi Rank", lat: 29.0630, lng: -13.6820 },
+  // Yaiza / Playa Blanca
+  { label: "Bus Stop", name: "Yaiza Bus Stop", lat: 28.9520, lng: -13.7700 },
+  { label: "Bus Stop", name: "Playa Blanca Bus Stop", lat: 28.8610, lng: -13.8270 },
+  { label: "Taxi Stand", name: "Playa Blanca Taxi Rank", lat: 28.8600, lng: -13.8280 },
+  // Teguise
+  { label: "Bus Stop", name: "Teguise Bus Stop", lat: 29.0600, lng: -13.5600 },
+  // Haría
+  { label: "Bus Stop", name: "Haría Bus Stop", lat: 29.1440, lng: -13.5020 },
+  // San Bartolomé
+  { label: "Bus Stop", name: "San Bartolomé Bus Stop", lat: 29.0050, lng: -13.5880 },
 ];
 
 const rawRestaurants: RawPOI[] = [
+  // Puerto del Carmen / Matagorda
   { label: "La Tegala", name: "La Tegala", lat: 28.9570, lng: -13.6080 },
   { label: "El Golfo Restaurant", name: "El Golfo Restaurant", lat: 28.9555, lng: -13.6095 },
   { label: "Casa Roja", name: "Casa Roja", lat: 28.9610, lng: -13.6010 },
-  { label: "Pizzeria Capri", name: "Pizzeria Capri", lat: 28.9625, lng: -13.5980 },
   { label: "Lani's Beach Bar", name: "Lani's Beach Bar", lat: 28.9540, lng: -13.6120 },
+  { label: "La Cañada Restaurant", name: "La Cañada Restaurant", lat: 28.9500, lng: -13.5980 },
+  // Arrecife
+  { label: "Restaurante Lilium", name: "Restaurante Lilium", lat: 28.9635, lng: -13.5498 },
+  { label: "Meson La Jordana", name: "Meson La Jordana", lat: 28.9602, lng: -13.5470 },
+  { label: "Restaurante Castillo de San José", name: "Castillo de San José", lat: 28.9720, lng: -13.5120 },
+  // Costa Teguise
+  { label: "Mesonero Costa Teguise", name: "Mesonero Costa Teguise", lat: 28.9990, lng: -13.5010 },
+  { label: "El Chiringuito Costa Teguise", name: "El Chiringuito", lat: 28.9975, lng: -13.4980 },
+  { label: "La Graciosa Restaurant", name: "La Graciosa Restaurant", lat: 29.0010, lng: -13.4960 },
+  // Tinajo / inland centre
+  { label: "Restaurante Mezzaluna", name: "Restaurante Mezzaluna", lat: 29.0632, lng: -13.6748 },
+  { label: "Gulliver Tapas Bar", name: "Gulliver Tapas Bar", lat: 29.0455, lng: -13.6912 },
+  { label: "Bar Restaurante El Volcán", name: "Bar Restaurante El Volcán", lat: 29.0690, lng: -13.6590 },
+  // Yaiza / Playa Blanca
+  { label: "La Era Restaurant", name: "La Era Restaurant", lat: 28.9525, lng: -13.7690 },
+  { label: "El Rincón de la Abuela", name: "El Rincón de la Abuela", lat: 28.8610, lng: -13.8260 },
+  { label: "Brisa Marina Playa Blanca", name: "Brisa Marina", lat: 28.8572, lng: -13.8300 },
+  // Teguise / inland north
+  { label: "Restaurante Ikarus Teguise", name: "Restaurante Ikarus", lat: 29.0600, lng: -13.5570 },
+  { label: "El Patio Teguise", name: "El Patio", lat: 29.0590, lng: -13.5580 },
+  // Haría / north
+  { label: "Restaurante El Cortijo", name: "El Cortijo", lat: 29.1440, lng: -13.5010 },
+  { label: "Casa Carlos Haría", name: "Casa Carlos", lat: 29.1450, lng: -13.5000 },
+  // San Bartolomé
+  { label: "Restaurante La Bodega", name: "Restaurante La Bodega", lat: 29.0040, lng: -13.5890 },
+  { label: "El Charcón San Bartolomé", name: "El Charcón", lat: 29.0060, lng: -13.5870 },
+  // Mácher / Güime
+  { label: "El Lago Mácher", name: "El Lago", lat: 28.9810, lng: -13.6730 },
+  { label: "Casería de Mozaga", name: "Casería de Mozaga", lat: 29.0150, lng: -13.6100 },
 ];
 
 const rawShoppingMalls: RawPOI[] = [
