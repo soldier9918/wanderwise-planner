@@ -29,7 +29,8 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-// Raw POI data (without distance — computed dynamically)
+const RADIUS_KM = 8.047; // 5 miles in km
+
 interface RawPOI { label: string; name: string; lat: number; lng: number }
 
 const rawTouristHotspots: RawPOI[] = [
@@ -82,9 +83,28 @@ const rawSpainAirports: RawPOI[] = [
   { label: "IBZ – Ibiza", name: "Ibiza Airport (IBZ)", lat: 38.8729, lng: 1.3731 },
 ];
 
+// Real Lanzarote coastal beaches
+const rawBeaches: RawPOI[] = [
+  { label: "Playa de los Pocillos", name: "Playa de los Pocillos", lat: 28.9225, lng: -13.6535 },
+  { label: "Playa Grande", name: "Playa Grande (Puerto del Carmen)", lat: 28.9183, lng: -13.6622 },
+  { label: "Playa de Matagorda", name: "Playa de Matagorda", lat: 28.9345, lng: -13.6327 },
+  { label: "Playa de Famara", name: "Playa de Famara", lat: 29.1115, lng: -13.5636 },
+  { label: "Playa Blanca", name: "Playa Blanca", lat: 28.8628, lng: -13.8284 },
+  { label: "Playa de la Garita", name: "Playa de la Garita", lat: 28.9640, lng: -13.4980 },
+  { label: "Playa del Reducto", name: "Playa del Reducto (Arrecife)", lat: 28.9564, lng: -13.5581 },
+  { label: "Playa de Papagayo", name: "Playa de Papagayo", lat: 28.8436, lng: -13.7806 },
+  { label: "Playa de Caletón Blanco", name: "Playa de Caletón Blanco", lat: 29.1858, lng: -13.4375 },
+];
+
+// SPA / Fitness locations across Lanzarote
+const rawSpaFitnessList: RawPOI[] = [
+  { label: "FitLife Gym", name: "FitLife Gym", lat: 28.9580, lng: -13.6050 },
+  { label: "Hesperia Lanzarote Spa", name: "Hesperia Lanzarote Spa", lat: 28.9210, lng: -13.6550 },
+  { label: "Sandos Papagayo Spa", name: "Sandos Papagayo Spa", lat: 28.8630, lng: -13.8270 },
+  { label: "Active Gym Arrecife", name: "Active Gym Arrecife", lat: 28.9620, lng: -13.5480 },
+];
+
 const rawHospital: RawPOI = { label: "Nearest Hospital", name: "Hospital José Molina Orosa", lat: 28.9580, lng: -13.5520 };
-const rawBeach: RawPOI = { label: "Nearest Beach", name: "Playa de la Garita", lat: 28.9530, lng: -13.6100 };
-const rawSpaFitness: RawPOI = { label: "SPA / Fitness", name: "FitLife Gym", lat: 28.9580, lng: -13.6050 };
 
 const estimateTime = (km: number) => {
   if (km <= 1) return `${Math.max(1, Math.round(km * 12))} min walk`;
@@ -99,7 +119,6 @@ const getTransportIcon = (label: string) => {
   return Car;
 };
 
-// Helper: compute distance and attach to raw POI, then sort by distance
 const withDistance = (hotelLat: number, hotelLng: number, pois: RawPOI[]): POILocation[] =>
   pois
     .map((p) => ({
@@ -116,15 +135,43 @@ const singleWithDistance = (hotelLat: number, hotelLng: number, poi: RawPOI): PO
 type DropdownKey = "airport" | "transport" | "hotspot" | "restaurant" | "shopping";
 
 const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activePOI }: NearbyPOIsProps) => {
-  // Compute all distances dynamically from the hotel's actual coordinates
-  const airports = useMemo(() => withDistance(hotelLat, hotelLng, rawSpainAirports), [hotelLat, hotelLng]);
-  const transport = useMemo(() => withDistance(hotelLat, hotelLng, rawPublicTransport), [hotelLat, hotelLng]);
+  // Cap airports at 5 nearest
+  const airports = useMemo(
+    () => withDistance(hotelLat, hotelLng, rawSpainAirports).slice(0, 5),
+    [hotelLat, hotelLng]
+  );
+
+  // Public transport — filtered to 5-mile (8.047 km) radius
+  const transport = useMemo(
+    () => withDistance(hotelLat, hotelLng, rawPublicTransport).filter((p) => p.distance <= RADIUS_KM),
+    [hotelLat, hotelLng]
+  );
+
   const hotspots = useMemo(() => withDistance(hotelLat, hotelLng, rawTouristHotspots), [hotelLat, hotelLng]);
-  const restaurantList = useMemo(() => withDistance(hotelLat, hotelLng, rawRestaurants), [hotelLat, hotelLng]);
+
+  // Restaurants — filtered to 5-mile radius
+  const restaurantList = useMemo(
+    () => withDistance(hotelLat, hotelLng, rawRestaurants).filter((p) => p.distance <= RADIUS_KM),
+    [hotelLat, hotelLng]
+  );
+
   const shopping = useMemo(() => withDistance(hotelLat, hotelLng, rawShoppingMalls), [hotelLat, hotelLng]);
+
+  // Nearest beach from the full list
+  const beach = useMemo(
+    () => withDistance(hotelLat, hotelLng, rawBeaches)[0],
+    [hotelLat, hotelLng]
+  );
+
+  // Hospital — single, dynamic distance
   const hospital = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawHospital), [hotelLat, hotelLng]);
-  const beach = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawBeach), [hotelLat, hotelLng]);
-  const spa = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawSpaFitness), [hotelLat, hotelLng]);
+
+  // SPA/Fitness — nearest within 5-mile radius; fallback to nearest overall
+  const spa = useMemo(() => {
+    const all = withDistance(hotelLat, hotelLng, rawSpaFitnessList);
+    const nearby = all.filter((p) => p.distance <= RADIUS_KM);
+    return nearby.length > 0 ? nearby[0] : all[0];
+  }, [hotelLat, hotelLng]);
 
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
   const [selectedAirport, setSelectedAirport] = useState<POILocation | null>(null);
@@ -133,7 +180,6 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
   const [selectedRestaurant, setSelectedRestaurant] = useState<POILocation | null>(null);
   const [selectedShopping, setSelectedShopping] = useState<POILocation | null>(null);
 
-  // Use selected or default to first (nearest)
   const activeAirport = selectedAirport ?? airports[0];
   const activeTransport = selectedTransport ?? transport[0];
   const activeHotspot = selectedHotspot ?? hotspots[0];
@@ -151,7 +197,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
     setOpenDropdown(prev => prev === key ? null : key);
   };
 
-  const TransportIcon = getTransportIcon(activeTransport.label);
+  const TransportIcon = transport.length > 0 ? getTransportIcon(activeTransport?.label ?? "") : Car;
 
   const renderDropdown = (
     key: DropdownKey,
@@ -204,6 +250,33 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
     </div>
   );
 
+  // Greyed-out tile for when no POIs are within radius
+  const renderDisabled = (label: string, icon: React.ReactNode) => (
+    <div className="flex items-center gap-3 p-3 rounded-xl opacity-50 cursor-not-allowed bg-secondary">
+      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-foreground">None nearby</p>
+        <p className="text-xs text-muted-foreground">No results within 5 miles</p>
+      </div>
+    </div>
+  );
+
+  // Dropdown that falls back to greyed-out if list is empty
+  const renderDropdownOrDisabled = (
+    key: DropdownKey,
+    icon: React.ReactNode,
+    label: string,
+    selected: POILocation | undefined,
+    items: POILocation[],
+    onSelect: (poi: POILocation) => void,
+  ) => {
+    if (items.length === 0 || !selected) return renderDisabled(label, icon);
+    return renderDropdown(key, icon, label, selected, items, onSelect);
+  };
+
   const renderFixed = (poi: POILocation, label: string, icon: React.ReactNode) => (
     <button
       onClick={() => handleClick(poi)}
@@ -226,9 +299,9 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {renderDropdown("airport", <Plane className="w-4 h-4 text-primary" />, "Airports", activeAirport, airports, setSelectedAirport)}
-      {renderDropdown("transport", <TransportIcon className="w-4 h-4 text-primary" />, "Public Transports", activeTransport, transport, setSelectedTransport)}
-      {renderDropdown("restaurant", <Utensils className="w-4 h-4 text-primary" />, "Restaurants", activeRestaurant, restaurantList, setSelectedRestaurant)}
+      {renderDropdown("airport", <Plane className="w-4 h-4 text-primary" />, "Nearest Airport", activeAirport, airports, setSelectedAirport)}
+      {renderDropdownOrDisabled("transport", <TransportIcon className="w-4 h-4 text-primary" />, "Public Transports", activeTransport, transport, setSelectedTransport)}
+      {renderDropdownOrDisabled("restaurant", <Utensils className="w-4 h-4 text-primary" />, "Restaurants", activeRestaurant, restaurantList, setSelectedRestaurant)}
       {renderDropdown("shopping", <ShoppingBag className="w-4 h-4 text-primary" />, "Shopping", activeShopping, shopping, setSelectedShopping)}
       {renderDropdown("hotspot", <Palmtree className="w-4 h-4 text-primary" />, "Tourist Hotspots", activeHotspot, hotspots, setSelectedHotspot)}
       {renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
