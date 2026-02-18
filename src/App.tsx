@@ -19,6 +19,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import WhoWeAre from "./pages/WhoWeAre";
 import ContactUs from "./pages/ContactUs";
 import Login from "./pages/Login";
+import FlightResults from "./pages/FlightResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/flights" element={<Flights />} />
             <Route path="/hotels" element={<Hotels />} />
             <Route path="/results" element={<SearchResults />} />
+            <Route path="/flight-results" element={<FlightResults />} />
             <Route path="/hotel/:id" element={<HotelDetail />} />
             <Route path="/help" element={<Help />} />
             <Route path="/trust-safety" element={<TrustSafety />} />
