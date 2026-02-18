@@ -217,7 +217,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
   const spa = useMemo(() => {
     const all = withDistance(hotelLat, hotelLng, rawSpaFitnessList);
     const nearby = all.filter((p) => p.distance <= RADIUS_KM);
-    return nearby.length > 0 ? nearby[0] : all[0];
+    return nearby.length > 0 ? nearby[0] : null;
   }, [hotelLat, hotelLng]);
 
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
@@ -353,7 +353,9 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
       {renderDropdown("hotspot", <Palmtree className="w-4 h-4 text-primary" />, "Tourist Hotspots", activeHotspot, hotspots, setSelectedHotspot)}
       {renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
       {renderFixed(beach, "Nearest Beach", <Waves className="w-4 h-4 text-primary" />)}
-      {renderFixed(spa, "SPA / Fitness", <Dumbbell className="w-4 h-4 text-primary" />)}
+      {spa
+        ? renderFixed(spa, "SPA / Fitness", <Dumbbell className="w-4 h-4 text-primary" />)
+        : renderDisabled("SPA / Fitness", <Dumbbell className="w-4 h-4 text-primary" />)}
     </div>
   );
 };
