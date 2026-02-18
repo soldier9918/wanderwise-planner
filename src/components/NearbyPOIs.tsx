@@ -202,7 +202,11 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
     [hotelLat, hotelLng]
   );
 
-  const shopping = useMemo(() => withDistance(hotelLat, hotelLng, rawShoppingMalls), [hotelLat, hotelLng]);
+  const SHOPPING_RADIUS_KM = 16.09; // 10 miles
+  const shopping = useMemo(
+    () => withDistance(hotelLat, hotelLng, rawShoppingMalls).filter((p) => p.distance <= SHOPPING_RADIUS_KM),
+    [hotelLat, hotelLng]
+  );
 
   // Nearest beach from the full list
   const beach = useMemo(
@@ -349,7 +353,7 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
       {renderDropdown("airport", <Plane className="w-4 h-4 text-primary" />, "Nearest Airport", activeAirport, airports, setSelectedAirport)}
       {renderDropdownOrDisabled("transport", <TransportIcon className="w-4 h-4 text-primary" />, "Public Transports", activeTransport, transport, setSelectedTransport)}
       {renderDropdownOrDisabled("restaurant", <Utensils className="w-4 h-4 text-primary" />, "Restaurants", activeRestaurant, restaurantList, setSelectedRestaurant)}
-      {renderDropdown("shopping", <ShoppingBag className="w-4 h-4 text-primary" />, "Shopping", activeShopping, shopping, setSelectedShopping)}
+      {renderDropdownOrDisabled("shopping", <ShoppingBag className="w-4 h-4 text-primary" />, "Shopping", activeShopping, shopping, setSelectedShopping)}
       {renderDropdown("hotspot", <Palmtree className="w-4 h-4 text-primary" />, "Tourist Hotspots", activeHotspot, hotspots, setSelectedHotspot)}
       {renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
       {renderFixed(beach, "Nearest Beach", <Waves className="w-4 h-4 text-primary" />)}
