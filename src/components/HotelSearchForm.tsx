@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { CalendarIcon, Minus, Plus, MapPin, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Minus, Plus, MapPin, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
+import RangeDatePickerCalendar from "@/components/RangeDatePickerCalendar";
 import {
   Popover,
   PopoverContent,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/popover";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface CitySuggestion {
   name: string;
@@ -43,51 +45,29 @@ const HotelSearchForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [travellersOpen, setTravellersOpen] = useState(false);
+
+  // Portal dropdown positioning
+  const [dropdownTop, setDropdownTop] = useState(0);
+  const [dropdownLeft, setDropdownLeft] = useState(0);
+  const [dropdownWidth, setDropdownWidth] = useState(0);
   const destinationRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const totalGuests = adults + children;
 
-  // Debounced autocomplete fetch
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (destination.length < 2 || selectedCityCode) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
+  const updatePosition = useCallback(() => {
+    if (destinationRef.current) {
+      const r = destinationRef.current.getBoundingClientRect();
+      setDropdownTop(r.bottom + 4);
+      setDropdownLeft(r.left);
+      setDropdownWidth(r.width);
     }
-
-    debounceRef.current = setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/amadeus-hotel-autocomplete?keyword=${encodeURIComponent(destination)}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            },
-          }
-        );
-        const data = await res.json();
-        setSuggestions(data.suggestions || []);
-        setShowSuggestions(true);
-      } catch {
-        setSuggestions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 300);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [destination, selectedCityCode]);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -100,6 +80,52 @@ const HotelSearchForm = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!showSuggestions) return;
+    const onScroll = () => updatePosition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [showSuggestions, updatePosition]);
+
+  const fetchSuggestions = useCallback(async (keyword: string) => {
+    updatePosition();
+    setIsLoading(true);
+    setShowSuggestions(true);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/amadeus-hotel-autocomplete?keyword=${encodeURIComponent(keyword)}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+          },
+        }
+      );
+      const data = await res.json();
+      setSuggestions(data.suggestions || []);
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [updatePosition]);
+
+  // Debounced fetch — triggers on 1+ chars
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (destination.length < 1 || selectedCityCode) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => fetchSuggestions(destination), 150);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [destination, selectedCityCode, fetchSuggestions]);
+
   const handleSuggestionSelect = (suggestion: CitySuggestion) => {
     const countryName = COUNTRY_NAMES[suggestion.countryCode] || suggestion.countryCode;
     setDestination(`${suggestion.name}, ${countryName}`);
@@ -110,7 +136,7 @@ const HotelSearchForm = () => {
 
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDestination(e.target.value);
-    if (selectedCityCode) setSelectedCityCode(""); // reset if user edits after selection
+    if (selectedCityCode) setSelectedCityCode("");
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -122,6 +148,56 @@ const HotelSearchForm = () => {
       `/results?${cityParam}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${totalGuests}&rooms=${rooms}`
     );
   };
+
+  const dropdownContent = (
+    <div
+      style={{
+        position: "fixed",
+        top: dropdownTop,
+        left: dropdownLeft,
+        minWidth: dropdownWidth,
+        width: "max-content",
+        maxWidth: "420px",
+        zIndex: 99999,
+      }}
+      className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm px-5">
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          Searching destinations…
+        </div>
+      ) : suggestions.length === 0 ? (
+        <div className="py-4 px-5 text-sm text-muted-foreground text-center">
+          No results found
+        </div>
+      ) : (
+        <ul className="max-h-72 overflow-y-auto">
+          {suggestions.map((s) => {
+            const countryName = COUNTRY_NAMES[s.countryCode] || s.countryCode;
+            return (
+              <li key={s.cityCode}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleSuggestionSelect(s);
+                  }}
+                  className="w-full flex items-center gap-3 px-5 py-3 hover:bg-primary/5 transition-colors text-left border-b border-border/50 last:border-0"
+                >
+                  <MapPin className="w-4 h-4 text-primary shrink-0" />
+                  <span>
+                    <span className="font-semibold text-foreground text-sm">{s.name}</span>
+                    <span className="text-muted-foreground text-xs ml-2">{countryName}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 
   return (
     <motion.form
@@ -141,9 +217,9 @@ const HotelSearchForm = () => {
 
           {/* Main Search Row */}
           <div className="flex items-stretch border border-border rounded-xl overflow-visible">
-            {/* Destination with autocomplete */}
+            {/* Destination with portal autocomplete */}
             <div ref={destinationRef} className="relative flex-[2] border-r border-border">
-              <label className="absolute left-5 top-3 text-base font-bold text-foreground z-10">
+              <label className="absolute left-5 top-3 text-base font-bold text-foreground z-10 pointer-events-none">
                 Where do you want to go?
               </label>
               <input
@@ -152,109 +228,60 @@ const HotelSearchForm = () => {
                 value={destination}
                 onChange={handleDestinationChange}
                 onFocus={() => {
-                  if (suggestions.length > 0) setShowSuggestions(true);
+                  if (!selectedCityCode && destination.length >= 1) fetchSuggestions(destination);
                 }}
                 autoComplete="off"
                 className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5 rounded-l-xl"
               />
-
-              {/* Dropdown */}
-              <AnimatePresence>
-                {(showSuggestions || isLoading) && destination.length >= 2 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-elevated z-50 overflow-hidden"
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center gap-2 py-5 text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Searching destinations…</span>
-                      </div>
-                    ) : suggestions.length === 0 ? (
-                      <div className="flex items-center justify-center py-5 text-muted-foreground text-sm">
-                        No results found
-                      </div>
-                    ) : (
-                      <ul>
-                        {suggestions.map((s) => {
-                          const countryName = COUNTRY_NAMES[s.countryCode] || s.countryCode;
-                          return (
-                            <li key={s.cityCode}>
-                              <button
-                                type="button"
-                                onMouseDown={(e) => {
-                                  e.preventDefault(); // prevent blur before click
-                                  handleSuggestionSelect(s);
-                                }}
-                                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-primary/5 transition-colors text-left"
-                              >
-                                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                                <span>
-                                  <span className="font-semibold text-foreground">{s.name}</span>
-                                  <span className="text-muted-foreground text-sm ml-1">{countryName}</span>
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {showSuggestions && createPortal(dropdownContent, document.body)}
             </div>
 
-            {/* Check-in */}
-            <Popover>
+            {/* Check-in / Check-out — unified dual-month calendar */}
+            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                 >
                   <span className="absolute left-5 top-3 text-base font-bold text-foreground">Check-in</span>
-                  <span className={cn("text-lg flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
-                    <CalendarIcon className="w-4 h-4" />
-                    {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
+                  <span className={cn("text-lg", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                    {checkIn ? format(checkIn, "dd MMM yyyy") : "Add date"}
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={checkIn}
-                  onSelect={setCheckIn}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+              <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+                <RangeDatePickerCalendar
+                  departDate={checkIn}
+                  returnDate={checkOut}
+                  onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
+                  onReturnChange={(d) => setCheckOut(d)}
+                  onApply={() => setDatePopoverOpen(false)}
+                  hint="Select check-out date"
                 />
               </PopoverContent>
             </Popover>
 
-            {/* Check-out */}
-            <Popover>
+            {/* Check-out — opens same calendar */}
+            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                 >
                   <span className="absolute left-5 top-3 text-base font-bold text-foreground">Check-out</span>
-                  <span className={cn("text-lg flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
-                    <CalendarIcon className="w-4 h-4" />
-                    {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
+                  <span className={cn("text-lg", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                    {checkOut ? format(checkOut, "dd MMM yyyy") : "Add date"}
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={checkOut}
-                  onSelect={setCheckOut}
-                  disabled={(date) => date < (checkIn || new Date())}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+              <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+                <RangeDatePickerCalendar
+                  departDate={checkIn}
+                  returnDate={checkOut}
+                  onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
+                  onReturnChange={(d) => setCheckOut(d)}
+                  onApply={() => setDatePopoverOpen(false)}
+                  hint="Select check-out date"
                 />
               </PopoverContent>
             </Popover>
@@ -290,7 +317,6 @@ const HotelSearchForm = () => {
                       </button>
                     </div>
                   </div>
-
                   {/* Children */}
                   <div className="flex items-center justify-between">
                     <div>
@@ -307,7 +333,6 @@ const HotelSearchForm = () => {
                       </button>
                     </div>
                   </div>
-
                   {/* Rooms */}
                   <div className="flex items-center justify-between">
                     <div>
@@ -323,7 +348,6 @@ const HotelSearchForm = () => {
                       </button>
                     </div>
                   </div>
-
                   <button
                     type="button"
                     onClick={() => setTravellersOpen(false)}
