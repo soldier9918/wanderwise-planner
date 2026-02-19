@@ -48,8 +48,13 @@ const SearchForm = () => {
   const openCalendar = useCallback((ref: React.RefObject<HTMLButtonElement>) => {
     if (ref.current) {
       const r = ref.current.getBoundingClientRect();
-      setCalTop(r.bottom + 6);
-      setCalLeft(Math.min(r.left, window.innerWidth - 680));
+      const calHeight = 480; // approx calendar height
+      const spaceBelow = window.innerHeight - r.bottom - 8;
+      const top = spaceBelow >= calHeight
+        ? r.bottom + 6
+        : Math.max(8, r.top - calHeight - 6);
+      setCalTop(top);
+      setCalLeft(Math.max(8, Math.min(r.left, window.innerWidth - 680)));
     }
     setDatePopoverOpen(true);
   }, []);
