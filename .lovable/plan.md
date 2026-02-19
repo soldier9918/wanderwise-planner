@@ -1,85 +1,100 @@
 
-## IATA Airport Autocomplete for Flight Search Form
+## Flight Price Calendar View
 
 ### What We're Building
 
-The From and To fields in `SearchForm.tsx` currently accept raw free-text and naively slice the first 3 characters to produce an IATA code. This often produces wrong codes (e.g. typing "London" sends "LON" instead of "LHR" or "LGW"). We'll replace them with a live airport/city autocomplete backed by the Amadeus Airport & City Search API, matching the pattern already built for hotel destination search.
+A price calendar component that appears below the departure date picker in the flight search form. Once a user has selected an origin airport (via the autocomplete), the calendar fetches the cheapest available price for each day of the current/selected month from the **Amadeus Flight Inspiration Search API** — letting users instantly spot the cheapest travel days before locking in a date.
 
-### How It Works
+### How the Amadeus API Works
+
+The endpoint used is:
 
 ```
-User types "Lon..."
-      |
-      v
-SearchForm (debounce 300ms, min 2 chars)
-      |
-      v
-New Edge Function: amadeus-airport-search
-      |
-      v
-Amadeus API: GET /v1/reference-data/locations?subType=CITY,AIRPORT&keyword=Lon
-      |
-      v
-Returns: [{ name: "London Heathrow", iataCode: "LHR", ... }, { name: "London Gatwick", iataCode: "LGW", ... }, ...]
-      |
-      v
-Dropdown under the input — user selects "London Heathrow (LHR)"
-      |
-      v
-iataCode "LHR" stored — passed to /flight-results?from=LHR&...
+GET /v1/shopping/flight-destinations?origin={IATA}&oneWay=false&nonStop=false&viewBy=DATE
+```
+
+This returns a list of destinations and dates with the cheapest price for each. Since the test environment has limited data, we'll call it with just the `origin` and filter client-side to pick the lowest price per departure date.
+
+**Note**: The Amadeus test environment returns limited/sample data, so not every calendar day will have a price — days without data will show as grayed out.
+
+### Architecture Overview
+
+```
+User selects "From" airport  →  fromIata = "LHR"
+User clicks Depart field     →  Price calendar appears below date picker
+
+FlightPriceCalendar component
+  │
+  ├── useEffect on `fromIata` + displayed month
+  │
+  └── Edge Function: amadeus-flight-inspiration
+        │
+        └── Amadeus API: GET /v1/shopping/flight-destinations?origin=LHR&viewBy=DATE
+              │
+              └── Returns: [{ departureDate, price.total }, ...]
+                    │
+                    └── Build a map: { "2026-03-05": 89.00, "2026-03-12": 112.50, ... }
+                          │
+                          └── Render calendar grid with price badges on each day
+                                Cheapest day highlighted in green
+                                Clicking a day → sets the depart date in SearchForm
 ```
 
 ### Files to Create / Edit
 
-**1. New Edge Function — `supabase/functions/amadeus-airport-search/index.ts`**
-- Reuses the exact same Amadeus token-caching pattern as `amadeus-flight-search`
-- Calls `GET https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY,AIRPORT&keyword={keyword}&page[limit]=8&view=LIGHT`
-- Maps each result to `{ name, iataCode, cityName, countryCode }` — enough to display a rich label and store the code
-- Handles CORS identically to existing functions (no new secrets required)
+**1. New Edge Function — `supabase/functions/amadeus-flight-inspiration/index.ts`**
+- Reuses the same Amadeus token-caching pattern
+- Accepts query params: `origin` (required), `oneWay` (optional), `nonStop` (optional)
+- Calls `GET https://test.api.amadeus.com/v1/shopping/flight-destinations?origin={origin}&viewBy=DATE`
+- Returns `{ prices: { [date: string]: number } }` — a plain date-to-price map
+- Handles CORS identically to all existing functions
 
-**2. Create `src/components/AirportAutocompleteInput.tsx`** — a reusable component
-- Props: `label`, `placeholder`, `value` (display string), `onChange`, `onSelect(iataCode, displayLabel)`
-- Internal state: `suggestions`, `showDropdown`, `isLoading`
-- 300ms debounced fetch to the new edge function on every keystroke (≥2 chars)
-- Closes on outside click via a `useRef` + `mousedown` listener
-- Dropdown rows show: **City/airport name** (bold) + IATA code chip (e.g. `LHR`) + country — matching the hotel autocomplete style with a `Plane` icon
-- Loading spinner and "No results" empty state
-- `onMouseDown` with `e.preventDefault()` on suggestion buttons to prevent blur-before-click (same pattern as hotel autocomplete)
-- Extracted as its own component so it works for both the standard From/To fields AND the multi-city leg fields without duplicating logic
+**2. New Component — `src/components/FlightPriceCalendar.tsx`**
+- Props: `origin: string` (the IATA code), `month: Date`, `onDaySelect: (date: Date) => void`, `selectedDate?: Date`
+- Fetches from the edge function whenever `origin` or `month` changes
+- Renders a clean monthly calendar grid (Mon–Sun header, 6-row grid)
+- Each day cell shows:
+  - Day number
+  - Price badge below (e.g. `£89`) in green/amber based on relative cost
+  - Cheapest day of the month gets a green `Best price` label
+  - Days in the past are grayed/disabled
+  - Days with no API data show no price but remain selectable
+- Month navigation arrows (prev/next month) — disables going before current month
+- Loading skeleton while fetching
+- Empty state if no price data returned ("Price data unavailable for this route")
 
 **3. Edit `src/components/SearchForm.tsx`**
+- Add a `showPriceCalendar` state that becomes `true` when the Depart popover is opened AND `fromIata` is set
+- Pass `fromIata`, the displayed `checkIn` month, and an `onDaySelect` callback into `<FlightPriceCalendar>`
+- The price calendar renders inside the Depart `PopoverContent`, replacing or sitting below the standard DayPicker — the user can use either: clicking a price day sets the date and closes the popover
 
-State changes:
-- Replace `departureCity: string` (raw text) with `departureCity: string` (display label) + `fromIata: string` (stored code)
-- Replace `destination: string` with `destination: string` (display) + `toIata: string` (stored code)
-- For multi-city legs, add `fromIata` and `toIata` fields to the `FlightLeg` interface alongside the existing `from`/`to` display strings
-- Update `swapCities()` to swap both display labels and IATA codes
+### Flight Price Calendar UI Design
 
-Search handler changes:
-- Remove the current `departureCity.trim().toUpperCase().slice(0, 3)` hack
-- Use `fromIata` and `toIata` directly when building the `/flight-results` URL params
-- Multi-city search will similarly use each leg's stored `fromIata`/`toIata`
+```
+  ← February 2026  →          (month nav)
+  Mo  Tu  We  Th  Fr  Sa  Su
+   2   3   4   5   6   7   8
+  £45 £52     £39 £61 £88 £72
+                ↑
+            "Best price" chip (green)
 
-UI changes:
-- Replace the plain `<input>` for From with `<AirportAutocompleteInput>` in the standard (Return/One-way) layout
-- Replace the plain `<input>` for To with `<AirportAutocompleteInput>` in the standard layout
-- Replace the From and To `<input>` elements inside each multi-city leg row with `<AirportAutocompleteInput>`
-- The swap button will be wired to swap both display strings and IATA codes
+   9  10  11  12  13  14  15
+  £49     £55 £60 £38 £74 £91
+                        ↑
+                    no data = blank
+```
 
-### Autocomplete Dropdown Design
-
-Each suggestion row displays:
-- ✈ Plane icon (primary colour, matching MapPin in hotel autocomplete)
-- **Airport/city name** in bold foreground text
-- IATA code as a small badge/chip (e.g. `LHR` in muted style)
-- City + country in muted smaller text on a second line (e.g. "London, United Kingdom")
-- Hover: `bg-primary/5` tint, same as hotel autocomplete
+- Each cell: rounded square, hover highlight, selected = primary bg
+- Price text: `text-green-600` for cheapest, `text-amber-600` for mid-range, `text-muted-foreground` for expensive  
+- "Best price" tag: tiny green pill on the cheapest day
+- Full-width inside the popover, max-width constrained so it doesn't overflow
 
 ### Technical Details
 
-- No new secrets needed — reuses `AMADEUS_CLIENT_ID` and `AMADEUS_CLIENT_SECRET` already configured
-- The `AirportAutocompleteInput` component is self-contained: it owns its own debounce ref, suggestions state and click-outside listener, keeping `SearchForm.tsx` clean
-- The `FlightLeg` interface gets two new optional fields (`fromIata?: string`, `toIata?: string`) so multi-city legs can track codes without breaking existing structure
-- The existing `handleSearch` currently does `.trim().toUpperCase().slice(0, 3)` as a workaround — this will be replaced with the stored IATA code; if no suggestion was selected (user typed a raw 3-letter code), the raw input is used as a fallback so the form still works
-- `view=LIGHT` parameter on the Amadeus API call returns a compact response with only essential fields, reducing payload size
-- The edge function will be deployed automatically on save
+- The edge function uses GET params (not POST body) — consistent with `amadeus-airport-search`
+- No new secrets needed — uses existing `AMADEUS_CLIENT_ID` / `AMADEUS_CLIENT_SECRET`
+- Price colouring thresholds: cheapest 33% = green, middle 33% = amber, top 33% = default muted
+- The price calendar only appears when `fromIata` is populated (the user has selected a From airport via autocomplete) — otherwise the normal DayPicker shows as before, so the form still works without an origin
+- Month navigation updates a local `calendarMonth` state, and a new fetch fires for each month shown
+- The component is self-contained — its own fetch, loading, and error state
+- Edge function deployed automatically on save
