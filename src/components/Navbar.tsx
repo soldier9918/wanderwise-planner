@@ -57,7 +57,7 @@ const Navbar = () => {
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 location.pathname === item.path && item.label === "Flights + Hotels"
                   ? "text-primary bg-primary/10"
-                  : "text-white/70 hover:text-white hover:bg-navy-lighter"
+                  : "text-white hover:text-white/80 hover:bg-navy-lighter"
               }`}
             >
               {item.label}
@@ -102,7 +102,7 @@ const Navbar = () => {
                   key={item.label}
                   to={item.path}
                   onClick={(e) => { handleNavClick(e, item.path); setMobileOpen(false); }}
-                  className="px-4 py-3 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-navy-lighter transition-colors"
+                  className="px-4 py-3 rounded-lg text-sm font-medium text-white hover:text-white/80 hover:bg-navy-lighter transition-colors"
                 >
                   {item.label}
                 </Link>
