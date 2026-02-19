@@ -1,12 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, Plane, AlertCircle, Loader2, ChevronDown,
   Sparkles, Search, SlidersHorizontal, X, ChevronUp, ChevronLeft,
-  Luggage, Briefcase, BaggageClaim,
+  Luggage, Briefcase, BaggageClaim, Plus, Minus, CalendarIcon,
 } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
+import AirportAutocompleteInput from "@/components/AirportAutocompleteInput";
+import RangeDatePickerCalendar from "@/components/RangeDatePickerCalendar";
+import { cn } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -504,6 +508,49 @@ const FlightResults = () => {
   const [sortBy, setSortBy] = useState<"price" | "duration" | "stops">("price");
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [editSearchOpen, setEditSearchOpen] = useState(false);
+
+  // Inline edit form state
+  const [editFrom, setEditFrom] = useState(from);
+  const [editFromIata, setEditFromIata] = useState(from);
+  const [editTo, setEditTo] = useState(to);
+  const [editToIata, setEditToIata] = useState(to);
+  const [editDepart, setEditDepart] = useState<Date | undefined>(() => { try { return depart ? parseISO(depart) : undefined; } catch { return undefined; } });
+  const [editReturn, setEditReturn] = useState<Date | undefined>(() => { try { return returnDate ? parseISO(returnDate) : undefined; } catch { return undefined; } });
+  const [editAdults, setEditAdults] = useState(adults);
+  const [editCalOpen, setEditCalOpen] = useState(false);
+  const editDepartBtnRef = useRef<HTMLButtonElement>(null);
+  const [editCalTop, setEditCalTop] = useState(0);
+  const [editCalLeft, setEditCalLeft] = useState(0);
+
+  const openEditCal = useCallback(() => {
+    if (editDepartBtnRef.current) {
+      const r = editDepartBtnRef.current.getBoundingClientRect();
+      const calH = 480;
+      const spaceBelow = window.innerHeight - r.bottom - 8;
+      const top = spaceBelow >= calH ? r.bottom + 6 : Math.max(8, r.top - calH - 6);
+      setEditCalTop(top);
+      setEditCalLeft(Math.max(8, Math.min(r.left, window.innerWidth - 680)));
+    }
+    setEditCalOpen(true);
+  }, []);
+
+  const handleEditSearch = () => {
+    if (!editFromIata || !editToIata || !editDepart) return;
+    const newParams = new URLSearchParams({
+      from: editFromIata.toUpperCase(),
+      to: editToIata.toUpperCase(),
+      depart: format(editDepart, "yyyy-MM-dd"),
+      adults: String(editAdults),
+      children: String(children),
+      cabin,
+      direct: String(direct),
+    });
+    if (editReturn) newParams.set("return", format(editReturn, "yyyy-MM-dd"));
+    setEditSearchOpen(false);
+    setEditCalOpen(false);
+    setSearchParams(newParams);
+  };
 
   const [filters, setFilters] = useState<FilterState>({
     stopsDirect: true, stopsOne: true, stopsTwo: true,
@@ -623,9 +670,9 @@ const FlightResults = () => {
 
         {/* ── Sticky search summary bar with date arrows ── */}
         <div className="bg-card border-b border-border sticky top-16 z-30 shadow-sm">
-          <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center gap-2 flex-wrap">
-            {/* Route pill */}
-            <button onClick={() => navigate(-1)}
+          <div className="max-w-[1400px] mx-auto px-2 py-3 flex items-center gap-2 flex-wrap">
+            {/* Route pill — opens inline edit overlay */}
+            <button onClick={() => setEditSearchOpen(true)}
               className="flex items-center gap-2 bg-secondary hover:bg-muted rounded-xl px-4 py-2 text-sm font-bold text-foreground transition-colors">
               <span>{from.toUpperCase()}</span>
               <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
@@ -671,45 +718,14 @@ const FlightResults = () => {
             <div className="bg-secondary rounded-xl px-3 py-2 text-sm text-foreground font-medium">
               {adults + children} traveller{adults + children !== 1 ? "s" : ""} · {cabinMap[cabin.toUpperCase().replace(" ", "_")] || cabin}
             </div>
-            <button onClick={() => navigate(-1)} className="ml-auto text-sm font-semibold text-primary hover:text-primary/80">
+            <button onClick={() => setEditSearchOpen(true)} className="ml-auto text-sm font-semibold text-primary hover:text-primary/80">
               Edit search
             </button>
           </div>
         </div>
 
-        {/* ── Cheapest / Fastest / Fewest stops tabs ── */}
-        {!loading && !error && flights.length > 0 && (
-          <div className="bg-card border-b border-border">
-            <div className="max-w-screen-xl mx-auto px-4">
-              <div className="flex items-stretch gap-4">
-                {/* Spacer to align tabs with results column */}
-                <div className="hidden lg:block w-56 shrink-0" />
-                <div className="flex flex-1 items-stretch">
-                  {([
-                    { key: "price" as const, label: "Cheapest", price: cheapest },
-                    { key: "duration" as const, label: "Fastest", price: fastest },
-                    { key: "stops" as const, label: "Fewest stops", price: null },
-                  ]).map((opt) => (
-                    <button key={opt.key} onClick={() => setSortBy(opt.key)}
-                      className={`flex-1 text-left px-4 py-3 border-b-2 transition-colors ${
-                        sortBy === opt.key ? "border-primary bg-primary/5" : "border-transparent hover:bg-secondary/60"
-                      }`}>
-                      <p className="text-sm font-semibold text-muted-foreground">{opt.label}</p>
-                      {opt.price != null && <p className={`text-lg font-bold ${sortBy === opt.key ? "text-primary" : "text-foreground"}`}>£{opt.price}</p>}
-                    </button>
-                  ))}
-                  <button onClick={() => setShowMobileFilters(true)}
-                    className="flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-semibold text-foreground hover:bg-secondary/60 lg:hidden">
-                    <SlidersHorizontal className="w-4 h-4" /> Filters
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── Body: sidebar + results ── */}
-        <div className="max-w-screen-xl mx-auto px-4 py-5">
+        <div className="max-w-[1400px] mx-auto px-2 py-5">
           <div className="flex gap-4 items-start">
 
             {/* Sidebar desktop */}
@@ -717,8 +733,39 @@ const FlightResults = () => {
               {sidebar}
             </aside>
 
-            {/* Results */}
+            {/* Results column — sort pills live here */}
             <div className="flex-1 min-w-0">
+
+              {/* ── Sort pills (Fix 4: inside results column, pill style) ── */}
+              {!loading && !error && flights.length > 0 && (
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  {([
+                    { key: "price" as const, label: "Cheapest", price: cheapest },
+                    { key: "duration" as const, label: "Fastest", price: fastest },
+                    { key: "stops" as const, label: "Fewest stops", price: null },
+                  ]).map((opt) => (
+                    <button key={opt.key} onClick={() => setSortBy(opt.key)}
+                      className={cn(
+                        "rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all text-left",
+                        sortBy === opt.key
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "bg-card border-border text-foreground hover:bg-secondary"
+                      )}>
+                      <span>{opt.label}</span>
+                      {opt.price != null && (
+                        <span className={cn("ml-1.5 font-bold", sortBy === opt.key ? "text-primary" : "text-foreground")}>
+                          £{opt.price}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                  <button onClick={() => setShowMobileFilters(true)}
+                    className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-secondary transition-all lg:hidden">
+                    <SlidersHorizontal className="w-4 h-4" /> Filters
+                  </button>
+                </div>
+              )}
+
               {loading && (
                 <div className="flex flex-col items-center justify-center py-32 gap-5">
                   <div className="relative">
@@ -778,6 +825,135 @@ const FlightResults = () => {
         </div>
       </div>
 
+      {/* ── Inline search edit overlay (Fix 3) ── */}
+      <AnimatePresence>
+        {editSearchOpen && (
+          <>
+            {/* Blurred backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              onClick={() => { setEditSearchOpen(false); setEditCalOpen(false); }}
+            />
+            {/* Edit card */}
+            <motion.div
+              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -16, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-full max-w-2xl mx-auto px-4"
+            >
+              <div className="bg-card rounded-2xl border border-border shadow-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-foreground">Edit search</h2>
+                  <button onClick={() => { setEditSearchOpen(false); setEditCalOpen(false); }}
+                    className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center transition-colors">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* From / To */}
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1 border border-border rounded-xl overflow-hidden">
+                    <AirportAutocompleteInput
+                      label="From"
+                      placeholder="City or airport"
+                      value={editFrom}
+                      onChange={(v) => { setEditFrom(v); if (!v) setEditFromIata(""); }}
+                      onSelect={(iata, display) => { setEditFrom(display); setEditFromIata(iata); }}
+                    />
+                  </div>
+                  <div className="flex-1 border border-border rounded-xl overflow-hidden">
+                    <AirportAutocompleteInput
+                      label="To"
+                      placeholder="City or airport"
+                      value={editTo}
+                      onChange={(v) => { setEditTo(v); if (!v) setEditToIata(""); }}
+                      onSelect={(iata, display) => { setEditTo(display); setEditToIata(iata); }}
+                    />
+                  </div>
+                </div>
+
+                {/* Dates + adults */}
+                <div className="flex gap-2 mb-4">
+                  {/* Depart date */}
+                  <button
+                    ref={editDepartBtnRef}
+                    type="button"
+                    onClick={openEditCal}
+                    className="flex-1 flex items-center gap-2 border border-border rounded-xl px-4 py-3 text-sm bg-card hover:bg-secondary transition-colors text-left"
+                  >
+                    <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold">Depart</p>
+                      <p className={cn("font-semibold", editDepart ? "text-foreground" : "text-muted-foreground")}>
+                        {editDepart ? format(editDepart, "dd MMM yyyy") : "Add date"}
+                      </p>
+                    </div>
+                  </button>
+                  {/* Return date */}
+                  <button
+                    type="button"
+                    onClick={openEditCal}
+                    className="flex-1 flex items-center gap-2 border border-border rounded-xl px-4 py-3 text-sm bg-card hover:bg-secondary transition-colors text-left"
+                  >
+                    <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold">Return</p>
+                      <p className={cn("font-semibold", editReturn ? "text-foreground" : "text-muted-foreground")}>
+                        {editReturn ? format(editReturn, "dd MMM yyyy") : "No return"}
+                      </p>
+                    </div>
+                  </button>
+                  {/* Adults */}
+                  <div className="flex items-center gap-2 border border-border rounded-xl px-4 py-3 bg-card">
+                    <button type="button" onClick={() => setEditAdults(Math.max(1, editAdults - 1))}
+                      className="w-7 h-7 rounded-lg border border-border flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-30"
+                      disabled={editAdults <= 1}>
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="text-sm font-bold text-foreground w-6 text-center">{editAdults}</span>
+                    <button type="button" onClick={() => setEditAdults(Math.min(9, editAdults + 1))}
+                      className="w-7 h-7 rounded-lg border border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors disabled:opacity-30"
+                      disabled={editAdults >= 9}>
+                      <Plus className="w-3 h-3 text-primary" />
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleEditSearch}
+                  disabled={!editFromIata || !editToIata || !editDepart}
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Search flights
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Calendar portal inside overlay */}
+            {editCalOpen && createPortal(
+              <div
+                id="edit-cal-portal"
+                style={{ position: "fixed", top: editCalTop, left: editCalLeft, zIndex: 99999 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RangeDatePickerCalendar
+                  departDate={editDepart}
+                  returnDate={editReturn}
+                  onDepartChange={(d) => { setEditDepart(d); setEditReturn(undefined); }}
+                  onReturnChange={(d) => setEditReturn(d)}
+                  onApply={() => setEditCalOpen(false)}
+                  hint="Select return date (optional)"
+                />
+              </div>,
+              document.body
+            )}
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Mobile filter drawer */}
       <AnimatePresence>
         {showMobileFilters && (
@@ -800,3 +976,4 @@ const FlightResults = () => {
 };
 
 export default FlightResults;
+

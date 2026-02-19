@@ -104,10 +104,17 @@ const SearchForm = () => {
       return;
     }
 
+    // Validate depart date — auto-open calendar if missing
+    if (!checkIn) {
+      setFormError("Please select a departure date.");
+      openCalendar(departBtnRef);
+      return;
+    }
+
     const params = new URLSearchParams({
       from: fromIata,
       to: toIata,
-      depart: checkIn ? format(checkIn, "yyyy-MM-dd") : "",
+      depart: format(checkIn, "yyyy-MM-dd"),
       adults: String(adults),
       children: String(children),
       cabin: cabinClass,
