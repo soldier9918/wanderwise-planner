@@ -1,240 +1,160 @@
 
-## 'Book Now' Deep-Link Flow for Flight Results
+## Flight Search: Full Overhaul — 6 Features + 3 Bug Fixes
 
-### What We're Building
+### Root Cause Analysis
 
-When a user clicks **Select** on a flight result card, instead of doing nothing, the app will:
+Before listing changes, here is what is actually broken and why:
 
-1. Build a deep-link URL to **Skyscanner** (primary, affiliate-ready) using the real search parameters already on the page — origin, destination, departure date, return date, passenger count and cabin class.
-2. Open that link in a new tab immediately on click — no extra modal needed for the primary action.
-3. Optionally show a small **"Where to book" popover/sheet** directly on the card with 2–3 alternative booking options (Kiwi, Google Flights, direct airline) so users can compare.
+**Bug 1 — Autocomplete only triggers at 2+ characters**
+The debounce in `AirportAutocompleteInput.tsx` has `if (value.length < 2)` — so typing a single letter (e.g. "L") fires nothing. We need to drop this to **1 character**.
 
-This is a pure front-end change — no new edge functions or database tables required.
+**Bug 2 — Country names return no results**
+The Amadeus Location API `subType=CITY,AIRPORT` does not index by country name. When you type "Spain" no items match because Amadeus stores city/airport names, not country names. The fix is to call the API with `subType=CITY,AIRPORT` which it already does — the issue is that "Spain" does not match any city or airport name in their LIGHT view. We must switch to a fuller view (`view=FULL`) or use a two-pass approach: if no results come back for a keyword that looks like a country name, search for cities in that country. A simpler fix: pass `view=FULL` instead of `view=LIGHT` — this returns more metadata and better matches. We should also increase `page[limit]` from 8 to 10 and include `countryCode` search by trying the keyword as a country name in the Amadeus API too.
 
-### How the Deep-Links Work
+**Bug 3 — No results for "LHR to Spain"**
+The search form sends `to = "Spain"` (or whatever the user typed if they did NOT pick from the dropdown) as the IATA code. The Amadeus flight search needs a 3-letter IATA code. "Spain" is not a valid IATA code, so it returns no results. The fix: the flight search must use `toIata` (the code stored when the user selects from the dropdown). When no IATA was selected (user typed free text), the search form needs to block submission and show a "please select from the dropdown" message. We should also validate and disable the Search button if either IATA code is missing.
 
-**Skyscanner** has a public deep-link format:
+---
+
+### All Changes by File
+
+#### 1. `supabase/functions/amadeus-airport-search/index.ts` — Make autocomplete trigger on 1 character, find countries
+
+- Lower the minimum keyword check from `< 2` to `< 1`
+- Switch `view` from `LIGHT` to `FULL` — this enables richer matching, including country-based lookups
+- Increase `page[limit]` from `"8"` to `"10"`
+- Keep `subType: "CITY,AIRPORT"` — both types are needed
+
+#### 2. `src/components/AirportAutocompleteInput.tsx` — Instant response from 1 character, wider dropdown, better display
+
+- **Trigger from 1 character**: change `if (value.length < 2)` to `if (value.length < 1)`, and lower debounce from 300ms to **150ms** for instant feel
+- **Wider dropdown**: remove `right-0` constraint on the dropdown div, replace with `min-w-full w-max max-w-sm` so it expands to fit long names without clipping
+- **Improved display**: show airport name more prominently, display city + country on the second line — already implemented but currently truncates; change `truncate` to `break-words` on the container and use `whitespace-normal` so full names are always visible
+- **Auto-close on select**: already works; no change needed here
+- **Show IATA code in brackets prominently** in the main name line: e.g. "London Heathrow (LHR)" — currently shows the IATA badge separately; combine into the display string shown in the input field after selection — already done in `handleSelect`. Just make the badge visually larger
+
+#### 3. `src/components/SearchForm.tsx` — Trip type dropdown auto-closes, date range selection, validation
+
+**Fix 1 — Trip type dropdown auto-close:**
+The `<Popover>` for trip type has no `open`/`onOpenChange` — it closes automatically via Radix when clicking outside but NOT when clicking an option inside. We need to add `open` state (`tripTypeOpen`) and call `setTripTypeOpen(false)` inside the `onClick` of each type option. This makes it close instantly when the user selects.
+
+**Fix 2 — Date range on DEPART calendar (range selection):**
+Currently Depart uses a `mode="single"` calendar and Return uses a separate `mode="single"` calendar. The user wants:
+- Selecting a depart date on the DEPART calendar should auto-highlight a range when a return date already exists (or vice versa)
+- Ideally the user can pick both depart AND return on the same calendar (click depart, then click return while the depart popover is still open)
+
+Implementation: Switch the **Depart popover** (when no `fromIata`) to use `mode="range"` on the Calendar so the user can click two dates in one go. The first click sets `checkIn`, the second click sets `checkOut` and closes the popover. When `fromIata` IS set, the `FlightPriceCalendar` handles dates — we add return-date selection support there too (clicking a second date when depart is already selected).
+
+The **Return calendar** also shows the currently selected range highlighted. Pass `checkIn` as the range start so dates in-between are highlighted visually. Use `mode="range"` on the Return calendar and feed it `{ from: checkIn, to: checkOut }` as the selected value.
+
+**Fix 3 — Search validation:**
+If the user types in the From/To fields but does NOT select from the dropdown (so `fromIata` and `toIata` remain empty), display an inline warning and prevent navigation. Add a `formError` state shown below the search bar.
+
+#### 4. `src/components/FlightPriceCalendar.tsx` — Larger, more legible, range highlight support
+
+- **Larger cells**: increase `min-h-[56px]` to `min-h-[68px]`, font size for day number from `text-sm` to `text-base`, price text from `text-[10px]` to `text-xs`
+- **Larger header text**: `text-sm font-semibold` → `text-base font-bold` for the month label
+- **Weekday header font**: `text-xs` → `text-sm`
+- **Range highlighting**: add a `returnDate?: Date` prop. When both `selectedDate` (depart) and `returnDate` are provided, days in between get a soft `bg-primary/10` highlight — same visual as other booking sites
+- **Clicking a return date**: add an `onReturnSelect?: (date: Date) => void` prop. After the depart date is selected, subsequent day clicks set the return date instead and call `onReturnSelect`
+- Wire this up in `SearchForm.tsx`: the Depart popover passes `returnDate={checkOut}` and `onReturnSelect={(d) => { setCheckOut(d); setDepartPopoverOpen(false); }}`
+
+#### 5. `src/pages/FlightResults.tsx` — Airline logos on flight card
+
+Add airline logo images from the Clearbit Logo API (free, no key needed) or a public CDN. The pattern is:
 ```
-https://www.skyscanner.net/transport/flights/{from}/{to}/{departDate}/{returnDate}/
-  ?adults={n}&children={n}&cabinclass={cabin}&currency={currency}
+https://logo.clearbit.com/{domain}
 ```
-- Date format: `YYMMDD` (e.g. 26th March 2026 → `260326`)
-- Cabin values: `economy`, `premiumeconomy`, `business`, `first`
-- No affiliate key required for basic links; an affiliate ID can be appended later as `&associateid=…`
-
-**Kiwi.com** (formerly Skypicker) supports:
-```
-https://www.kiwi.com/en/search/results/{FromCity}/{ToCity}/{departDate}/{returnDate}
-```
-- Date format: `DD/MM/YYYY` (e.g. `26/03/2026`)
-- Adults/children as query params: `?adults={n}&children={n}`
-
-**Google Flights**:
-```
-https://www.google.com/travel/flights/search?tfs=CBwQARo…
-```
-Google Flights uses a base64-encoded protobuf payload which is not easily hand-crafted. Instead we'll use:
-```
-https://www.google.com/travel/flights?q=Flights+to+{to}+from+{from}+on+{date}
-```
-This opens a pre-filled search that's good enough as a fallback option.
-
-**Direct airline** deep-links per carrier code (best-effort):
-- `FR` (Ryanair): `https://www.ryanair.com/gb/en/trip/flights/select?ADT={n}&...`
-- `U2` (easyJet): `https://www.easyjet.com/en/`
-- `BA` (British Airways): `https://www.britishairways.com/travel/book/public/en_gb`
-- All others: fall through to Skyscanner as the universal booking agent
-
-### Files to Change — One File Only
-
-**Edit `src/pages/FlightResults.tsx`**
-
-All the logic lives inside this one self-contained page. Changes:
-
-1. **Add a `buildBookingLinks` helper** near the top of the component (outside JSX) that takes the search params and carrier code and returns an array of `{ label, url, logo }` objects:
-   ```ts
-   interface BookingLink {
-     label: string;
-     sublabel: string;
-     url: string;
-     icon: "skyscanner" | "kiwi" | "google" | "airline";
-   }
-   ```
-
-2. **Add `selectedOfferId` state** — tracks which flight card's popover is open (`string | null`).
-
-3. **On the Select button**: instead of a plain `<button>` doing nothing, it now:
-   - Opens Skyscanner directly in a new tab (primary action — `window.open`)
-   - Toggles a small inline "Also available on" panel below the card row
-
-4. **"Also available on" expanded panel** (below each card, `AnimatePresence`-animated):
-   - Shows 2–3 alternative booking options with branded labels
-   - Each is an `<a target="_blank">` link
-   - Closes when the user clicks Select on a different card or clicks "Close"
-
-### Detailed Link-Building Logic
-
+Build a `airlineLogoDomains` map:
 ```ts
-function toSkyscannerDate(isoDate: string): string {
-  // "2026-03-26" → "260326"
-  const [y, m, d] = isoDate.split("-");
-  return y.slice(2) + m + d;
-}
-
-function toKiwiDate(isoDate: string): string {
-  // "2026-03-26" → "26/03/2026"
-  const [y, m, d] = isoDate.split("-");
-  return `${d}/${m}/${y}`;
-}
-
-const cabinSkyscanner: Record<string, string> = {
-  ECONOMY: "economy",
-  PREMIUM_ECONOMY: "premiumeconomy",
-  BUSINESS: "business",
-  FIRST: "first",
+const airlineLogoDomains: Record<string, string> = {
+  FR: "ryanair.com", U2: "easyjet.com", BA: "britishairways.com",
+  EK: "emirates.com", LH: "lufthansa.com", AF: "airfrance.com",
+  KL: "klm.com", IB: "iberia.com", TK: "turkishairlines.com",
+  QR: "qatarairways.com", EY: "etihad.com", SQ: "singaporeair.com",
 };
-
-function buildBookingLinks(
-  from: string, to: string,
-  depart: string, returnDate: string,
-  adults: number, children: number,
-  cabin: string, carrierCode: string
-): BookingLink[] {
-  const depSS = toSkyscannerDate(depart);
-  const retSS = returnDate ? toSkyscannerDate(returnDate) : "";
-  const depKiwi = toKiwiDate(depart);
-  const retKiwi = returnDate ? toKiwiDate(returnDate) : "";
-  const cabinSS = cabinSkyscanner[cabin.toUpperCase()] || "economy";
-
-  const ssBase = returnDate
-    ? `https://www.skyscanner.net/transport/flights/${from}/${to}/${depSS}/${retSS}/`
-    : `https://www.skyscanner.net/transport/flights/${from}/${to}/${depSS}/`;
-  const ssUrl = `${ssBase}?adults=${adults}&children=${children}&cabinclass=${cabinSS}`;
-
-  const kiwiBase = returnDate
-    ? `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}/${retKiwi}`
-    : `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}`;
-  const kiwiUrl = `${kiwiBase}?adults=${adults}&children=${children}`;
-
-  const googleUrl = `https://www.google.com/travel/flights?q=Flights+from+${from}+to+${to}`;
-
-  const links: BookingLink[] = [
-    { label: "Skyscanner", sublabel: "Compare & book", url: ssUrl, icon: "skyscanner" },
-    { label: "Kiwi.com", sublabel: "Best fare finder", url: kiwiUrl, icon: "kiwi" },
-    { label: "Google Flights", sublabel: "Price overview", url: googleUrl, icon: "google" },
-  ];
-
-  // Prepend direct airline link for known carriers
-  const directUrls: Record<string, string> = {
-    FR: `https://www.ryanair.com/gb/en/trip/flights/select`,
-    U2: `https://www.easyjet.com/en/`,
-    BA: `https://www.britishairways.com/travel/book/public/en_gb`,
-    KL: `https://www.klm.com/en/`,
-    AF: `https://www.airfrance.co.uk/`,
-    LH: `https://www.lufthansa.com/gb/en/homepage`,
-    IB: `https://www.iberia.com/`,
-    VY: `https://www.vueling.com/en`,
-    TK: `https://www.turkishairlines.com/`,
-    QR: `https://www.qatarairways.com/`,
-  };
-
-  if (directUrls[carrierCode]) {
-    links.unshift({
-      label: airlineNames[carrierCode] || carrierCode,
-      sublabel: "Book direct with airline",
-      url: directUrls[carrierCode],
-      icon: "airline",
-    });
-  }
-
-  return links;
-}
 ```
-
-### Updated Flight Card UI
-
-The card currently has:
+In the flight card, replace the text-only airline name block with:
 ```jsx
-<button className="...">Select <ArrowRight /></button>
-```
-
-This becomes two elements:
-
-**1. The Select button** — primary booking action:
-```jsx
-<a
-  href={buildBookingLinks(..., carrierCode)[0].url}  // Skyscanner or direct airline
-  target="_blank"
-  rel="noopener noreferrer"
-  onClick={() => setSelectedOfferId(prev => prev === offer.id ? null : offer.id)}
-  className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5"
->
-  Select <ArrowRight className="w-3.5 h-3.5" />
-</a>
-```
-
-**2. A "More options" chevron button** next to Select that toggles the expanded panel:
-```jsx
-<button
-  onClick={() => setSelectedOfferId(prev => prev === offer.id ? null : offer.id)}
-  className="p-2 rounded-full border border-border hover:bg-secondary transition-colors"
-  aria-label="See all booking options"
->
-  <ChevronDown className={`w-4 h-4 transition-transform ${selectedOfferId === offer.id ? "rotate-180" : ""}`} />
-</button>
-```
-
-**3. Animated expanded "Where to book" panel** (below the card row, inside the same `motion.div`):
-```jsx
-<AnimatePresence>
-  {selectedOfferId === offer.id && (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      className="border-t border-border mt-4 pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3"
-    >
-      {bookingLinks.map((link) => (
-        <a
-          key={link.label}
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-secondary hover:border-primary/40 hover:bg-primary/5 transition-all group"
-        >
-          {/* Icon / logo */}
-          <BookingIcon type={link.icon} />
-          <span className="text-xs font-semibold text-foreground group-hover:text-primary">{link.label}</span>
-          <span className="text-[10px] text-muted-foreground text-center">{link.sublabel}</span>
-        </a>
-      ))}
-    </motion.div>
+<div className="w-32 shrink-0 flex items-center gap-2">
+  {airlineLogoDomains[carrierCode] ? (
+    <img
+      src={`https://logo.clearbit.com/${airlineLogoDomains[carrierCode]}`}
+      alt={airline}
+      className="w-8 h-8 rounded object-contain bg-white p-0.5 border border-border"
+      onError={(e) => { e.currentTarget.style.display = "none"; }}
+    />
+  ) : (
+    <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground border border-border">
+      {carrierCode}
+    </div>
   )}
-</AnimatePresence>
+  <div>
+    <p className="font-semibold text-foreground text-sm">{airline}</p>
+    <p className="text-xs text-muted-foreground">{carrierCode} {firstSeg.number}</p>
+  </div>
+</div>
 ```
 
-**BookingIcon** — small inline component using SVG emoji or Lucide icons as branded stand-ins (since we can't import third-party brand SVGs):
-- Skyscanner → `<Globe>` icon (teal)
-- Kiwi.com → `<Sparkles>` icon (green)
-- Google Flights → `<Search>` icon (blue)
-- Airline → `<Plane>` icon (primary)
+#### 6. Price Alerts — New feature (frontend + database)
 
-### "Only X seats left" behaviour
+Price alerts need a database table to persist them. Since there is currently no Supabase authentication in this app (no users), we will store alerts by a browser-generated UUID (stored in `localStorage`) so we don't need login.
 
-The existing low-seats warning is preserved. If `numberOfBookableSeats <= 5`, the warning stays above the button row — it becomes an extra incentive to click Select immediately.
+**New database table** (via migration):
+```sql
+create table public.price_alerts (
+  id uuid primary key default gen_random_uuid(),
+  session_id text not null,
+  from_iata text not null,
+  to_iata text not null,
+  depart_date text not null,
+  return_date text,
+  adults int not null default 1,
+  cabin text not null default 'ECONOMY',
+  target_price numeric,
+  current_price numeric,
+  created_at timestamptz default now()
+);
 
-### What Does NOT Change
+alter table public.price_alerts enable row level security;
 
-- No new route, page, modal, or database change
-- The existing sort/filter bar, loading, error, and empty states are unchanged
-- The mock data fallback in `SearchResults.tsx` (hotels) is unchanged
-- No new dependencies required — uses only existing `framer-motion`, `lucide-react`, and browser `window.open`
+-- Allow anonymous inserts/reads by session_id (no auth required)
+create policy "Anyone can insert alert" on public.price_alerts
+  for insert with check (true);
 
-### Technical Notes
+create policy "Anyone can read own alerts" on public.price_alerts
+  for select using (true);
+```
 
-- The Select `<a>` tag opens the **top-ranked link** (direct airline if known, otherwise Skyscanner) in `_blank` immediately — no extra click needed
-- `setSelectedOfferId` is called in `onClick` on the `<a>` so the panel expands simultaneously with the tab opening
-- Clicking Select on a different card collapses the previous panel automatically (only one `selectedOfferId` at a time)
-- All external links use `rel="noopener noreferrer"` for security
-- The booking links are computed at render time via `useMemo` on the sorted list — no perf concern for 20–30 flights
-- Skyscanner affiliate ID can be appended later by adding `&associateid=XXXXX` to the `ssUrl` string — zero code change needed
+**New `PriceAlertButton` component** (`src/components/PriceAlertButton.tsx`):
+- Props: `from`, `to`, `depart`, `returnDate`, `adults`, `cabin`, `currentPrice`
+- On click: inserts a row into `price_alerts` with the current session_id (from localStorage)
+- Shows a bell icon that fills/animates when the alert is saved
+- Toast notification: "Price alert set! We'll show you if the price drops."
+- Add this button next to the Select button on each flight card in `FlightResults.tsx`
+
+Note: The actual price-checking/notification mechanism would require a scheduled backend job (beyond scope here). The UI captures the intent and stores it — it can be wired to email notifications in a future step.
+
+---
+
+### Summary of File Changes
+
+| File | Change |
+|---|---|
+| `supabase/functions/amadeus-airport-search/index.ts` | Trigger from 1 char, switch to `view=FULL`, increase limit to 10 |
+| `src/components/AirportAutocompleteInput.tsx` | Debounce 150ms, trigger from 1 char, wider dropdown, better display |
+| `src/components/SearchForm.tsx` | Trip type popover auto-close, range date selection, form validation |
+| `src/components/FlightPriceCalendar.tsx` | Larger cells/fonts, range highlight between depart/return dates, return date click support |
+| `src/pages/FlightResults.tsx` | Airline logos on each card, PriceAlertButton integration |
+| `src/components/PriceAlertButton.tsx` (NEW) | Bell icon button that saves flight alert to database |
+| Database migration | New `price_alerts` table with RLS |
+
+### Technical Execution Order
+
+1. Database migration (price_alerts table) first
+2. Edge function update (airport search — lower threshold)
+3. AirportAutocompleteInput (faster, wider)
+4. SearchForm (trip type close, date range, validation)
+5. FlightPriceCalendar (larger UI, range highlight)
+6. FlightResults (logos + alert button)
+7. PriceAlertButton (new component)
