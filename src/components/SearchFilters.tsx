@@ -7,6 +7,8 @@ interface FiltersProps {
   onFilterChange: (filters: FilterState) => void;
   distanceUnit: "km" | "mi";
   onDistanceUnitChange: (unit: "km" | "mi") => void;
+  /** When true, hides mock-only filters (board type, accommodation, flight stops) */
+  hideMockFilters?: boolean;
 }
 
 export interface FilterState {
@@ -19,7 +21,7 @@ export interface FilterState {
   minRating: number;
 }
 
-const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: FiltersProps) => {
+const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange, hideMockFilters = false }: FiltersProps) => {
   const { formatPrice } = useCurrency();
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -131,7 +133,8 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
           </div>
         </div>
 
-        {/* Accommodation Type */}
+        {/* Accommodation Type — mock data only */}
+        {!hideMockFilters && (
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-2 block">
             <Building2 className="w-3 h-3 inline mr-1" />
@@ -163,8 +166,10 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
             ))}
           </div>
         </div>
+        )}
 
-        {/* Board Type */}
+        {/* Board Type — mock data only */}
+        {!hideMockFilters && (
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-2 block">Board Type</label>
           <div className="flex flex-col gap-1">
@@ -193,8 +198,10 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
             ))}
           </div>
         </div>
+        )}
 
-        {/* Flight Type */}
+        {/* Flight Type — mock data only */}
+        {!hideMockFilters && (
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-2 block">
             <Plane className="w-3 h-3 inline mr-1" />
@@ -216,6 +223,7 @@ const SearchFilters = ({ onFilterChange, distanceUnit, onDistanceUnitChange }: F
             ))}
           </div>
         </div>
+        )}
 
         {/* Max Price */}
         <div>

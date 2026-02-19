@@ -1,10 +1,48 @@
 import { useCallback, useState } from "react";
 import { GoogleMap, useJsApiLoader, OverlayViewF, OverlayView } from "@react-google-maps/api";
 import { Hotel } from "@/data/mockHotels";
+import { LiveHotel } from "@/types/liveHotel";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface SearchResultsMapProps {
-  hotels: Hotel[];
+  hotels: Hotel[] | LiveHotel[];
+  isLive?: boolean;
+}
+
+// Normalise both shapes into a minimal map-pin structure
+interface MapPin {
+  id: string;
+  name: string;
+  location: string;
+  lat: number;
+  lng: number;
+  price: number;
+}
+
+function toMapPins(hotels: Hotel[] | LiveHotel[], isLive: boolean): MapPin[] {
+  if (!isLive) {
+    return (hotels as Hotel[])
+      .filter((h) => h.lat && h.lng)
+      .map((h) => ({
+        id: h.id,
+        name: h.name,
+        location: h.location,
+        lat: h.lat,
+        lng: h.lng,
+        price: Math.min(...h.prices.map((p) => p.price)),
+      }));
+  }
+
+  return (hotels as LiveHotel[])
+    .filter((h) => h.lat && h.lng && h.offers.length > 0)
+    .map((h) => ({
+      id: h.hotelId,
+      name: h.name,
+      location: `${h.cityCode}${h.countryCode ? ", " + h.countryCode : ""}`,
+      lat: h.lat,
+      lng: h.lng,
+      price: Math.min(...h.offers.map((o) => o.price)),
+    }));
 }
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyBVtwVPrEBuROA_uKOlHYr9qLmBlvbFb4s";
@@ -23,22 +61,24 @@ const mapStyles = [
 
 const containerStyle = { width: "100%", height: "100%" };
 
-const SearchResultsMap = ({ hotels }: SearchResultsMapProps) => {
+const SearchResultsMap = ({ hotels, isLive = false }: SearchResultsMapProps) => {
   const { formatPrice } = useCurrency();
-  const [activeHotel, setActiveHotel] = useState<string | null>(null);
+  const [activePin, setActivePin] = useState<string | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     id: "google-map-script",
   });
 
+  const pins = toMapPins(hotels, isLive);
+
   const getCenter = useCallback(() => {
-    if (hotels.length === 0) return { lat: 28.96, lng: -13.6 };
+    if (pins.length === 0) return { lat: 28.96, lng: -13.6 };
     return {
-      lat: hotels.reduce((s, h) => s + h.lat, 0) / hotels.length,
-      lng: hotels.reduce((s, h) => s + h.lng, 0) / hotels.length,
+      lat: pins.reduce((s, h) => s + h.lat, 0) / pins.length,
+      lng: pins.reduce((s, h) => s + h.lng, 0) / pins.length,
     };
-  }, [hotels]);
+  }, [pins]);
 
   if (!isLoaded) {
     return (
@@ -63,18 +103,16 @@ const SearchResultsMap = ({ hotels }: SearchResultsMapProps) => {
           fullscreenControl: true,
         }}
       >
-        {hotels.map((hotel) => {
-          const bestPrice = Math.min(...hotel.prices.map((p) => p.price));
-          const isActive = activeHotel === hotel.id;
-
+        {pins.map((pin) => {
+          const isActive = activePin === pin.id;
           return (
             <OverlayViewF
-              key={hotel.id}
-              position={{ lat: hotel.lat, lng: hotel.lng }}
+              key={pin.id}
+              position={{ lat: pin.lat, lng: pin.lng }}
               mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             >
               <div
-                onClick={() => setActiveHotel(isActive ? null : hotel.id)}
+                onClick={() => setActivePin(isActive ? null : pin.id)}
                 className="cursor-pointer relative"
                 style={{ transform: "translate(-50%, -100%)" }}
               >
@@ -85,7 +123,7 @@ const SearchResultsMap = ({ hotels }: SearchResultsMapProps) => {
                       : "bg-card text-foreground border-2 border-primary/60 hover:border-primary hover:scale-105"
                   }`}
                 >
-                  {formatPrice(bestPrice)}
+                  {formatPrice(pin.price)}
                 </div>
                 <div
                   className={`w-2 h-2 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 ${
@@ -94,9 +132,14 @@ const SearchResultsMap = ({ hotels }: SearchResultsMapProps) => {
                 />
                 {isActive && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 bg-card rounded-xl shadow-elevated border border-border p-3 z-50">
-                    <p className="font-display text-sm font-bold text-foreground truncate">{hotel.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{hotel.location}</p>
-                    <p className="text-primary font-bold text-sm mt-1">{formatPrice(bestPrice)} <span className="text-xs font-normal text-muted-foreground">per person</span></p>
+                    <p className="font-display text-sm font-bold text-foreground truncate">{pin.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{pin.location}</p>
+                    <p className="text-primary font-bold text-sm mt-1">
+                      {formatPrice(pin.price)}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {isLive ? "/ night" : "per person"}
+                      </span>
+                    </p>
                   </div>
                 )}
               </div>
