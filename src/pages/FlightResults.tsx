@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Plane, Clock, ArrowLeftRight, Filter, AlertCircle, Loader2 } from "lucide-react";
+import {
+  ArrowRight, Plane, Clock, ArrowLeftRight, Filter,
+  AlertCircle, Loader2, ChevronDown, Globe, Sparkles, Search,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -28,6 +31,13 @@ interface FlightOffer {
   validatingAirlineCodes: string[];
 }
 
+interface BookingLink {
+  label: string;
+  sublabel: string;
+  url: string;
+  icon: "skyscanner" | "kiwi" | "google" | "airline";
+}
+
 const airlineNames: Record<string, string> = {
   FR: "Ryanair", U2: "easyJet", W9: "Wizz Air", BA: "British Airways",
   EK: "Emirates", LH: "Lufthansa", AF: "Air France", KL: "KLM",
@@ -35,6 +45,88 @@ const airlineNames: Record<string, string> = {
   AA: "American Airlines", DL: "Delta", UA: "United", QR: "Qatar Airways",
   EY: "Etihad", SQ: "Singapore Airlines", CX: "Cathay Pacific", TK: "Turkish Airlines",
 };
+
+const directAirlineUrls: Record<string, string> = {
+  FR: "https://www.ryanair.com/gb/en/trip/flights/select",
+  U2: "https://www.easyjet.com/en/",
+  BA: "https://www.britishairways.com/travel/book/public/en_gb",
+  KL: "https://www.klm.com/en/",
+  AF: "https://www.airfrance.co.uk/",
+  LH: "https://www.lufthansa.com/gb/en/homepage",
+  IB: "https://www.iberia.com/",
+  VY: "https://www.vueling.com/en",
+  TK: "https://www.turkishairlines.com/",
+  QR: "https://www.qatarairways.com/",
+  EK: "https://www.emirates.com/",
+  EY: "https://www.etihad.com/",
+  SQ: "https://www.singaporeair.com/",
+};
+
+const cabinSkyscanner: Record<string, string> = {
+  ECONOMY: "economy",
+  PREMIUM_ECONOMY: "premiumeconomy",
+  BUSINESS: "business",
+  FIRST: "first",
+};
+
+function toSkyscannerDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  return y.slice(2) + m + d;
+}
+
+function toKiwiDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function buildBookingLinks(
+  from: string, to: string,
+  depart: string, returnDate: string,
+  adults: number, children: number,
+  cabin: string, carrierCode: string,
+): BookingLink[] {
+  const depSS = toSkyscannerDate(depart);
+  const retSS = returnDate ? toSkyscannerDate(returnDate) : "";
+  const depKiwi = toKiwiDate(depart);
+  const retKiwi = returnDate ? toKiwiDate(returnDate) : "";
+  const cabinSS = cabinSkyscanner[cabin.toUpperCase().replace(" ", "_")] || "economy";
+
+  const ssBase = returnDate
+    ? `https://www.skyscanner.net/transport/flights/${from}/${to}/${depSS}/${retSS}/`
+    : `https://www.skyscanner.net/transport/flights/${from}/${to}/${depSS}/`;
+  const ssUrl = `${ssBase}?adults=${adults}&children=${children}&cabinclass=${cabinSS}`;
+
+  const kiwiBase = returnDate
+    ? `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}/${retKiwi}`
+    : `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}`;
+  const kiwiUrl = `${kiwiBase}?adults=${adults}&children=${children}`;
+
+  const googleUrl = `https://www.google.com/travel/flights?q=Flights+from+${from}+to+${to}`;
+
+  const links: BookingLink[] = [
+    { label: "Skyscanner", sublabel: "Compare & book", url: ssUrl, icon: "skyscanner" },
+    { label: "Kiwi.com", sublabel: "Best fare finder", url: kiwiUrl, icon: "kiwi" },
+    { label: "Google Flights", sublabel: "Price overview", url: googleUrl, icon: "google" },
+  ];
+
+  if (directAirlineUrls[carrierCode]) {
+    links.unshift({
+      label: airlineNames[carrierCode] || carrierCode,
+      sublabel: "Book direct with airline",
+      url: directAirlineUrls[carrierCode],
+      icon: "airline",
+    });
+  }
+
+  return links;
+}
+
+function BookingIcon({ type }: { type: BookingLink["icon"] }) {
+  if (type === "skyscanner") return <Globe className="w-5 h-5 text-teal-500" />;
+  if (type === "kiwi") return <Sparkles className="w-5 h-5 text-green-500" />;
+  if (type === "google") return <Search className="w-5 h-5 text-blue-500" />;
+  return <Plane className="w-5 h-5 text-primary" />;
+}
 
 function parseDuration(iso: string) {
   const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
@@ -70,6 +162,7 @@ const FlightResults = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"price" | "duration" | "stops">("price");
   const [filterDirect, setFilterDirect] = useState(direct);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!from || !to || !depart) {
@@ -114,22 +207,13 @@ const FlightResults = () => {
 
   const sorted = [...flights]
     .filter((f) => {
-      if (filterDirect) {
-        return f.itineraries.every((it) => it.segments.length === 1);
-      }
+      if (filterDirect) return f.itineraries.every((it) => it.segments.length === 1);
       return true;
     })
     .sort((a, b) => {
       if (sortBy === "price") return parseFloat(a.price.grandTotal) - parseFloat(b.price.grandTotal);
-      if (sortBy === "duration") {
-        const durA = a.itineraries[0].duration;
-        const durB = b.itineraries[0].duration;
-        return durA.localeCompare(durB);
-      }
-      // stops
-      const stopsA = a.itineraries[0].segments.length - 1;
-      const stopsB = b.itineraries[0].segments.length - 1;
-      return stopsA - stopsB;
+      if (sortBy === "duration") return a.itineraries[0].duration.localeCompare(b.itineraries[0].duration);
+      return (a.itineraries[0].segments.length - 1) - (b.itineraries[0].segments.length - 1);
     });
 
   const cabinMap: Record<string, string> = {
@@ -226,108 +310,161 @@ const FlightResults = () => {
           {!loading && !error && sorted.length > 0 && (
             <>
               <p className="text-sm text-muted-foreground mb-4">{sorted.length} flights found</p>
-              <AnimatePresence>
-                <div className="space-y-3">
-                  {sorted.map((offer, i) => {
-                    const outbound = offer.itineraries[0];
-                    const inbound = offer.itineraries[1];
-                    const firstSeg = outbound.segments[0];
-                    const lastSeg = outbound.segments[outbound.segments.length - 1];
-                    const stops = outbound.segments.length - 1;
-                    const airline = airlineNames[offer.validatingAirlineCodes[0]] || offer.validatingAirlineCodes[0];
-                    const priceGBP = parseFloat(offer.price.grandTotal);
+              <div className="space-y-3">
+                {sorted.map((offer, i) => {
+                  const outbound = offer.itineraries[0];
+                  const inbound = offer.itineraries[1];
+                  const firstSeg = outbound.segments[0];
+                  const lastSeg = outbound.segments[outbound.segments.length - 1];
+                  const stops = outbound.segments.length - 1;
+                  const carrierCode = offer.validatingAirlineCodes[0];
+                  const airline = airlineNames[carrierCode] || carrierCode;
+                  const priceGBP = parseFloat(offer.price.grandTotal);
+                  const bookingLinks = buildBookingLinks(
+                    from, to, depart, returnDate, adults, children, cabin, carrierCode,
+                  );
+                  const primaryLink = bookingLinks[0];
+                  const isExpanded = selectedOfferId === offer.id;
 
-                    return (
-                      <motion.div
-                        key={offer.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03, duration: 0.3 }}
-                        className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-center gap-6 flex-wrap">
-                          {/* Airline */}
-                          <div className="w-32 shrink-0">
-                            <p className="font-semibold text-foreground text-sm">{airline}</p>
-                            <p className="text-xs text-muted-foreground">{offer.validatingAirlineCodes[0]} {firstSeg.number}</p>
-                          </div>
+                  return (
+                    <motion.div
+                      key={offer.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03, duration: 0.3 }}
+                      className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-6 flex-wrap">
+                        {/* Airline */}
+                        <div className="w-32 shrink-0">
+                          <p className="font-semibold text-foreground text-sm">{airline}</p>
+                          <p className="text-xs text-muted-foreground">{carrierCode} {firstSeg.number}</p>
+                        </div>
 
-                          {/* Outbound */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3">
-                              <div className="text-center">
-                                <p className="text-xl font-bold text-foreground">{formatTime(firstSeg.departure.at)}</p>
-                                <p className="text-xs text-muted-foreground">{firstSeg.departure.iataCode}</p>
-                              </div>
-                              <div className="flex-1 flex flex-col items-center gap-1">
-                                <p className="text-xs text-muted-foreground">{parseDuration(outbound.duration)}</p>
-                                <div className="flex items-center gap-1 w-full">
-                                  <div className="h-px flex-1 bg-border" />
-                                  <Plane className="w-3 h-3 text-muted-foreground rotate-90" />
-                                  <div className="h-px flex-1 bg-border" />
-                                </div>
-                                <p className={`text-xs font-medium ${stops === 0 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}>
-                                  {stops === 0 ? "Direct" : `${stops} stop${stops > 1 ? "s" : ""}`}
-                                </p>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-xl font-bold text-foreground">{formatTime(lastSeg.arrival.at)}</p>
-                                <p className="text-xs text-muted-foreground">{lastSeg.arrival.iataCode}</p>
-                              </div>
+                        {/* Outbound */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <div className="text-center">
+                              <p className="text-xl font-bold text-foreground">{formatTime(firstSeg.departure.at)}</p>
+                              <p className="text-xs text-muted-foreground">{firstSeg.departure.iataCode}</p>
                             </div>
-
-                            {/* Inbound row */}
-                            {inbound && (() => {
-                              const inFirst = inbound.segments[0];
-                              const inLast = inbound.segments[inbound.segments.length - 1];
-                              const inStops = inbound.segments.length - 1;
-                              return (
-                                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
-                                  <div className="text-center">
-                                    <p className="text-base font-semibold text-foreground">{formatTime(inFirst.departure.at)}</p>
-                                    <p className="text-xs text-muted-foreground">{inFirst.departure.iataCode}</p>
-                                  </div>
-                                  <div className="flex-1 flex flex-col items-center gap-1">
-                                    <p className="text-xs text-muted-foreground">{parseDuration(inbound.duration)}</p>
-                                    <div className="flex items-center gap-1 w-full">
-                                      <div className="h-px flex-1 bg-border" />
-                                      <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
-                                      <div className="h-px flex-1 bg-border" />
-                                    </div>
-                                    <p className={`text-xs font-medium ${inStops === 0 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}>
-                                      {inStops === 0 ? "Direct" : `${inStops} stop${inStops > 1 ? "s" : ""}`}
-                                    </p>
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-base font-semibold text-foreground">{formatTime(inLast.arrival.at)}</p>
-                                    <p className="text-xs text-muted-foreground">{inLast.arrival.iataCode}</p>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Price + CTA */}
-                          <div className="flex flex-col items-end gap-2 ml-auto shrink-0">
-                            <div className="text-right">
-                              <p className="text-2xl font-bold text-primary">{formatPrice(priceGBP)}</p>
-                              <p className="text-xs text-muted-foreground">per person total</p>
-                            </div>
-                            {offer.numberOfBookableSeats <= 5 && (
-                              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                                Only {offer.numberOfBookableSeats} seats left!
+                            <div className="flex-1 flex flex-col items-center gap-1">
+                              <p className="text-xs text-muted-foreground">{parseDuration(outbound.duration)}</p>
+                              <div className="flex items-center gap-1 w-full">
+                                <div className="h-px flex-1 bg-border" />
+                                <Plane className="w-3 h-3 text-muted-foreground rotate-90" />
+                                <div className="h-px flex-1 bg-border" />
+                              </div>
+                              <p className={`text-xs font-medium ${stops === 0 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}>
+                                {stops === 0 ? "Direct" : `${stops} stop${stops > 1 ? "s" : ""}`}
                               </p>
-                            )}
-                            <button className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xl font-bold text-foreground">{formatTime(lastSeg.arrival.at)}</p>
+                              <p className="text-xs text-muted-foreground">{lastSeg.arrival.iataCode}</p>
+                            </div>
+                          </div>
+
+                          {/* Inbound row */}
+                          {inbound && (() => {
+                            const inFirst = inbound.segments[0];
+                            const inLast = inbound.segments[inbound.segments.length - 1];
+                            const inStops = inbound.segments.length - 1;
+                            return (
+                              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
+                                <div className="text-center">
+                                  <p className="text-base font-semibold text-foreground">{formatTime(inFirst.departure.at)}</p>
+                                  <p className="text-xs text-muted-foreground">{inFirst.departure.iataCode}</p>
+                                </div>
+                                <div className="flex-1 flex flex-col items-center gap-1">
+                                  <p className="text-xs text-muted-foreground">{parseDuration(inbound.duration)}</p>
+                                  <div className="flex items-center gap-1 w-full">
+                                    <div className="h-px flex-1 bg-border" />
+                                    <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
+                                    <div className="h-px flex-1 bg-border" />
+                                  </div>
+                                  <p className={`text-xs font-medium ${inStops === 0 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}>
+                                    {inStops === 0 ? "Direct" : `${inStops} stop${inStops > 1 ? "s" : ""}`}
+                                  </p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-base font-semibold text-foreground">{formatTime(inLast.arrival.at)}</p>
+                                  <p className="text-xs text-muted-foreground">{inLast.arrival.iataCode}</p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Price + CTA */}
+                        <div className="flex flex-col items-end gap-2 ml-auto shrink-0">
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-primary">{formatPrice(priceGBP)}</p>
+                            <p className="text-xs text-muted-foreground">per person total</p>
+                          </div>
+                          {offer.numberOfBookableSeats <= 5 && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                              Only {offer.numberOfBookableSeats} seats left!
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={primaryLink.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setSelectedOfferId((prev) => prev === offer.id ? null : offer.id)}
+                              className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                            >
                               Select <ArrowRight className="w-3.5 h-3.5" />
+                            </a>
+                            <button
+                              onClick={() => setSelectedOfferId((prev) => prev === offer.id ? null : offer.id)}
+                              className="p-2 rounded-full border border-border hover:bg-secondary transition-colors"
+                              aria-label="See all booking options"
+                            >
+                              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
                             </button>
                           </div>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </AnimatePresence>
+                      </div>
+
+                      {/* Expandable "Where to book" panel */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="border-t border-border mt-4 pt-4">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                                Where to book
+                              </p>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {bookingLinks.map((link) => (
+                                  <a
+                                    key={link.label}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-secondary hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                  >
+                                    <BookingIcon type={link.icon} />
+                                    <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{link.label}</span>
+                                    <span className="text-[10px] text-muted-foreground text-center">{link.sublabel}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>
