@@ -11,17 +11,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import AirportAutocompleteInput from "@/components/AirportAutocompleteInput";
 
 interface FlightLeg {
   from: string;
   to: string;
+  fromIata?: string;
+  toIata?: string;
   depart: Date | undefined;
 }
 
 const SearchForm = () => {
   const navigate = useNavigate();
-  const [destination, setDestination] = useState("");
+  // Standard form — display labels
   const [departureCity, setDepartureCity] = useState("");
+  const [destination, setDestination] = useState("");
+  // IATA codes stored separately
+  const [fromIata, setFromIata] = useState("");
+  const [toIata, setToIata] = useState("");
+
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [adults, setAdults] = useState(2);
@@ -35,18 +43,20 @@ const SearchForm = () => {
   const [nearbyTo, setNearbyTo] = useState(false);
   const [directFlights, setDirectFlights] = useState(false);
   const [addHotel, setAddHotel] = useState(false);
-  const [distanceUnit] = useState<"km" | "mi">("km");
   const [multiCityLegs, setMultiCityLegs] = useState<FlightLeg[]>([
-    { from: "", to: "", depart: undefined },
-    { from: "", to: "", depart: undefined },
+    { from: "", to: "", fromIata: "", toIata: "", depart: undefined },
+    { from: "", to: "", fromIata: "", toIata: "", depart: undefined },
   ]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to flight results with IATA-style params for the Amadeus edge function
+    // Use stored IATA codes; fall back to uppercased raw input if user typed a code directly
+    const resolvedFrom = fromIata || departureCity.trim().toUpperCase().slice(0, 3);
+    const resolvedTo = toIata || destination.trim().toUpperCase().slice(0, 3);
+
     const params = new URLSearchParams({
-      from: departureCity.trim().toUpperCase().slice(0, 3),
-      to: destination.trim().toUpperCase().slice(0, 3),
+      from: resolvedFrom,
+      to: resolvedTo,
       depart: checkIn ? format(checkIn, "yyyy-MM-dd") : "",
       adults: String(adults),
       children: String(children),
@@ -58,15 +68,19 @@ const SearchForm = () => {
   };
 
   const swapCities = () => {
+    // Swap display labels
     setDepartureCity(destination);
     setDestination(departureCity);
+    // Swap IATA codes
+    setFromIata(toIata);
+    setToIata(fromIata);
   };
 
   const swapMultiCityCities = (index: number) => {
     setMultiCityLegs((prev) => {
       const updated = [...prev];
-      const temp = updated[index].from;
-      updated[index] = { ...updated[index], from: updated[index].to, to: temp };
+      const { from, to, fromIata, toIata } = updated[index];
+      updated[index] = { ...updated[index], from: to, to: from, fromIata: toIata, toIata: fromIata };
       return updated;
     });
   };
@@ -81,7 +95,7 @@ const SearchForm = () => {
 
   const addLeg = () => {
     if (multiCityLegs.length < 6) {
-      setMultiCityLegs((prev) => [...prev, { from: "", to: "", depart: undefined }]);
+      setMultiCityLegs((prev) => [...prev, { from: "", to: "", fromIata: "", toIata: "", depart: undefined }]);
     }
   };
 
@@ -152,54 +166,62 @@ const SearchForm = () => {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.25 }}
-                  className="overflow-hidden"
+                  className="overflow-visible"
                 >
-                  <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
+                  <div className="flex items-stretch border border-border rounded-xl overflow-visible">
                     {/* Flight number label */}
-                    <div className="flex items-center justify-center w-10 bg-secondary text-xs font-bold text-muted-foreground shrink-0">
+                    <div className="flex items-center justify-center w-10 bg-secondary text-xs font-bold text-muted-foreground shrink-0 rounded-l-xl">
                       {index + 1}
                     </div>
 
                     {/* From */}
-                    <div className="relative flex-1 border-r border-border">
-                      <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
-                      <input
-                        type="text"
-                        placeholder="City or airport"
-                        value={leg.from}
-                        onChange={(e) => updateLeg(index, "from", e.target.value)}
-                        className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
-                      />
-                    </div>
+                    <AirportAutocompleteInput
+                      label="From"
+                      placeholder="City or airport"
+                      value={leg.from}
+                      onChange={(v) => {
+                        updateLeg(index, "from", v);
+                        if (!v) updateLeg(index, "fromIata", "");
+                      }}
+                      onSelect={(iata, display) => {
+                        updateLeg(index, "from", display);
+                        updateLeg(index, "fromIata", iata);
+                      }}
+                      className="flex-1"
+                    />
 
                     {/* Swap */}
                     <button
                       type="button"
                       onClick={() => swapMultiCityCities(index)}
-                      className="flex items-center justify-center w-12 bg-card border-r border-border hover:bg-secondary transition-colors shrink-0"
+                      className="flex items-center justify-center w-12 bg-card border-l border-r border-border hover:bg-secondary transition-colors shrink-0"
                       title="Swap cities"
                     >
                       <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
                     </button>
 
                     {/* To */}
-                    <div className="relative flex-1 border-r border-border">
-                      <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
-                      <input
-                        type="text"
-                        placeholder="Country, city or airport"
-                        value={leg.to}
-                        onChange={(e) => updateLeg(index, "to", e.target.value)}
-                        className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
-                      />
-                    </div>
+                    <AirportAutocompleteInput
+                      label="To"
+                      placeholder="Country, city or airport"
+                      value={leg.to}
+                      onChange={(v) => {
+                        updateLeg(index, "to", v);
+                        if (!v) updateLeg(index, "toIata", "");
+                      }}
+                      onSelect={(iata, display) => {
+                        updateLeg(index, "to", display);
+                        updateLeg(index, "toIata", iata);
+                      }}
+                      className="flex-1"
+                    />
 
                     {/* Depart */}
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+                          className="relative border-l border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
                         >
                           <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
                           <span className={cn("text-lg flex items-center gap-2", leg.depart ? "text-foreground" : "text-muted-foreground")}>
@@ -225,7 +247,7 @@ const SearchForm = () => {
                       <button
                         type="button"
                         onClick={() => removeLeg(index)}
-                        className="flex items-center justify-center w-12 bg-card hover:bg-destructive/10 transition-colors shrink-0"
+                        className="flex items-center justify-center w-12 bg-card hover:bg-destructive/10 transition-colors shrink-0 rounded-r-xl"
                         title="Remove flight"
                       >
                         <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
@@ -310,18 +332,22 @@ const SearchForm = () => {
           </div>
         ) : (
           /* Standard single-row layout */
-          <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
+          <div className="flex items-stretch border border-border rounded-xl overflow-visible">
             {/* From */}
-            <div className="relative flex-1 border-r border-border">
-              <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
-              <input
-                type="text"
-                placeholder="City or airport"
-                value={departureCity}
-                onChange={(e) => setDepartureCity(e.target.value)}
-                className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
-              />
-            </div>
+            <AirportAutocompleteInput
+              label="From"
+              placeholder="City or airport"
+              value={departureCity}
+              onChange={(v) => {
+                setDepartureCity(v);
+                if (!v) setFromIata("");
+              }}
+              onSelect={(iata, display) => {
+                setDepartureCity(display);
+                setFromIata(iata);
+              }}
+              className="flex-1"
+            />
 
             {/* Swap Button */}
             <button
@@ -334,16 +360,20 @@ const SearchForm = () => {
             </button>
 
             {/* To */}
-            <div className="relative flex-1 border-r border-border">
-              <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
-              <input
-                type="text"
-                placeholder="Country, city or airport"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
-              />
-            </div>
+            <AirportAutocompleteInput
+              label="To"
+              placeholder="Country, city or airport"
+              value={destination}
+              onChange={(v) => {
+                setDestination(v);
+                if (!v) setToIata("");
+              }}
+              onSelect={(iata, display) => {
+                setDestination(display);
+                setToIata(iata);
+              }}
+              className="flex-1"
+            />
 
             {/* Depart */}
             <Popover>
