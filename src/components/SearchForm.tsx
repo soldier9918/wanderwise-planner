@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, CalendarIcon, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import AirportAutocompleteInput from "@/components/AirportAutocompleteInput";
+import FlightPriceCalendar from "@/components/FlightPriceCalendar";
 
 interface FlightLeg {
   from: string;
@@ -34,6 +35,7 @@ const SearchForm = () => {
   const [checkOut, setCheckOut] = useState<Date>();
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
+  const [departPopoverOpen, setDepartPopoverOpen] = useState(false);
   const [travellersOpen, setTravellersOpen] = useState(false);
   const [multiTravellersOpen, setMultiTravellersOpen] = useState(false);
   const [cabinClass, setCabinClass] = useState("Economy");
@@ -376,7 +378,7 @@ const SearchForm = () => {
             />
 
             {/* Depart */}
-            <Popover>
+            <Popover open={departPopoverOpen} onOpenChange={setDepartPopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -389,15 +391,30 @@ const SearchForm = () => {
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={checkIn}
-                  onSelect={setCheckIn}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
+              <PopoverContent className="p-0" style={{ width: fromIata ? "364px" : "auto" }} align="start">
+                {fromIata ? (
+                  <FlightPriceCalendar
+                    origin={fromIata}
+                    month={checkIn ? startOfMonth(checkIn) : startOfMonth(new Date())}
+                    selectedDate={checkIn}
+                    onDaySelect={(date) => {
+                      setCheckIn(date);
+                      setDepartPopoverOpen(false);
+                    }}
+                  />
+                ) : (
+                  <Calendar
+                    mode="single"
+                    selected={checkIn}
+                    onSelect={(d) => {
+                      setCheckIn(d);
+                      setDepartPopoverOpen(false);
+                    }}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                )}
               </PopoverContent>
             </Popover>
 
