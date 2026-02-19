@@ -1,63 +1,85 @@
 
-## Hotel Destination Autocomplete
+## IATA Airport Autocomplete for Flight Search Form
 
 ### What We're Building
 
-The "Where do you want to go?" field in `HotelSearchForm` currently accepts free-text with no suggestions. We'll upgrade it to a live autocomplete that queries the **Amadeus Hotel & City Search API** as the user types, showing a dropdown of matching cities/hotels with their country — and storing the selected city code to pass along when searching.
+The From and To fields in `SearchForm.tsx` currently accept raw free-text and naively slice the first 3 characters to produce an IATA code. This often produces wrong codes (e.g. typing "London" sends "LON" instead of "LHR" or "LGW"). We'll replace them with a live airport/city autocomplete backed by the Amadeus Airport & City Search API, matching the pattern already built for hotel destination search.
 
 ### How It Works
 
-```text
-User types "Par..."
-       |
-       v
-HotelSearchForm (debounce 300ms)
-       |
-       v
-Edge Function: amadeus-hotel-autocomplete
-       |
-       v
-Amadeus API: GET /v1/reference-data/locations/hotel-cities?keyword=Par
-       |
-       v
-Returns: [{ name: "Paris", countryCode: "FR", iataCode: "PAR" }, ...]
-       |
-       v
-Dropdown shown under input — user selects "Paris, France"
-       |
-       v
-cityCode "PAR" stored, passes to /results?cityCode=PAR&...
+```
+User types "Lon..."
+      |
+      v
+SearchForm (debounce 300ms, min 2 chars)
+      |
+      v
+New Edge Function: amadeus-airport-search
+      |
+      v
+Amadeus API: GET /v1/reference-data/locations?subType=CITY,AIRPORT&keyword=Lon
+      |
+      v
+Returns: [{ name: "London Heathrow", iataCode: "LHR", ... }, { name: "London Gatwick", iataCode: "LGW", ... }, ...]
+      |
+      v
+Dropdown under the input — user selects "London Heathrow (LHR)"
+      |
+      v
+iataCode "LHR" stored — passed to /flight-results?from=LHR&...
 ```
 
 ### Files to Create / Edit
 
-**1. New Edge Function — `supabase/functions/amadeus-hotel-autocomplete/index.ts`**
-- Reuses the same Amadeus token-fetching pattern as the existing flight search function
-- Calls `GET https://test.api.amadeus.com/v1/reference-data/locations/hotel-cities?keyword={keyword}&max=8`
-- Returns an array of `{ name, countryCode, cityCode }` objects
-- Handles CORS identically to the existing function
+**1. New Edge Function — `supabase/functions/amadeus-airport-search/index.ts`**
+- Reuses the exact same Amadeus token-caching pattern as `amadeus-flight-search`
+- Calls `GET https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY,AIRPORT&keyword={keyword}&page[limit]=8&view=LIGHT`
+- Maps each result to `{ name, iataCode, cityName, countryCode }` — enough to display a rich label and store the code
+- Handles CORS identically to existing functions (no new secrets required)
 
-**2. Edit `src/components/HotelSearchForm.tsx`**
-- Add state: `suggestions`, `showSuggestions`, `selectedCityCode`, `isLoading`
-- Add a `useEffect` with 300ms debounce on the `destination` input that calls the new edge function
-- Replace the plain `<input>` with a container that also renders a dropdown list below it
-- On suggestion click: set `destination` display text (e.g. "Paris, France") and store `cityCode` separately
-- Close dropdown on blur / after selection
-- Pass `cityCode` (not raw text) in the navigate URL: `/results?cityCode=PAR&...`
+**2. Create `src/components/AirportAutocompleteInput.tsx`** — a reusable component
+- Props: `label`, `placeholder`, `value` (display string), `onChange`, `onSelect(iataCode, displayLabel)`
+- Internal state: `suggestions`, `showDropdown`, `isLoading`
+- 300ms debounced fetch to the new edge function on every keystroke (≥2 chars)
+- Closes on outside click via a `useRef` + `mousedown` listener
+- Dropdown rows show: **City/airport name** (bold) + IATA code chip (e.g. `LHR`) + country — matching the hotel autocomplete style with a `Plane` icon
+- Loading spinner and "No results" empty state
+- `onMouseDown` with `e.preventDefault()` on suggestion buttons to prevent blur-before-click (same pattern as hotel autocomplete)
+- Extracted as its own component so it works for both the standard From/To fields AND the multi-city leg fields without duplicating logic
+
+**3. Edit `src/components/SearchForm.tsx`**
+
+State changes:
+- Replace `departureCity: string` (raw text) with `departureCity: string` (display label) + `fromIata: string` (stored code)
+- Replace `destination: string` with `destination: string` (display) + `toIata: string` (stored code)
+- For multi-city legs, add `fromIata` and `toIata` fields to the `FlightLeg` interface alongside the existing `from`/`to` display strings
+- Update `swapCities()` to swap both display labels and IATA codes
+
+Search handler changes:
+- Remove the current `departureCity.trim().toUpperCase().slice(0, 3)` hack
+- Use `fromIata` and `toIata` directly when building the `/flight-results` URL params
+- Multi-city search will similarly use each leg's stored `fromIata`/`toIata`
+
+UI changes:
+- Replace the plain `<input>` for From with `<AirportAutocompleteInput>` in the standard (Return/One-way) layout
+- Replace the plain `<input>` for To with `<AirportAutocompleteInput>` in the standard layout
+- Replace the From and To `<input>` elements inside each multi-city leg row with `<AirportAutocompleteInput>`
+- The swap button will be wired to swap both display strings and IATA codes
 
 ### Autocomplete Dropdown Design
 
-- Appears directly below the destination input, full-width, with a subtle card shadow
-- Each row shows: **City name** (bold) + country (muted), with a map-pin icon
-- Highlights on hover with the primary/5 bg tint (matching the rest of the form)
-- Loading spinner replaces dropdown when fetching
-- "No results found" empty state when API returns nothing
+Each suggestion row displays:
+- ✈ Plane icon (primary colour, matching MapPin in hotel autocomplete)
+- **Airport/city name** in bold foreground text
+- IATA code as a small badge/chip (e.g. `LHR` in muted style)
+- City + country in muted smaller text on a second line (e.g. "London, United Kingdom")
+- Hover: `bg-primary/5` tint, same as hotel autocomplete
 
 ### Technical Details
 
-- Debounce: 300ms to avoid hammering the API on every keystroke
-- Minimum 2 characters before a request fires
-- Z-index set high enough to overlap the date/guest fields
-- Keyboard accessible: clicking outside closes the dropdown
-- If user clears the input, `selectedCityCode` is reset so a fresh search is required
-- The edge function uses the same `AMADEUS_CLIENT_ID` and `AMADEUS_CLIENT_SECRET` secrets already configured — no new secrets needed
+- No new secrets needed — reuses `AMADEUS_CLIENT_ID` and `AMADEUS_CLIENT_SECRET` already configured
+- The `AirportAutocompleteInput` component is self-contained: it owns its own debounce ref, suggestions state and click-outside listener, keeping `SearchForm.tsx` clean
+- The `FlightLeg` interface gets two new optional fields (`fromIata?: string`, `toIata?: string`) so multi-city legs can track codes without breaking existing structure
+- The existing `handleSearch` currently does `.trim().toUpperCase().slice(0, 3)` as a workaround — this will be replaced with the stored IATA code; if no suggestion was selected (user typed a raw 3-letter code), the raw input is used as a fallback so the form still works
+- `view=LIGHT` parameter on the Amadeus API call returns a compact response with only essential fields, reducing payload size
+- The edge function will be deployed automatically on save
