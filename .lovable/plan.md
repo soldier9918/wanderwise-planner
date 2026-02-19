@@ -1,132 +1,100 @@
 
-# Flight Results Page — 7 Improvements
+# Flight Search — End-to-End Bug Fix
 
-## Overview of Changes
+## Root Cause Identified
 
-All changes are confined to **`src/pages/FlightResults.tsx`** and **`src/components/Navbar.tsx`**. No new dependencies or database changes are needed.
+The "Edge Function returned a non-2xx status code" error has **one primary cause** and two secondary improvements needed:
+
+### Bug 1 (PRIMARY — causes every search from homepage to fail)
+`SearchForm.tsx` stores cabin class as human-readable strings: `"Economy"`, `"Premium Economy"`, `"Business"`, `"First"`. These are passed directly in the URL as the `cabin` param. `FlightResults.tsx` reads `cabin` and passes it directly as `travelClass` to the Amadeus API. Amadeus strictly requires: `"ECONOMY"`, `"PREMIUM_ECONOMY"`, `"BUSINESS"`, `"FIRST"`. Any mismatch returns a 400 error.
+
+Confirmed by direct API test:
+- `travelClass: "Economy"` → **400** "travelClass is not in the allowed enumeration"
+- `travelClass: "ECONOMY"` → **200** with results ✓
+
+### Bug 2 (SECONDARY — causes past-date searches to fail with generic message)
+If the user selects a date that has already passed, Amadeus returns 400 "Date/Time is in the past". The frontend currently shows a generic "Search failed" message. It should show a human-readable explanation.
+
+### Bug 3 (SECONDARY — better error reporting)
+The `catch` block in `FlightResults.tsx` shows `err.message` which is often the raw Supabase function error string. When Amadeus returns a descriptive error (like the cabin class or date error), `data?.error` is already extracted from the JSON response — this is shown correctly. But `fnError.message` from Supabase wraps it in a less helpful string.
 
 ---
 
-## Fix 1 — SELECT button: show booking site logos + options count
+## Fixes
 
-**Current:** The SELECT button simply says "Select →".
+### Fix 1 — Normalize cabin class to uppercase before passing to URL
+**File:** `src/components/SearchForm.tsx`
 
-**New (matching attachment image-56.png):**
-- Show 3 small booking-site logo icons stacked horizontally (Kiwi, Google, and the direct airline if applicable). These use real-image logos: Kiwi from their CDN, Google from favicon, airline from gstatic.
-- Show "+N options from" text above the price, where N = number of booking links available for that flight.
-- The SELECT button remains full-width navy/dark below.
+In `handleSearch`, when building URL params, convert `cabinClass` to the Amadeus-expected format:
 
-**Implementation:** In `FlightCard`, before the price, add a small row of circular favicon/icon images:
-```tsx
-// Booking partner logos (up to 3)
-const optionCount = bookingLinks.length;
-<div className="flex items-center gap-1 mb-1">
-  {bookingLinks.slice(0,3).map(link => <PartnerLogo key={link.label} link={link} />)}
-  <span className="text-xs text-primary font-semibold ml-1">+{optionCount} options from</span>
-</div>
-<p className="text-3xl font-black text-foreground">£{priceGBP.toFixed(0)}</p>
+```typescript
+// Mapping from display label → Amadeus enum
+const cabinAmadeusMap: Record<string, string> = {
+  "Economy": "ECONOMY",
+  "Premium Economy": "PREMIUM_ECONOMY",
+  "Business": "BUSINESS",
+  "First": "FIRST",
+};
+
+const params = new URLSearchParams({
+  from: fromIata,
+  to: toIata,
+  depart: format(checkIn, "yyyy-MM-dd"),
+  adults: String(adults),
+  children: String(children),
+  cabin: cabinAmadeusMap[cabinClass] || cabinClass.toUpperCase().replace(" ", "_"),
+  direct: String(directFlights),
+});
 ```
 
-Partner logos will be small 20x20 rounded images:
-- Kiwi.com: `https://www.kiwi.com/favicon.ico`
-- Google Flights: `https://www.google.com/favicon.ico`
-- Airline: use existing `airlineLogoUrl(code)` at 20px
+Also fix the multi-city leg search (if triggered it would also use the cabin state).
+
+### Fix 2 — Normalize cabin in FlightResults too (defensive fix)
+**File:** `src/pages/FlightResults.tsx`
+
+Even if `SearchForm` is fixed, normalise the cabin param when reading it from the URL so old bookmarked links or direct URL edits also work:
+
+```typescript
+// Line 831 — replace:
+const cabin = searchParams.get("cabin") || "ECONOMY";
+
+// With:
+const cabinRaw = searchParams.get("cabin") || "ECONOMY";
+const cabin = cabinRaw.toUpperCase().replace(/\s+/g, "_");
+```
+
+This means `"Economy"` → `"ECONOMY"`, `"Premium Economy"` → `"PREMIUM_ECONOMY"` etc., matching the Amadeus API requirement.
+
+### Fix 3 — Better error messages for common API errors
+**File:** `src/pages/FlightResults.tsx`
+
+In the `fetch_` async function, improve the error handling to detect and explain common API errors:
+
+```typescript
+if (fnError) throw new Error(fnError.message);
+if (data?.error) {
+  const msg = data.error as string;
+  // Give human-friendly messages for known errors
+  if (msg.includes("past")) throw new Error("The departure date is in the past. Please choose a future date.");
+  if (msg.includes("travelClass")) throw new Error("Invalid cabin class selected. Please search again.");
+  throw new Error(msg);
+}
+```
+
+Also: on the error display UI, add a "Search Again" button that takes the user back to the search form (navigate(-1) or to /flights) so they don't get stuck.
 
 ---
 
-## Fix 2 — Sunset Maldives beach background on results page
-
-**Current:** `bg-background` (light blue-grey).
-
-**New:** Use the existing `src/assets/hero-dest-maldives.jpg` as a fixed full-page background behind the results. A semi-transparent white overlay (~90% opacity) over the content areas keeps all white cards/boxes fully readable.
-
-**Implementation:**
-- Change the root `<div>` from `bg-background` to `relative`.
-- Add a fixed `<div>` behind everything with `bg-[url(...)] bg-cover bg-center bg-fixed` using the imported Maldives image.
-- Wrap the sticky bar, body, and footer in an `relative z-10` wrapper so cards remain white (`bg-card` = white by CSS var).
-- The date price strip and filter sidebar are already `bg-card` (white), so they stay white automatically.
-- The main content area gets a very light `bg-white/80 backdrop-blur-[1px]` panel behind the results for readability.
-
----
-
-## Fix 3 — Filter sidebar scrolls fully to the bottom
-
-**Current:** The sidebar uses `max-h-[calc(100vh-8.5rem)] overflow-y-auto`. The `FilterSidebar` inner div has `rounded-2xl overflow-hidden` which clips the scroll. When filter sections expand (using `AnimatePresence`/`motion.div`), the animated height expansion works but may not trigger re-scroll.
-
-**Root cause:** The `overflow-hidden` on the outer `bg-card rounded-2xl` wrapper clips overflow. The `overflow-y-auto` is on the `<aside>` but the inner card clips content.
-
-**Fix:**
-- Remove `overflow-hidden` from the `FilterSidebar`'s outer `<div className="bg-card border ... rounded-2xl overflow-hidden">` — change to just `rounded-2xl`.
-- Add `pb-4` to ensure the last filter section has padding at the bottom.
-- The `<aside>` already has `overflow-y-auto` so scrolling to the bottom will work.
-
----
-
-## Fix 4 — Date price strip: nicely boxed with white card background
-
-**Current:** The strip uses `border-b border-border bg-background` — it blends into the page background.
-
-**New:** Wrap the `DatePriceStrip` in a proper white card container:
-- Outer wrapper: `bg-card border border-border rounded-xl shadow-sm mx-2 my-2`
-- Remove the full-width `border-b` styling; the strip now sits as a standalone boxed element inside the sticky bar area.
-- The individual date buttons inside the strip retain their `border-b-2` bottom accent.
-
----
-
-## Fix 5 — Navbar text: ensure full white (not white/70)
-
-**Current:** Nav items use `text-white/70 hover:text-white`. The active link uses `text-primary`.
-
-**New:** Change all nav item text from `text-white/70` to `text-white` so they are fully bright white at all times. The hover state becomes `hover:text-white/80` to give subtle feedback. The active link retains `text-primary`.
-
-**File:** `src/components/Navbar.tsx` — update the `className` on nav `<Link>` elements.
-
----
-
-## Fix 6 — "See Whole Month" button with calendar + price chart dropdown
-
-**New feature:** Add a "See Whole Month" button to the sticky bar, right of the date pills.
-
-**When clicked:** Opens a dropdown panel (attached below the button) showing:
-1. A **monthly calendar grid** (31 cells) where each day shows the date number + a price (cheapest from `flights` for that date if it matches, `—` otherwise). The selected date is highlighted in primary colour.
-2. A **bar chart** below it (using `recharts` already installed) showing the 7 days in the `DatePriceStrip` range as bars, with price on the Y-axis and dates on the X-axis, allowing visual comparison of cheapest fares across dates.
-
-**Implementation:**
-- Add `showMonthView` boolean state.
-- Add a `SeeWholeMonthPanel` sub-component rendered as a `motion.div` dropdown below the button.
-- The calendar grid uses CSS Grid `grid-cols-7` with day-of-week headers.
-- The `BarChart` from `recharts` uses the 7 `DatePriceStrip` dates as data (price from `flights` if depart matches, null otherwise).
-- Clicking a date in the calendar calls `shiftDates()` to jump to that date.
-
----
-
-## Fix 7 — Edit search modal: properly centred, not offset
-
-**Current problem (image-57.png):** The modal appears shifted (not centred) — it's `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2` but may be constrained by the parent container width.
-
-**Fix:**
-- Ensure the modal wrapper is `fixed inset-0 flex items-center justify-center z-[60]` (a flex centering container) rather than relying on translate hacks.
-- The inner card becomes `w-full max-w-2xl mx-4 rounded-2xl bg-card shadow-2xl`.
-- This guarantees true viewport-centred rendering regardless of scroll position or container widths.
-- The calendar portal keeps its `position: fixed` with coordinates relative to the viewport, so it remains unaffected.
-
----
-
-## Technical Summary
+## Summary of Files Changed
 
 ```text
-src/pages/FlightResults.tsx:
-├── Fix 1: FlightCard — add PartnerLogos row + "+N options from" above price
-├── Fix 2: Root div — Maldives bg-fixed image + white content overlays
-├── Fix 3: FilterSidebar — remove overflow-hidden from card wrapper
-├── Fix 4: DatePriceStrip container — white card box with border/shadow
-├── Fix 6: New SeeWholeMonthPanel — calendar grid + recharts BarChart
-└── Fix 7: editSearchOpen modal — use flex centering container
+src/components/SearchForm.tsx
+└── handleSearch: convert cabinClass to Amadeus enum format before URL
 
-src/components/Navbar.tsx:
-└── Fix 5: nav link text-white/70 → text-white
+src/pages/FlightResults.tsx
+├── Line 831: normalize cabin from URL param to uppercase enum
+└── Error handler: friendly messages for past-date and invalid-cabin errors
 ```
 
-No new packages needed (recharts already installed).
-No database or edge function changes.
-No new files needed.
+No new dependencies. No database changes. No edge function changes.
+These are pure frontend fixes — 3 targeted line changes across 2 files.
