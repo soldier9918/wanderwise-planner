@@ -151,7 +151,15 @@ const AirportAutocompleteInput = ({
       );
       const data = await res.json();
       const all: AirportSuggestion[] = data.suggestions || [];
-      setSuggestions(all);
+      // Client-side filter: only keep entries where name, city, IATA or country STARTS WITH the keyword
+      const kw = keyword.trim().toLowerCase();
+      const filtered = all.filter((s) =>
+        s.iataCode?.toLowerCase().startsWith(kw) ||
+        (s.cityName || "").toLowerCase().startsWith(kw) ||
+        s.name?.toLowerCase().startsWith(kw) ||
+        (s.countryName || "").toLowerCase().startsWith(kw)
+      );
+      setSuggestions(filtered);
     } catch {
       setSuggestions([]);
     } finally {
