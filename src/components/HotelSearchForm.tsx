@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarIcon, ChevronDown, Minus, Plus } from "lucide-react";
-import { motion } from "framer-motion";
+import { CalendarIcon, Minus, Plus, MapPin, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -11,22 +11,115 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
+interface CitySuggestion {
+  name: string;
+  countryCode: string;
+  cityCode: string;
+}
+
+const COUNTRY_NAMES: Record<string, string> = {
+  FR: "France", ES: "Spain", GB: "United Kingdom", US: "United States",
+  IT: "Italy", DE: "Germany", PT: "Portugal", NL: "Netherlands",
+  GR: "Greece", TH: "Thailand", JP: "Japan", AU: "Australia",
+  AE: "UAE", TR: "Turkey", MX: "Mexico", BR: "Brazil",
+  IN: "India", CN: "China", SG: "Singapore", ZA: "South Africa",
+  AR: "Argentina", EG: "Egypt", MA: "Morocco", ID: "Indonesia",
+  MY: "Malaysia", PH: "Philippines", VN: "Vietnam", HK: "Hong Kong",
+  NZ: "New Zealand", CA: "Canada", MV: "Maldives", BE: "Belgium",
+  SE: "Sweden", NO: "Norway", DK: "Denmark", FI: "Finland",
+  CH: "Switzerland", AT: "Austria", PL: "Poland", CZ: "Czechia",
+  HU: "Hungary", RO: "Romania", HR: "Croatia", BA: "Bosnia",
+  RS: "Serbia", BG: "Bulgaria", SK: "Slovakia", SI: "Slovenia",
+};
+
 const HotelSearchForm = () => {
   const navigate = useNavigate();
   const [destination, setDestination] = useState("");
+  const [selectedCityCode, setSelectedCityCode] = useState("");
+  const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [travellersOpen, setTravellersOpen] = useState(false);
+  const destinationRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const totalGuests = adults + children;
 
+  // Debounced autocomplete fetch
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (destination.length < 2 || selectedCityCode) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/amadeus-hotel-autocomplete?keyword=${encodeURIComponent(destination)}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        const data = await res.json();
+        setSuggestions(data.suggestions || []);
+        setShowSuggestions(true);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [destination, selectedCityCode]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (destinationRef.current && !destinationRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSuggestionSelect = (suggestion: CitySuggestion) => {
+    const countryName = COUNTRY_NAMES[suggestion.countryCode] || suggestion.countryCode;
+    setDestination(`${suggestion.name}, ${countryName}`);
+    setSelectedCityCode(suggestion.cityCode);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDestination(e.target.value);
+    if (selectedCityCode) setSelectedCityCode(""); // reset if user edits after selection
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    const cityParam = selectedCityCode
+      ? `cityCode=${encodeURIComponent(selectedCityCode)}`
+      : `destination=${encodeURIComponent(destination)}`;
     navigate(
-      `/results?destination=${encodeURIComponent(destination)}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${totalGuests}&rooms=${rooms}`
+      `/results?${cityParam}&checkIn=${checkIn ? format(checkIn, "yyyy-MM-dd") : ""}&checkOut=${checkOut ? format(checkOut, "yyyy-MM-dd") : ""}&guests=${totalGuests}&rooms=${rooms}`
     );
   };
 
@@ -47,19 +140,71 @@ const HotelSearchForm = () => {
           </div>
 
           {/* Main Search Row */}
-          <div className="flex items-stretch border border-border rounded-xl overflow-hidden">
-            {/* Destination */}
-            <div className="relative flex-[2] border-r border-border">
-              <label className="absolute left-5 top-3 text-base font-bold text-foreground">
+          <div className="flex items-stretch border border-border rounded-xl overflow-visible">
+            {/* Destination with autocomplete */}
+            <div ref={destinationRef} className="relative flex-[2] border-r border-border">
+              <label className="absolute left-5 top-3 text-base font-bold text-foreground z-10">
                 Where do you want to go?
               </label>
               <input
                 type="text"
                 placeholder="Enter a destination or hotel name"
                 value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
+                onChange={handleDestinationChange}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                autoComplete="off"
+                className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5 rounded-l-xl"
               />
+
+              {/* Dropdown */}
+              <AnimatePresence>
+                {(showSuggestions || isLoading) && destination.length >= 2 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-elevated z-50 overflow-hidden"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center gap-2 py-5 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Searching destinations…</span>
+                      </div>
+                    ) : suggestions.length === 0 ? (
+                      <div className="flex items-center justify-center py-5 text-muted-foreground text-sm">
+                        No results found
+                      </div>
+                    ) : (
+                      <ul>
+                        {suggestions.map((s) => {
+                          const countryName = COUNTRY_NAMES[s.countryCode] || s.countryCode;
+                          return (
+                            <li key={s.cityCode}>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault(); // prevent blur before click
+                                  handleSuggestionSelect(s);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-primary/5 transition-colors text-left"
+                              >
+                                <MapPin className="w-4 h-4 text-primary shrink-0" />
+                                <span>
+                                  <span className="font-semibold text-foreground">{s.name}</span>
+                                  <span className="text-muted-foreground text-sm ml-1">{countryName}</span>
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Check-in */}
@@ -136,21 +281,11 @@ const HotelSearchForm = () => {
                       <p className="text-sm text-muted-foreground">Aged 18+</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setAdults(Math.max(1, adults - 1))}
-                        disabled={adults <= 1}
-                        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="text-base font-semibold text-foreground w-6 text-center">{adults}</span>
-                      <button
-                        type="button"
-                        onClick={() => setAdults(Math.min(9, adults + 1))}
-                        disabled={adults >= 9}
-                        className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button type="button" onClick={() => setAdults(Math.min(9, adults + 1))} disabled={adults >= 9} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
@@ -163,21 +298,11 @@ const HotelSearchForm = () => {
                       <p className="text-sm text-muted-foreground">Aged 0 to 17</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setChildren(Math.max(0, children - 1))}
-                        disabled={children <= 0}
-                        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button type="button" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="text-base font-semibold text-foreground w-6 text-center">{children}</span>
-                      <button
-                        type="button"
-                        onClick={() => setChildren(Math.min(6, children + 1))}
-                        disabled={children >= 6}
-                        className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button type="button" onClick={() => setChildren(Math.min(6, children + 1))} disabled={children >= 6} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
@@ -189,21 +314,11 @@ const HotelSearchForm = () => {
                       <p className="text-base font-semibold text-foreground">Rooms</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setRooms(Math.max(1, rooms - 1))}
-                        disabled={rooms <= 1}
-                        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button type="button" onClick={() => setRooms(Math.max(1, rooms - 1))} disabled={rooms <= 1} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="text-base font-semibold text-foreground w-6 text-center">{rooms}</span>
-                      <button
-                        type="button"
-                        onClick={() => setRooms(Math.min(5, rooms + 1))}
-                        disabled={rooms >= 5}
-                        className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button type="button" onClick={() => setRooms(Math.min(5, rooms + 1))} disabled={rooms >= 5} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
@@ -223,7 +338,7 @@ const HotelSearchForm = () => {
             {/* Search Button */}
             <button
               type="submit"
-              className="px-10 bg-primary text-primary-foreground font-bold text-xl hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0"
+              className="px-10 bg-primary text-primary-foreground font-bold text-xl hover:bg-coral-light transition-colors flex items-center gap-2 shrink-0 rounded-r-xl"
             >
               Search
             </button>
