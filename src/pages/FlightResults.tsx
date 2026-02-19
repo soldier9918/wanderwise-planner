@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, Plane, AlertCircle, Loader2, ChevronDown,
   Sparkles, Search, SlidersHorizontal, X, ChevronUp, ChevronLeft,
+  Luggage, Briefcase, BaggageClaim,
 } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 import Navbar from "@/components/Navbar";
@@ -103,19 +104,54 @@ function buildBookingLinks(
 function AirlineLogo({ code, name }: { code: string; name: string }) {
   const [err, setErr] = useState(false);
   if (err) return (
-    <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-bold text-muted-foreground border border-border shrink-0">
+    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-bold text-muted-foreground border border-border shrink-0">
       {code.slice(0, 2)}
     </div>
   );
   return (
     <img src={airlineLogoUrl(code)} alt={name}
-      className="w-9 h-9 rounded-lg object-contain bg-card p-0.5 border border-border shrink-0"
+      className="w-8 h-8 rounded-lg object-contain bg-card p-0.5 border border-border shrink-0"
       onError={() => setErr(true)} />
   );
 }
 
+// ── Luggage Icons ──────────────────────────────────────────────────────────────
+function LuggageIcons({ includedCheckedBags }: { includedCheckedBags?: number }) {
+  const hasChecked = includedCheckedBags != null ? includedCheckedBags > 0 : false;
+  return (
+    <div className="flex items-center gap-1.5 mt-1">
+      {/* Personal item — always included */}
+      <div className="flex flex-col items-center gap-0.5" title="Personal item included">
+        <Briefcase className="w-4 h-4 text-primary" />
+        <span className="text-[9px] text-primary font-semibold leading-none">Item</span>
+      </div>
+      {/* Cabin bag — always included */}
+      <div className="flex flex-col items-center gap-0.5" title="Cabin bag included">
+        <Luggage className="w-4 h-4 text-primary" />
+        <span className="text-[9px] text-primary font-semibold leading-none">Cabin</span>
+      </div>
+      {/* Checked bag — based on fare data */}
+      <div className="flex flex-col items-center gap-0.5 relative" title={hasChecked ? "Checked bag included" : "Checked bag not included"}>
+        <BaggageClaim className={`w-4 h-4 ${hasChecked ? "text-primary" : "text-muted-foreground/40"}`} />
+        {!hasChecked && (
+          <div className="absolute inset-0 flex items-start justify-end">
+            <div className="w-4 h-[1.5px] bg-destructive/70 rotate-[-45deg] translate-y-[6px] -translate-x-[1px]" />
+          </div>
+        )}
+        <span className={`text-[9px] font-semibold leading-none ${hasChecked ? "text-primary" : "text-muted-foreground/40"}`}>
+          {hasChecked ? "Hold" : "No hold"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Itinerary Row — Skyscanner-style ───────────────────────────────────────────
-function ItineraryRow({ itinerary, carrierCode }: { itinerary: FlightItinerary; carrierCode: string }) {
+function ItineraryRow({ itinerary, carrierCode, includedCheckedBags }: {
+  itinerary: FlightItinerary;
+  carrierCode: string;
+  includedCheckedBags?: number;
+}) {
   const first = itinerary.segments[0];
   const last = itinerary.segments[itinerary.segments.length - 1];
   const stops = itinerary.segments.length - 1;
@@ -123,20 +159,21 @@ function ItineraryRow({ itinerary, carrierCode }: { itinerary: FlightItinerary; 
 
   return (
     <div className="flex items-center gap-0 w-full">
-      {/* Airline logo */}
-      <div className="shrink-0 mr-4">
+      {/* Airline logo + name */}
+      <div className="shrink-0 mr-3 flex flex-col items-center gap-0.5">
         <AirlineLogo code={carrierCode} name={airline} />
+        <p className="text-[9px] text-muted-foreground text-center max-w-[40px] leading-tight truncate">{airline}</p>
       </div>
 
       {/* Depart */}
-      <div className="text-center shrink-0 w-16">
-        <p className="text-2xl font-bold text-foreground leading-none">{formatTime(first.departure.at)}</p>
-        <p className="text-xs text-muted-foreground mt-1 font-semibold">{first.departure.iataCode}</p>
+      <div className="text-center shrink-0 w-14">
+        <p className="text-xl font-black text-foreground leading-none">{formatTime(first.departure.at)}</p>
+        <p className="text-sm font-bold text-muted-foreground mt-0.5">{first.departure.iataCode}</p>
       </div>
 
       {/* Duration line */}
-      <div className="flex-1 flex flex-col items-center gap-0.5 px-4 min-w-0">
-        <p className="text-xs text-muted-foreground">{parseDuration(itinerary.duration)}</p>
+      <div className="flex-1 flex flex-col items-center gap-0.5 px-3 min-w-0">
+        <p className="text-sm text-muted-foreground">{parseDuration(itinerary.duration)}</p>
         <div className="relative w-full flex items-center">
           <div className="h-px w-full bg-border" />
           <div className="absolute inset-0 flex items-center justify-end pr-0">
@@ -146,16 +183,17 @@ function ItineraryRow({ itinerary, carrierCode }: { itinerary: FlightItinerary; 
           </div>
         </div>
         {stops === 0 ? (
-          <p className="text-xs font-semibold text-success">Direct</p>
+          <p className="text-sm font-semibold text-success">Direct</p>
         ) : (
-          <p className="text-xs font-semibold text-warning">{stops} stop{stops > 1 ? "s" : ""}</p>
+          <p className="text-sm font-semibold text-warning">{stops} stop{stops > 1 ? "s" : ""}</p>
         )}
       </div>
 
-      {/* Arrive */}
-      <div className="text-center shrink-0 w-16">
-        <p className="text-2xl font-bold text-foreground leading-none">{formatTime(last.arrival.at)}</p>
-        <p className="text-xs text-muted-foreground mt-1 font-semibold">{last.arrival.iataCode}</p>
+      {/* Arrive + luggage */}
+      <div className="text-center shrink-0 w-14">
+        <p className="text-xl font-black text-foreground leading-none">{formatTime(last.arrival.at)}</p>
+        <p className="text-sm font-bold text-muted-foreground mt-0.5">{last.arrival.iataCode}</p>
+        <LuggageIcons includedCheckedBags={includedCheckedBags} />
       </div>
     </div>
   );
@@ -188,21 +226,21 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
       <div className="flex items-stretch cursor-pointer" onClick={onToggle}>
 
         {/* LEFT — flight segments */}
-        <div className="flex-1 min-w-0 p-5 space-y-4">
+        <div className="flex-1 min-w-0 p-3 px-4 space-y-2">
           <ItineraryRow itinerary={outbound} carrierCode={carrierCode} />
           {inbound && (
-            <div className="pt-4 border-t border-border/60">
+            <div className="pt-2 border-t border-border/60">
               <ItineraryRow itinerary={inbound} carrierCode={carrierCode} />
             </div>
           )}
         </div>
 
         {/* RIGHT — price + CTA (vertical separator) */}
-        <div className="shrink-0 w-44 border-l border-border flex flex-col items-stretch justify-center p-5 gap-3">
+        <div className="shrink-0 w-36 border-l border-border flex flex-col items-stretch justify-center p-3 gap-2">
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">from</p>
-            <p className="text-3xl font-bold text-foreground">£{priceGBP.toFixed(0)}</p>
-            <p className="text-xs text-muted-foreground">per person</p>
+            <p className="text-3xl font-black text-foreground">£{priceGBP.toFixed(0)}</p>
+            <p className="text-sm text-muted-foreground">per person</p>
           </div>
           {offer.numberOfBookableSeats <= 5 && (
             <span className="text-[10px] font-semibold text-warning bg-warning/10 px-2 py-0.5 rounded-full w-fit">
@@ -212,7 +250,7 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggle(); }}
-            className={`w-full flex items-center justify-center gap-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`w-full flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-bold transition-all ${
               isExpanded
                 ? "bg-primary/10 text-primary border border-primary/30"
                 : "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -643,24 +681,28 @@ const FlightResults = () => {
         {!loading && !error && flights.length > 0 && (
           <div className="bg-card border-b border-border">
             <div className="max-w-screen-xl mx-auto px-4">
-              <div className="flex items-stretch">
-                {([
-                  { key: "price" as const, label: "Cheapest", price: cheapest },
-                  { key: "duration" as const, label: "Fastest", price: fastest },
-                  { key: "stops" as const, label: "Fewest stops", price: null },
-                ]).map((opt) => (
-                  <button key={opt.key} onClick={() => setSortBy(opt.key)}
-                    className={`flex-1 text-left px-5 py-4 border-b-2 transition-colors ${
-                      sortBy === opt.key ? "border-primary bg-primary/5" : "border-transparent hover:bg-secondary/60"
-                    }`}>
-                    <p className="text-xs text-muted-foreground font-medium">{opt.label}</p>
-                    {opt.price != null && <p className={`text-lg font-bold ${sortBy === opt.key ? "text-primary" : "text-foreground"}`}>£{opt.price}</p>}
+              <div className="flex items-stretch gap-4">
+                {/* Spacer to align tabs with results column */}
+                <div className="hidden lg:block w-56 shrink-0" />
+                <div className="flex flex-1 items-stretch">
+                  {([
+                    { key: "price" as const, label: "Cheapest", price: cheapest },
+                    { key: "duration" as const, label: "Fastest", price: fastest },
+                    { key: "stops" as const, label: "Fewest stops", price: null },
+                  ]).map((opt) => (
+                    <button key={opt.key} onClick={() => setSortBy(opt.key)}
+                      className={`flex-1 text-left px-4 py-3 border-b-2 transition-colors ${
+                        sortBy === opt.key ? "border-primary bg-primary/5" : "border-transparent hover:bg-secondary/60"
+                      }`}>
+                      <p className="text-sm font-semibold text-muted-foreground">{opt.label}</p>
+                      {opt.price != null && <p className={`text-lg font-bold ${sortBy === opt.key ? "text-primary" : "text-foreground"}`}>£{opt.price}</p>}
+                    </button>
+                  ))}
+                  <button onClick={() => setShowMobileFilters(true)}
+                    className="flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-semibold text-foreground hover:bg-secondary/60 lg:hidden">
+                    <SlidersHorizontal className="w-4 h-4" /> Filters
                   </button>
-                ))}
-                <button onClick={() => setShowMobileFilters(true)}
-                  className="flex items-center gap-2 px-5 py-4 border-b-2 border-transparent text-sm font-semibold text-foreground hover:bg-secondary/60 lg:hidden">
-                  <SlidersHorizontal className="w-4 h-4" /> Filters
-                </button>
+                </div>
               </div>
             </div>
           </div>
@@ -671,7 +713,7 @@ const FlightResults = () => {
           <div className="flex gap-4 items-start">
 
             {/* Sidebar desktop */}
-            <aside className="hidden lg:block w-60 shrink-0 sticky top-36">
+            <aside className="hidden lg:block w-56 shrink-0 sticky top-[8.5rem] max-h-[calc(100vh-8.5rem)] overflow-y-auto">
               {sidebar}
             </aside>
 
