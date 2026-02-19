@@ -56,6 +56,10 @@
     --teal: 174 60% 40%;
     --teal-foreground: 0 0% 100%;
     --gold: 42 90% 55%;
+    --success: 142 71% 35%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 40%;
+    --warning-foreground: 0 0% 100%;
 
     --gradient-hero: linear-gradient(135deg, hsl(216 28% 10%), hsl(216 35% 18%), hsl(216 28% 12%));
     --gradient-coral: linear-gradient(135deg, hsl(12 100% 64%), hsl(20 100% 58%));

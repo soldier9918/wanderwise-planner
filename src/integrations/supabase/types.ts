@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      price_alerts: {
+        Row: {
+          adults: number
+          cabin: string
+          created_at: string | null
+          current_price: number | null
+          depart_date: string
+          from_iata: string
+          id: string
+          return_date: string | null
+          session_id: string
+          target_price: number | null
+          to_iata: string
+        }
+        Insert: {
+          adults?: number
+          cabin?: string
+          created_at?: string | null
+          current_price?: number | null
+          depart_date: string
+          from_iata: string
+          id?: string
+          return_date?: string | null
+          session_id: string
+          target_price?: number | null
+          to_iata: string
+        }
+        Update: {
+          adults?: number
+          cabin?: string
+          created_at?: string | null
+          current_price?: number | null
+          depart_date?: string
+          from_iata?: string
+          id?: string
+          return_date?: string | null
+          session_id?: string
+          target_price?: number | null
+          to_iata?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

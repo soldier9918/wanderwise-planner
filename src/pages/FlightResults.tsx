@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { supabase } from "@/integrations/supabase/client";
+import PriceAlertButton from "@/components/PriceAlertButton";
 
 interface FlightSegment {
   departure: { iataCode: string; at: string };
@@ -44,6 +45,15 @@ const airlineNames: Record<string, string> = {
   IB: "Iberia", VY: "Vueling", LS: "Jet2", TOM: "TUI Airways",
   AA: "American Airlines", DL: "Delta", UA: "United", QR: "Qatar Airways",
   EY: "Etihad", SQ: "Singapore Airlines", CX: "Cathay Pacific", TK: "Turkish Airlines",
+};
+
+const airlineLogoDomains: Record<string, string> = {
+  FR: "ryanair.com", U2: "easyjet.com", BA: "britishairways.com",
+  EK: "emirates.com", LH: "lufthansa.com", AF: "airfrance.com",
+  KL: "klm.com", IB: "iberia.com", TK: "turkishairlines.com",
+  QR: "qatarairways.com", EY: "etihad.com", SQ: "singaporeair.com",
+  AA: "aa.com", DL: "delta.com", UA: "united.com", VY: "vueling.com",
+  LS: "jet2.com", W9: "wizzair.com", CX: "cathaypacific.com",
 };
 
 const directAirlineUrls: Record<string, string> = {
@@ -122,9 +132,9 @@ function buildBookingLinks(
 }
 
 function BookingIcon({ type }: { type: BookingLink["icon"] }) {
-  if (type === "skyscanner") return <Globe className="w-5 h-5 text-teal-500" />;
-  if (type === "kiwi") return <Sparkles className="w-5 h-5 text-green-500" />;
-  if (type === "google") return <Search className="w-5 h-5 text-blue-500" />;
+  if (type === "skyscanner") return <Globe className="w-5 h-5 text-teal" />;
+  if (type === "kiwi") return <Sparkles className="w-5 h-5 text-success" />;
+  if (type === "google") return <Search className="w-5 h-5 text-primary" />;
   return <Plane className="w-5 h-5 text-primary" />;
 }
 
@@ -336,9 +346,23 @@ const FlightResults = () => {
                     >
                       <div className="flex items-center gap-6 flex-wrap">
                         {/* Airline */}
-                        <div className="w-32 shrink-0">
-                          <p className="font-semibold text-foreground text-sm">{airline}</p>
-                          <p className="text-xs text-muted-foreground">{carrierCode} {firstSeg.number}</p>
+                        <div className="w-36 shrink-0 flex items-center gap-2">
+                          {airlineLogoDomains[carrierCode] ? (
+                            <img
+                              src={`https://logo.clearbit.com/${airlineLogoDomains[carrierCode]}`}
+                              alt={airline}
+                              className="w-9 h-9 rounded-lg object-contain bg-white p-0.5 border border-border shrink-0"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground border border-border shrink-0">
+                              {carrierCode.slice(0, 2)}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground text-sm leading-tight truncate">{airline}</p>
+                            <p className="text-xs text-muted-foreground">{carrierCode} {firstSeg.number}</p>
+                          </div>
                         </div>
 
                         {/* Outbound */}
@@ -403,11 +427,20 @@ const FlightResults = () => {
                             <p className="text-xs text-muted-foreground">per person total</p>
                           </div>
                           {offer.numberOfBookableSeats <= 5 && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                            <p className="text-xs text-warning font-medium">
                               Only {offer.numberOfBookableSeats} seats left!
                             </p>
                           )}
                           <div className="flex items-center gap-2">
+                            <PriceAlertButton
+                              from={from}
+                              to={to}
+                              depart={depart}
+                              returnDate={returnDate || undefined}
+                              adults={adults}
+                              cabin={cabin}
+                              currentPrice={priceGBP}
+                            />
                             <a
                               href={primaryLink.url}
                               target="_blank"

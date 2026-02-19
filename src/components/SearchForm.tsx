@@ -41,6 +41,8 @@ const SearchForm = () => {
   const [cabinClass, setCabinClass] = useState("Economy");
   const totalTravellers = adults + children;
   const [tripType, setTripType] = useState("Return");
+  const [tripTypeOpen, setTripTypeOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [nearbyFrom, setNearbyFrom] = useState(false);
   const [nearbyTo, setNearbyTo] = useState(false);
   const [directFlights, setDirectFlights] = useState(false);
@@ -52,20 +54,28 @@ const SearchForm = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Use stored IATA codes; fall back to uppercased raw input if user typed a code directly
-    const resolvedFrom = fromIata || departureCity.trim().toUpperCase().slice(0, 3);
-    const resolvedTo = toIata || destination.trim().toUpperCase().slice(0, 3);
+    setFormError(null);
+
+    // Validate IATA codes
+    if (!fromIata) {
+      setFormError("Please select a departure airport from the dropdown.");
+      return;
+    }
+    if (!toIata) {
+      setFormError("Please select a destination airport from the dropdown.");
+      return;
+    }
 
     const params = new URLSearchParams({
-      from: resolvedFrom,
-      to: resolvedTo,
+      from: fromIata,
+      to: toIata,
       depart: checkIn ? format(checkIn, "yyyy-MM-dd") : "",
       adults: String(adults),
       children: String(children),
       cabin: cabinClass,
       direct: String(directFlights),
     });
-    if (checkOut) params.set("return", format(checkOut, "yyyy-MM-dd"));
+    if (checkOut && tripType !== "One way") params.set("return", format(checkOut, "yyyy-MM-dd"));
     navigate(`/flight-results?${params.toString()}`);
   };
 
@@ -127,7 +137,7 @@ const SearchForm = () => {
 
         {/* Trip Type Selector */}
         <div className="mb-4">
-          <Popover>
+          <Popover open={tripTypeOpen} onOpenChange={setTripTypeOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
@@ -142,7 +152,7 @@ const SearchForm = () => {
                 <button
                   key={type}
                   type="button"
-                  onClick={() => setTripType(type)}
+                  onClick={() => { setTripType(type); setTripTypeOpen(false); }}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                     tripType === type
@@ -391,14 +401,20 @@ const SearchForm = () => {
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="p-0" style={{ width: fromIata ? "364px" : "auto" }} align="start">
+              <PopoverContent className="p-0" style={{ width: fromIata ? "380px" : "auto" }} align="start">
                 {fromIata ? (
                   <FlightPriceCalendar
                     origin={fromIata}
                     month={checkIn ? startOfMonth(checkIn) : startOfMonth(new Date())}
                     selectedDate={checkIn}
+                    returnDate={checkOut}
                     onDaySelect={(date) => {
                       setCheckIn(date);
+                      // Auto-close depart popover only if return date already selected
+                      if (checkOut) setDepartPopoverOpen(false);
+                    }}
+                    onReturnSelect={(date) => {
+                      setCheckOut(date);
                       setDepartPopoverOpen(false);
                     }}
                   />
@@ -435,10 +451,14 @@ const SearchForm = () => {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
-                    mode="single"
-                    selected={checkOut}
-                    onSelect={setCheckOut}
+                    mode="range"
+                    selected={{ from: checkIn, to: checkOut }}
+                    onSelect={(range) => {
+                      if (range?.to) setCheckOut(range.to);
+                      else if (range?.from) setCheckOut(range.from);
+                    }}
                     disabled={(date) => date < (checkIn || new Date())}
+                    defaultMonth={checkIn || new Date()}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                   />
@@ -502,6 +522,13 @@ const SearchForm = () => {
             >
               Search
             </button>
+          </div>
+        )}
+
+        {/* Form error */}
+        {formError && (
+          <div className="mt-3 flex items-center gap-2 text-destructive text-sm font-medium animate-in fade-in slide-in-from-top-1">
+            <span>⚠️</span> {formError}
           </div>
         )}
 
