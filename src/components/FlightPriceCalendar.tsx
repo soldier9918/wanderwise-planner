@@ -9,13 +9,13 @@ import {
   addMonths,
   subMonths,
   isBefore,
+  isAfter,
   startOfDay,
   isSameDay,
   isSameMonth,
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface FlightPriceCalendarProps {
@@ -23,6 +23,8 @@ interface FlightPriceCalendarProps {
   month: Date;
   onDaySelect: (date: Date) => void;
   selectedDate?: Date;
+  returnDate?: Date;
+  onReturnSelect?: (date: Date) => void;
 }
 
 // Monday-first weekday headers
@@ -45,7 +47,10 @@ function mondayIndex(date: Date): number {
   return day === 0 ? 6 : day - 1;
 }
 
-const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: FlightPriceCalendarProps) => {
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate, returnDate, onReturnSelect }: FlightPriceCalendarProps) => {
   const { formatPrice } = useCurrency();
   const [calendarMonth, setCalendarMonth] = useState<Date>(startOfMonth(month));
   const [prices, setPrices] = useState<Record<string, number>>({});
@@ -59,23 +64,12 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("amadeus-flight-inspiration", {
-        method: "GET",
-        headers: {},
-        // Pass query params by appending to the function name won't work with invoke,
-        // so we use body to pass params and handle in GET edge function via URL
-      });
-
-      // supabase.functions.invoke doesn't support GET query params directly,
-      // so we call the function URL manually
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/amadeus-flight-inspiration?origin=${encodeURIComponent(iata)}`,
+        `${SUPABASE_URL}/functions/v1/amadeus-flight-inspiration?origin=${encodeURIComponent(iata)}`,
         {
           headers: {
-            "apikey": anonKey,
-            "Authorization": `Bearer ${anonKey}`,
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
           },
         }
       );
@@ -126,6 +120,12 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
 
   const handleDayClick = (date: Date) => {
     if (isBefore(date, today)) return;
+
+    // If depart date is already set and this is a later date, treat as return date selection
+    if (selectedDate && onReturnSelect && !isSameDay(date, selectedDate) && !isBefore(date, selectedDate)) {
+      onReturnSelect(date);
+      return;
+    }
     onDaySelect(date);
   };
 
@@ -141,7 +141,7 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
         </div>
         <div className="grid grid-cols-7 gap-1">
           {Array(35).fill(null).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-lg" />
+            <Skeleton key={i} className="h-[68px] rounded-lg" />
           ))}
         </div>
       </div>
@@ -149,40 +149,40 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
   }
 
   return (
-    <div className="p-3 w-full select-none">
+    <div className="p-4 w-full select-none">
       {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <button
           type="button"
           onClick={goToPrev}
           disabled={isPrevDisabled}
           className={cn(
-            "w-7 h-7 rounded-md flex items-center justify-center transition-colors",
+            "w-8 h-8 rounded-md flex items-center justify-center transition-colors",
             isPrevDisabled
               ? "text-muted-foreground/30 cursor-not-allowed"
               : "text-foreground hover:bg-secondary"
           )}
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-base font-bold text-foreground">
           {format(calendarMonth, "MMMM yyyy")}
         </span>
 
         <button
           type="button"
           onClick={goToNext}
-          className="w-7 h-7 rounded-md flex items-center justify-center text-foreground hover:bg-secondary transition-colors"
+          className="w-8 h-8 rounded-md flex items-center justify-center text-foreground hover:bg-secondary transition-colors"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 mb-1">
+      <div className="grid grid-cols-7 mb-2">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
+          <div key={d} className="text-center text-sm font-semibold text-muted-foreground py-1">
             {d}
           </div>
         ))}
@@ -198,7 +198,11 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
           const dateKey = format(date, "yyyy-MM-dd");
           const price = prices[dateKey];
           const isPast = isBefore(date, today);
-          const isSelected = selectedDate && isSameDay(date, selectedDate);
+          const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
+          const isReturn = returnDate ? isSameDay(date, returnDate) : false;
+          const isInRange = selectedDate && returnDate
+            ? !isBefore(date, selectedDate) && !isAfter(date, returnDate) && !isSelected && !isReturn
+            : false;
           const isToday = isSameDay(date, today);
           const isCheapest = price !== null && price !== undefined && cheapestPrice !== null && price === cheapestPrice;
 
@@ -214,21 +218,23 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
               disabled={isPast}
               onClick={() => handleDayClick(date)}
               className={cn(
-                "relative flex flex-col items-center justify-start rounded-lg pt-1.5 pb-1 px-0.5 min-h-[56px] text-xs transition-all border",
+                "relative flex flex-col items-center justify-start rounded-lg pt-2 pb-1.5 px-0.5 min-h-[68px] text-xs transition-all border",
                 isPast
                   ? "opacity-30 cursor-not-allowed border-transparent"
                   : "cursor-pointer hover:border-primary/30",
-                isSelected
+                isSelected || isReturn
                   ? "bg-primary text-primary-foreground border-primary"
-                  : isToday
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-transparent hover:bg-primary/5"
+                  : isInRange
+                    ? "bg-primary/10 border-primary/20"
+                    : isToday
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-transparent hover:bg-primary/5"
               )}
             >
               {/* Day number */}
               <span className={cn(
-                "font-semibold leading-none text-sm",
-                isSelected ? "text-primary-foreground" : "text-foreground"
+                "font-bold leading-none text-base",
+                isSelected || isReturn ? "text-primary-foreground" : "text-foreground"
               )}>
                 {format(date, "d")}
               </span>
@@ -236,22 +242,31 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
               {/* Price badge */}
               {price !== undefined && !isPast && (
                 <span className={cn(
-                  "mt-1 text-[10px] font-medium leading-none",
-                  isSelected
+                  "mt-1 text-xs font-medium leading-none",
+                  isSelected || isReturn
                     ? "text-primary-foreground/90"
-                    : priceColor === "cheap"
-                      ? "text-green-600 dark:text-green-400"
-                      : priceColor === "mid"
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-muted-foreground"
+                    : isInRange
+                      ? "text-primary"
+                      : priceColor === "cheap"
+                        ? "text-success"
+                        : priceColor === "mid"
+                          ? "text-warning"
+                          : "text-muted-foreground"
                 )}>
                   {formatPrice(price)}
                 </span>
               )}
 
+              {/* Return label */}
+              {isReturn && !isPast && (
+                <span className="text-[9px] font-bold text-primary-foreground/80 leading-none mt-0.5">
+                  Return
+                </span>
+              )}
+
               {/* Best price chip */}
-              {isCheapest && !isPast && !isSelected && (
-                <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center gap-0.5">
+              {isCheapest && !isPast && !isSelected && !isReturn && (
+                <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-success text-white text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center gap-0.5">
                   <TrendingDown className="w-2 h-2" />
                   Best
                 </span>
@@ -260,6 +275,13 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
           );
         })}
       </div>
+
+      {/* Hint when depart selected but no return yet */}
+      {selectedDate && !returnDate && onReturnSelect && (
+        <p className="text-center text-xs text-primary font-medium mt-3 py-2">
+          ✈ Now click a return date
+        </p>
+      )}
 
       {/* Error / empty state */}
       {error && (
@@ -274,16 +296,16 @@ const FlightPriceCalendar = ({ origin, month, onDaySelect, selectedDate }: Fligh
       {/* Legend */}
       {allPriceValues.length > 0 && (
         <div className="flex items-center justify-center gap-4 mt-3 pt-2 border-t border-border">
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-full bg-success inline-block" />
             Cheap
           </span>
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-full bg-warning inline-block" />
             Mid
           </span>
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-full bg-muted-foreground/50 inline-block" />
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/50 inline-block" />
             Pricier
           </span>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plane, Loader2 } from "lucide-react";
+import { Plane, MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -66,24 +66,25 @@ const AirportAutocompleteInput = ({
     }
   }, []);
 
-  // Debounced search
+  // Debounced search — triggers from 1 character
   useEffect(() => {
     if (iataSelected) return;
-    if (value.length < 2) {
+    if (value.length < 1) {
       setSuggestions([]);
       setShowDropdown(false);
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
+    debounceRef.current = setTimeout(() => fetchSuggestions(value), 150);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [value, iataSelected, fetchSuggestions]);
 
   const handleSelect = (s: AirportSuggestion) => {
-    const display = s.subType === "CITY"
-      ? `${s.name} (${s.iataCode})`
+    const cityPart = s.cityName && s.cityName !== s.name ? s.cityName : "";
+    const display = cityPart
+      ? `${cityPart} (${s.iataCode})`
       : `${s.name} (${s.iataCode})`;
     setIataSelected(true);
     setShowDropdown(false);
@@ -108,7 +109,7 @@ const AirportAutocompleteInput = ({
         value={value}
         onChange={handleInputChange}
         onFocus={() => {
-          if (!iataSelected && value.length >= 2) {
+          if (!iataSelected && value.length >= 1) {
             fetchSuggestions(value);
           }
         }}
@@ -118,14 +119,16 @@ const AirportAutocompleteInput = ({
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-card border border-border rounded-xl shadow-elevated overflow-hidden">
+        <div className="absolute top-full left-0 z-50 mt-1 bg-card border border-border rounded-xl shadow-elevated overflow-hidden"
+          style={{ minWidth: "100%", width: "max-content", maxWidth: "420px" }}
+        >
           {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
+            <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm whitespace-nowrap px-5">
+              <Loader2 className="w-4 h-4 animate-spin shrink-0" />
               Searching airports…
             </div>
           ) : suggestions.length === 0 ? (
-            <div className="py-4 px-5 text-sm text-muted-foreground text-center">
+            <div className="py-4 px-5 text-sm text-muted-foreground text-center whitespace-nowrap">
               No results found
             </div>
           ) : (
@@ -135,24 +138,31 @@ const AirportAutocompleteInput = ({
                   <button
                     type="button"
                     onMouseDown={(e) => {
-                      e.preventDefault(); // prevent blur before click
+                      e.preventDefault();
                       handleSelect(s);
                     }}
                     className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border last:border-0"
                   >
-                    <Plane className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    {s.subType === "CITY" ? (
+                      <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    ) : (
+                      <Plane className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    )}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground text-sm truncate">
-                          {s.name}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-foreground text-sm">
+                          {s.cityName && s.cityName !== s.name ? s.cityName : s.name}
                         </span>
-                        <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                        <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
                           {s.iataCode}
                         </span>
+                        {s.subType === "AIRPORT" && s.cityName && s.cityName !== s.name && (
+                          <span className="text-xs text-muted-foreground">· {s.name}</span>
+                        )}
                       </div>
-                      {(s.cityName || s.countryName) && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {[s.cityName, s.countryName].filter(Boolean).join(", ")}
+                      {s.countryName && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {[s.cityName && s.cityName !== s.name ? "" : "", s.countryName].filter(Boolean).join(", ") || s.countryName}
                         </p>
                       )}
                     </div>

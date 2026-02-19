@@ -53,9 +53,9 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const keyword = url.searchParams.get("keyword");
 
-    if (!keyword || keyword.trim().length < 2) {
+    if (!keyword || keyword.trim().length < 1) {
       return new Response(
-        JSON.stringify({ error: "keyword must be at least 2 characters" }),
+        JSON.stringify({ error: "keyword must be at least 1 character" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
     const params = new URLSearchParams({
       keyword: keyword.trim(),
       subType: "CITY,AIRPORT",
-      "page[limit]": "8",
-      view: "LIGHT",
+      "page[limit]": "10",
+      view: "FULL",
     });
 
     const searchRes = await fetch(
