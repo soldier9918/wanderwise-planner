@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, CalendarIcon, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +38,38 @@ const SearchForm = () => {
   const [children, setChildren] = useState(0);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [travellersOpen, setTravellersOpen] = useState(false);
+
+  // Portal-based calendar positioning
+  const departBtnRef = useRef<HTMLButtonElement>(null);
+  const returnBtnRef = useRef<HTMLButtonElement>(null);
+  const [calTop, setCalTop] = useState(0);
+  const [calLeft, setCalLeft] = useState(0);
+
+  const openCalendar = useCallback((ref: React.RefObject<HTMLButtonElement>) => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setCalTop(r.bottom + 6);
+      setCalLeft(Math.min(r.left, window.innerWidth - 680));
+    }
+    setDatePopoverOpen(true);
+  }, []);
+
+  // Close calendar on outside click
+  useEffect(() => {
+    if (!datePopoverOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        !departBtnRef.current?.contains(target) &&
+        !returnBtnRef.current?.contains(target) &&
+        !(document.getElementById("range-cal-portal")?.contains(target))
+      ) {
+        setDatePopoverOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [datePopoverOpen]);
   const [multiTravellersOpen, setMultiTravellersOpen] = useState(false);
   const [cabinClass, setCabinClass] = useState("Economy");
   const totalTravellers = adults + children;
@@ -387,58 +420,52 @@ const SearchForm = () => {
               className="flex-1"
             />
 
-            {/* Depart + Return — unified dual-month calendar */}
-            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-                >
-                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
-                  <span className={cn("text-lg flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
-                    <CalendarIcon className="w-4 h-4" />
-                    {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+            {/* Depart — portal-based calendar */}
+            <button
+              ref={departBtnRef}
+              type="button"
+              onClick={() => openCalendar(departBtnRef)}
+              className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+            >
+              <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
+              <span className={cn("text-lg flex items-center gap-2", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                <CalendarIcon className="w-4 h-4" />
+                {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
+              </span>
+            </button>
+
+            {/* Return — portal-based calendar */}
+            {tripType !== "One way" && (
+              <button
+                ref={returnBtnRef}
+                type="button"
+                onClick={() => openCalendar(returnBtnRef)}
+                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+              >
+                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
+                <span className={cn("text-lg flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                  <CalendarIcon className="w-4 h-4" />
+                  {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
+                </span>
+              </button>
+            )}
+
+            {/* Portal calendar */}
+            {datePopoverOpen && createPortal(
+              <div
+                id="range-cal-portal"
+                style={{ position: "fixed", top: calTop, left: calLeft, zIndex: 99999 }}
+              >
                 <RangeDatePickerCalendar
                   departDate={checkIn}
                   returnDate={checkOut}
                   onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
-                  onReturnChange={(d) => setCheckOut(d)}
+                  onReturnChange={(d) => { setCheckOut(d); }}
                   onApply={() => setDatePopoverOpen(false)}
                   hint={tripType === "One way" ? "One way — select departure date" : "Select return date"}
                 />
-              </PopoverContent>
-            </Popover>
-
-            {/* Return trigger — opens same unified calendar */}
-            {tripType !== "One way" && (
-              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-                  >
-                    <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
-                    <span className={cn("text-lg flex items-center gap-2", checkOut ? "text-foreground" : "text-muted-foreground")}>
-                      <CalendarIcon className="w-4 h-4" />
-                      {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
-                  <RangeDatePickerCalendar
-                    departDate={checkIn}
-                    returnDate={checkOut}
-                    onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
-                    onReturnChange={(d) => setCheckOut(d)}
-                    onApply={() => setDatePopoverOpen(false)}
-                    hint="Select return date"
-                  />
-                </PopoverContent>
-              </Popover>
+              </div>,
+              document.body
             )}
 
             {/* Travellers & Cabin Class */}
