@@ -18,7 +18,9 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 interface CitySuggestion {
   name: string;
   countryCode: string;
+  countryName: string;
   cityCode: string;
+  subType?: string;
 }
 
 const COUNTRY_NAMES: Record<string, string> = {
@@ -127,7 +129,7 @@ const HotelSearchForm = () => {
   }, [destination, selectedCityCode, fetchSuggestions]);
 
   const handleSuggestionSelect = (suggestion: CitySuggestion) => {
-    const countryName = COUNTRY_NAMES[suggestion.countryCode] || suggestion.countryCode;
+    const countryName = suggestion.countryName || COUNTRY_NAMES[suggestion.countryCode] || suggestion.countryCode;
     setDestination(`${suggestion.name}, ${countryName}`);
     setSelectedCityCode(suggestion.cityCode);
     setSuggestions([]);
@@ -173,10 +175,10 @@ const HotelSearchForm = () => {
         </div>
       ) : (
         <ul className="max-h-72 overflow-y-auto">
-          {suggestions.map((s) => {
-            const countryName = COUNTRY_NAMES[s.countryCode] || s.countryCode;
+          {suggestions.map((s, i) => {
+            const countryName = s.countryName || COUNTRY_NAMES[s.countryCode] || s.countryCode;
             return (
-              <li key={s.cityCode}>
+              <li key={`${s.cityCode}-${i}`}>
                 <button
                   type="button"
                   onMouseDown={(e) => {
@@ -186,10 +188,13 @@ const HotelSearchForm = () => {
                   className="w-full flex items-center gap-3 px-5 py-3 hover:bg-primary/5 transition-colors text-left border-b border-border/50 last:border-0"
                 >
                   <MapPin className="w-4 h-4 text-primary shrink-0" />
-                  <span>
-                    <span className="font-semibold text-foreground text-sm">{s.name}</span>
-                    <span className="text-muted-foreground text-xs ml-2">{countryName}</span>
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground text-sm">{s.name}</span>
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">{s.cityCode}</span>
+                    </div>
+                    {countryName && <p className="text-xs text-muted-foreground mt-0.5">{countryName}</p>}
+                  </div>
                 </button>
               </li>
             );

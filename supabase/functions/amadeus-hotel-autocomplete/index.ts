@@ -53,22 +53,25 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const keyword = url.searchParams.get("keyword");
 
-    if (!keyword || keyword.trim().length < 2) {
+    if (!keyword || keyword.trim().length < 1) {
       return new Response(
-        JSON.stringify({ error: "keyword must be at least 2 characters" }),
+        JSON.stringify({ error: "keyword must be at least 1 character" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const token = await getAmadeusToken();
 
+    // Use the same locations endpoint as flights — supports country names (e.g. "Maldives")
     const params = new URLSearchParams({
       keyword: keyword.trim(),
-      max: "8",
+      subType: "CITY,AIRPORT",
+      "page[limit]": "20",
+      view: "FULL",
     });
 
     const searchRes = await fetch(
-      `https://test.api.amadeus.com/v1/reference-data/locations/hotel-cities?${params.toString()}`,
+      `https://test.api.amadeus.com/v1/reference-data/locations?${params.toString()}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -86,11 +89,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Map to simplified shape: { name, countryCode, cityCode }
-    const suggestions = (searchData.data || []).map((item: { name: string; address?: { countryCode: string }; iataCode: string }) => ({
-      name: item.name,
+    // Map to simplified shape: { name, countryCode, cityCode, countryName }
+    const suggestions = (searchData.data || []).map((item: {
+      name: string;
+      iataCode: string;
+      subType: string;
+      address?: { cityName?: string; countryName?: string; countryCode?: string };
+    }) => ({
+      name: item.address?.cityName || item.name,
       countryCode: item.address?.countryCode ?? "",
+      countryName: item.address?.countryName ?? "",
       cityCode: item.iataCode,
+      subType: item.subType,
     }));
 
     return new Response(JSON.stringify({ suggestions }), {
