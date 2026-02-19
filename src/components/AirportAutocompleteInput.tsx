@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Plane, MapPin, Loader2 } from "lucide-react";
+import { Plane, MapPin, Loader2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -13,6 +13,72 @@ interface AirportSuggestion {
   cityName: string;
   countryName: string;
   countryCode: string;
+}
+
+// Group airports under their city, like Skyscanner's "London (Any)"
+interface GroupedSuggestion {
+  type: "city-group" | "single";
+  cityName: string;
+  countryName: string;
+  // For city-group: the city-level IATA (e.g. LON) or first airport's city code
+  cityIata: string;
+  airports: AirportSuggestion[];
+}
+
+function groupSuggestions(suggestions: AirportSuggestion[]): GroupedSuggestion[] {
+  const cityMap = new Map<string, AirportSuggestion[]>();
+  const cityOrder: string[] = [];
+
+  for (const s of suggestions) {
+    // Normalise city key: use cityName if available, else name
+    const cityKey = (s.cityName || s.name).trim().toUpperCase();
+    if (!cityMap.has(cityKey)) {
+      cityMap.set(cityKey, []);
+      cityOrder.push(cityKey);
+    }
+    cityMap.get(cityKey)!.push(s);
+  }
+
+  const groups: GroupedSuggestion[] = [];
+  for (const cityKey of cityOrder) {
+    const airports = cityMap.get(cityKey)!;
+    const city = airports[0];
+    // Separate CITY subtype entries from AIRPORT entries
+    const cityEntry = airports.find((a) => a.subType === "CITY");
+    const airportEntries = airports.filter((a) => a.subType === "AIRPORT");
+
+    if (airportEntries.length > 1) {
+      // Multiple airports → show city "(Any)" group first
+      groups.push({
+        type: "city-group",
+        cityName: city.cityName || city.name,
+        countryName: city.countryName,
+        cityIata: cityEntry?.iataCode || airportEntries[0].iataCode,
+        airports: airportEntries,
+      });
+    } else if (airportEntries.length === 1 && cityEntry) {
+      // One airport + city entry → just show the airport
+      groups.push({
+        type: "single",
+        cityName: city.cityName || city.name,
+        countryName: city.countryName,
+        cityIata: airportEntries[0].iataCode,
+        airports: airportEntries,
+      });
+    } else {
+      // Anything else — show as individual entries
+      for (const s of airports) {
+        groups.push({
+          type: "single",
+          cityName: s.cityName || s.name,
+          countryName: s.countryName,
+          cityIata: s.iataCode,
+          airports: [s],
+        });
+      }
+    }
+  }
+  return groups;
 }
 
 interface AirportAutocompleteInputProps {
@@ -45,6 +111,7 @@ const AirportAutocompleteInput = ({
   const updatePosition = useCallback(() => {
     if (containerRef.current) {
       const r = containerRef.current.getBoundingClientRect();
+      // Use fixed positioning (viewport-relative) since portal renders at document.body
       setDropdownTop(r.bottom + 4);
       setDropdownLeft(r.left);
       setDropdownWidth(r.width);
@@ -63,11 +130,13 @@ const AirportAutocompleteInput = ({
 
   useEffect(() => {
     if (!showDropdown) return;
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("resize", updatePosition);
+    const onScroll = () => updatePosition();
+    const onResize = () => updatePosition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
     };
   }, [showDropdown, updatePosition]);
 
@@ -81,15 +150,8 @@ const AirportAutocompleteInput = ({
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       const data = await res.json();
-      const kw = keyword.trim().toLowerCase();
       const all: AirportSuggestion[] = data.suggestions || [];
-      const filtered = all.filter((s) => {
-        const city = (s.cityName || "").toLowerCase();
-        const name = (s.name || "").toLowerCase();
-        const iata = (s.iataCode || "").toLowerCase();
-        return city.startsWith(kw) || name.startsWith(kw) || iata.startsWith(kw);
-      });
-      setSuggestions(filtered);
+      setSuggestions(all);
     } catch {
       setSuggestions([]);
     } finally {
@@ -111,11 +173,9 @@ const AirportAutocompleteInput = ({
     };
   }, [value, iataSelected, fetchSuggestions]);
 
-  const handleSelect = (s: AirportSuggestion) => {
-    const cityPart = s.cityName && s.cityName !== s.name ? s.cityName : "";
-    const display = cityPart
-      ? `${cityPart} (${s.iataCode})`
-      : `${s.name} (${s.iataCode})`;
+  const handleSelectAirport = (s: AirportSuggestion) => {
+    const cityPart = s.cityName && s.cityName !== s.name ? s.cityName : s.name;
+    const display = `${cityPart} (${s.iataCode})`;
     setIataSelected(true);
     setShowDropdown(false);
     setSuggestions([]);
@@ -123,10 +183,22 @@ const AirportAutocompleteInput = ({
     onSelect(s.iataCode, display);
   };
 
+  const handleSelectCityGroup = (group: GroupedSuggestion) => {
+    // "London (Any)" → use the city IATA
+    const display = `${group.cityName} (Any)`;
+    setIataSelected(true);
+    setShowDropdown(false);
+    setSuggestions([]);
+    onChange(display);
+    onSelect(group.cityIata, display);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIataSelected(false);
     onChange(e.target.value);
   };
+
+  const grouped = groupSuggestions(suggestions);
 
   const dropdownContent = (
     <div
@@ -136,54 +208,91 @@ const AirportAutocompleteInput = ({
         left: dropdownLeft,
         minWidth: dropdownWidth,
         width: "max-content",
-        maxWidth: "420px",
+        maxWidth: "460px",
         zIndex: 99999,
       }}
       className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
     >
       {isLoading ? (
-        <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm whitespace-nowrap px-5">
+        <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm px-5">
           <Loader2 className="w-4 h-4 animate-spin shrink-0" />
           Searching airports…
         </div>
-      ) : suggestions.length === 0 ? (
-        <div className="py-4 px-5 text-sm text-muted-foreground text-center whitespace-nowrap">
+      ) : grouped.length === 0 ? (
+        <div className="py-4 px-5 text-sm text-muted-foreground text-center">
           No results found
         </div>
       ) : (
-        <ul>
-          {suggestions.map((s, i) => (
-            <li key={`${s.iataCode}-${i}`}>
-              <button
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleSelect(s);
-                }}
-                className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border last:border-0"
-              >
-                {s.subType === "CITY" ? (
-                  <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                ) : (
-                  <Plane className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-foreground text-sm">
-                      {s.cityName && s.cityName !== s.name ? s.cityName : s.name}
-                    </span>
-                    <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                      {s.iataCode}
-                    </span>
-                    {s.subType === "AIRPORT" && s.cityName && s.cityName !== s.name && (
-                      <span className="text-xs text-muted-foreground">· {s.name}</span>
+        <ul className="max-h-80 overflow-y-auto">
+          {grouped.map((group, gi) => (
+            <li key={`g-${gi}`}>
+              {group.type === "city-group" ? (
+                <>
+                  {/* City (Any) row */}
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); handleSelectCityGroup(group); }}
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border/50"
+                  >
+                    <Globe className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-foreground text-sm">
+                          {group.cityName} (Any)
+                        </span>
+                        <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          {group.cityIata}
+                        </span>
+                      </div>
+                      {group.countryName && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{group.countryName}</p>
+                      )}
+                    </div>
+                  </button>
+                  {/* Individual airports indented */}
+                  {group.airports.map((s, ai) => (
+                    <button
+                      key={`${s.iataCode}-${ai}`}
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); handleSelectAirport(s); }}
+                      className="w-full flex items-start gap-3 pl-10 pr-4 py-2.5 text-left hover:bg-primary/5 transition-colors border-b border-border/30 last:border-b border-border/50"
+                    >
+                      <Plane className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-foreground text-sm">{s.name}</span>
+                          <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                            {s.iataCode}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); handleSelectAirport(group.airports[0]); }}
+                  className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0"
+                >
+                  {group.airports[0]?.subType === "CITY" ? (
+                    <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  ) : (
+                    <Plane className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-foreground text-sm">{group.cityName}</span>
+                      <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                        {group.airports[0]?.iataCode}
+                      </span>
+                    </div>
+                    {group.countryName && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{group.countryName}</p>
                     )}
                   </div>
-                  {s.countryName && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.countryName}</p>
-                  )}
-                </div>
-              </button>
+                </button>
+              )}
             </li>
           ))}
         </ul>

@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     const params = new URLSearchParams({
       keyword: keyword.trim(),
       subType: "CITY,AIRPORT",
-      "page[limit]": "10",
+      "page[limit]": "20",
       view: "FULL",
     });
 

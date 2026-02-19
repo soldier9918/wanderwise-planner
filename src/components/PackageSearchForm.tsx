@@ -4,19 +4,23 @@ import { ArrowLeftRight, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import AirportAutocompleteInput from "@/components/AirportAutocompleteInput";
+import RangeDatePickerCalendar from "@/components/RangeDatePickerCalendar";
 
 const PackageSearchForm = () => {
   const navigate = useNavigate();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [fromIata, setFromIata] = useState("");
+  const [toIata, setToIata] = useState("");
   const [depart, setDepart] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [cabinClass, setCabinClass] = useState("Economy");
@@ -27,14 +31,15 @@ const PackageSearchForm = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(
-      `/results?from=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}&checkIn=${depart ? format(depart, "yyyy-MM-dd") : ""}&checkOut=${returnDate ? format(returnDate, "yyyy-MM-dd") : ""}&guests=${totalTravellers}&cabin=${cabinClass}`
+      `/results?from=${encodeURIComponent(fromIata || from)}&destination=${encodeURIComponent(toIata || to)}&checkIn=${depart ? format(depart, "yyyy-MM-dd") : ""}&checkOut=${returnDate ? format(returnDate, "yyyy-MM-dd") : ""}&guests=${totalTravellers}&cabin=${cabinClass}`
     );
   };
 
   const swapCities = () => {
-    const temp = from;
     setFrom(to);
-    setTo(temp);
+    setTo(from);
+    setFromIata(toIata);
+    setToIata(fromIata);
   };
 
   return (
@@ -46,18 +51,16 @@ const PackageSearchForm = () => {
       className="w-full max-w-7xl mx-auto"
     >
       <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-4 shadow-elevated border border-white/10">
-        <div className="flex items-stretch rounded-xl overflow-hidden">
+        <div className="flex items-stretch rounded-xl overflow-visible">
           {/* From */}
-          <div className="relative flex-1 bg-card border-r border-border">
-            <label className="absolute left-5 top-3 text-base font-bold text-foreground">From</label>
-            <input
-              type="text"
-              placeholder="City or airport"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:ring-2 focus:ring-primary/50 focus:ring-inset"
-            />
-          </div>
+          <AirportAutocompleteInput
+            label="From"
+            placeholder="City or airport"
+            value={from}
+            onChange={(v) => { setFrom(v); if (!v) setFromIata(""); }}
+            onSelect={(iata, display) => { setFrom(display); setFromIata(iata); }}
+            className="flex-1"
+          />
 
           {/* Swap */}
           <button
@@ -70,63 +73,61 @@ const PackageSearchForm = () => {
           </button>
 
           {/* To */}
-          <div className="relative flex-1 bg-card border-r border-border">
-            <label className="absolute left-5 top-3 text-base font-bold text-foreground">To</label>
-            <input
-              type="text"
-              placeholder="City or airport"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:ring-2 focus:ring-primary/50 focus:ring-inset"
-            />
-          </div>
+          <AirportAutocompleteInput
+            label="To"
+            placeholder="Country, city or airport"
+            value={to}
+            onChange={(v) => { setTo(v); if (!v) setToIata(""); }}
+            onSelect={(iata, display) => { setTo(display); setToIata(iata); }}
+            className="flex-1"
+          />
 
-          {/* Depart */}
-          <Popover>
+          {/* Depart — unified dual-month calendar */}
+          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
+                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
-                <span className={cn("text-lg flex items-center gap-1.5", depart ? "text-foreground" : "text-muted-foreground")}>
-                  {depart ? format(depart, "dd/MM/yyyy") : "Add date"}
+                <span className={cn("text-lg", depart ? "text-foreground" : "text-muted-foreground")}>
+                  {depart ? format(depart, "dd MMM yyyy") : "Add date"}
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={depart}
-                onSelect={setDepart}
-                disabled={(date) => date < new Date()}
-                initialFocus
-                className="p-3 pointer-events-auto"
+            <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+              <RangeDatePickerCalendar
+                departDate={depart}
+                returnDate={returnDate}
+                onDepartChange={(d) => { setDepart(d); setReturnDate(undefined); }}
+                onReturnChange={(d) => setReturnDate(d)}
+                onApply={() => setDatePopoverOpen(false)}
+                hint="Select return date"
               />
             </PopoverContent>
           </Popover>
 
-          {/* Return */}
-          <Popover>
+          {/* Return — opens same calendar */}
+          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-secondary/50 transition-all cursor-pointer"
+                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
-                <span className={cn("text-lg flex items-center gap-1.5", returnDate ? "text-foreground" : "text-muted-foreground")}>
-                  {returnDate ? format(returnDate, "dd/MM/yyyy") : "Add date"}
+                <span className={cn("text-lg", returnDate ? "text-foreground" : "text-muted-foreground")}>
+                  {returnDate ? format(returnDate, "dd MMM yyyy") : "Add date"}
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={returnDate}
-                onSelect={setReturnDate}
-                disabled={(date) => date < (depart || new Date())}
-                initialFocus
-                className="p-3 pointer-events-auto"
+            <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+              <RangeDatePickerCalendar
+                departDate={depart}
+                returnDate={returnDate}
+                onDepartChange={(d) => { setDepart(d); setReturnDate(undefined); }}
+                onReturnChange={(d) => setReturnDate(d)}
+                onApply={() => setDatePopoverOpen(false)}
+                hint="Select return date"
               />
             </PopoverContent>
           </Popover>
@@ -153,26 +154,15 @@ const PackageSearchForm = () => {
                     <p className="text-sm text-muted-foreground">Aged 18+</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setAdults(Math.max(1, adults - 1))}
-                      disabled={adults <= 1}
-                      className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
+                    <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                       <Minus className="w-4 h-4" />
                     </button>
                     <span className="text-base font-semibold text-foreground w-6 text-center">{adults}</span>
-                    <button
-                      type="button"
-                      onClick={() => setAdults(Math.min(9, adults + 1))}
-                      disabled={adults >= 9}
-                      className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
+                    <button type="button" onClick={() => setAdults(Math.min(9, adults + 1))} disabled={adults >= 9} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-
                 {/* Children */}
                 <div className="flex items-center justify-between">
                   <div>
@@ -180,30 +170,18 @@ const PackageSearchForm = () => {
                     <p className="text-sm text-muted-foreground">Aged 0 to 17</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setChildren(Math.max(0, children - 1))}
-                      disabled={children <= 0}
-                      className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
+                    <button type="button" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                       <Minus className="w-4 h-4" />
                     </button>
                     <span className="text-base font-semibold text-foreground w-6 text-center">{children}</span>
-                    <button
-                      type="button"
-                      onClick={() => setChildren(Math.min(6, children + 1))}
-                      disabled={children >= 6}
-                      className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
+                    <button type="button" onClick={() => setChildren(Math.min(6, children + 1))} disabled={children >= 6} className="w-9 h-9 rounded-lg border border-primary bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Your age at time of travel must be valid for the age category booked. Airlines have restrictions on under 18s travelling alone.
                 </p>
-
                 {/* Cabin Class */}
                 <div>
                   <label className="text-sm font-semibold text-foreground mb-1.5 block">Cabin Class</label>
@@ -217,7 +195,6 @@ const PackageSearchForm = () => {
                     ))}
                   </select>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => setTravellersOpen(false)}
