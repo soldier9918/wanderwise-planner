@@ -1,84 +1,132 @@
 
-# Flight Results Page — 4 Fixes
+# Flight Results Page — 7 Improvements
 
-## What's Being Changed
+## Overview of Changes
 
-### Fix 1 — Auto-open calendar when no date is entered on Search
-**Problem:** The `handleSearch` function in `SearchForm.tsx` currently does nothing when `checkIn` (depart date) is missing — it just builds a URL with an empty `depart` param, which navigates to the results page and triggers "Search failed" because the API call gets no date.
-
-**Fix:** In `handleSearch`, before navigating, add validation: if `!checkIn`, call `openCalendar(departBtnRef)` to programmatically open the date picker and show a form error message. The user stays on the search form and the calendar pops open automatically.
-
-**File:** `src/components/SearchForm.tsx`
+All changes are confined to **`src/pages/FlightResults.tsx`** and **`src/components/Navbar.tsx`**. No new dependencies or database changes are needed.
 
 ---
 
-### Fix 2 — Remove blank space: push content left, pull scrollbar right
-**Reference (image-49.png):** The red circle on the left indicates empty space to the left of the Filters sidebar. The green circle on the right indicates the scrollbar is too far inside the content area.
+## Fix 1 — SELECT button: show booking site logos + options count
 
-**Root cause:** The `max-w-screen-xl` container uses `mx-auto` centering. On wide screens, if the content doesn't fill the full xl width, there's empty space on both sides. The filter sidebar starts too far from the left edge.
+**Current:** The SELECT button simply says "Select →".
+
+**New (matching attachment image-56.png):**
+- Show 3 small booking-site logo icons stacked horizontally (Kiwi, Google, and the direct airline if applicable). These use real-image logos: Kiwi from their CDN, Google from favicon, airline from gstatic.
+- Show "+N options from" text above the price, where N = number of booking links available for that flight.
+- The SELECT button remains full-width navy/dark below.
+
+**Implementation:** In `FlightCard`, before the price, add a small row of circular favicon/icon images:
+```tsx
+// Booking partner logos (up to 3)
+const optionCount = bookingLinks.length;
+<div className="flex items-center gap-1 mb-1">
+  {bookingLinks.slice(0,3).map(link => <PartnerLogo key={link.label} link={link} />)}
+  <span className="text-xs text-primary font-semibold ml-1">+{optionCount} options from</span>
+</div>
+<p className="text-3xl font-black text-foreground">£{priceGBP.toFixed(0)}</p>
+```
+
+Partner logos will be small 20x20 rounded images:
+- Kiwi.com: `https://www.kiwi.com/favicon.ico`
+- Google Flights: `https://www.google.com/favicon.ico`
+- Airline: use existing `airlineLogoUrl(code)` at 20px
+
+---
+
+## Fix 2 — Sunset Maldives beach background on results page
+
+**Current:** `bg-background` (light blue-grey).
+
+**New:** Use the existing `src/assets/hero-dest-maldives.jpg` as a fixed full-page background behind the results. A semi-transparent white overlay (~90% opacity) over the content areas keeps all white cards/boxes fully readable.
+
+**Implementation:**
+- Change the root `<div>` from `bg-background` to `relative`.
+- Add a fixed `<div>` behind everything with `bg-[url(...)] bg-cover bg-center bg-fixed` using the imported Maldives image.
+- Wrap the sticky bar, body, and footer in an `relative z-10` wrapper so cards remain white (`bg-card` = white by CSS var).
+- The date price strip and filter sidebar are already `bg-card` (white), so they stay white automatically.
+- The main content area gets a very light `bg-white/80 backdrop-blur-[1px]` panel behind the results for readability.
+
+---
+
+## Fix 3 — Filter sidebar scrolls fully to the bottom
+
+**Current:** The sidebar uses `max-h-[calc(100vh-8.5rem)] overflow-y-auto`. The `FilterSidebar` inner div has `rounded-2xl overflow-hidden` which clips the scroll. When filter sections expand (using `AnimatePresence`/`motion.div`), the animated height expansion works but may not trigger re-scroll.
+
+**Root cause:** The `overflow-hidden` on the outer `bg-card rounded-2xl` wrapper clips overflow. The `overflow-y-auto` is on the `<aside>` but the inner card clips content.
 
 **Fix:**
-- Change the outer container from `max-w-screen-xl mx-auto px-4` to `max-w-[1400px] mx-auto px-2` so the layout stretches closer to screen edges.
-- In both the sort bar and the body, reduce the spacer `div` width from `w-56` to `w-52` to bring content closer to the left.
-- The sidebar width stays `w-56` but the outer container padding reduces, naturally pushing it left.
-
-**File:** `src/pages/FlightResults.tsx`
+- Remove `overflow-hidden` from the `FilterSidebar`'s outer `<div className="bg-card border ... rounded-2xl overflow-hidden">` — change to just `rounded-2xl`.
+- Add `pb-4` to ensure the last filter section has padding at the bottom.
+- The `<aside>` already has `overflow-y-auto` so scrolling to the bottom will work.
 
 ---
 
-### Fix 3 — Route pill (LHR → ATL) opens inline search editor instead of navigating away
-**Reference (image-50.png):** On Skyscanner, clicking the route in the sticky bar reveals an inline edit panel over the results (with a blurred background) that lets users change From/To/Dates/Travellers without leaving the page.
+## Fix 4 — Date price strip: nicely boxed with white card background
 
-**Current behaviour:** Clicking the route pill does `navigate(-1)` which goes back to the Flights page.
+**Current:** The strip uses `border-b border-border bg-background` — it blends into the page background.
 
-**New behaviour:**
-1. Add `editSearchOpen` state (boolean) to `FlightResults`.
-2. When the route pill is clicked, set `editSearchOpen = true` — this shows a fixed overlay with a blurred backdrop (`backdrop-blur-sm bg-black/40`) covering the results.
-3. In the overlay, render a compact inline edit form with:
-   - Two `AirportAutocompleteInput` fields (From / To), pre-populated with the current `from`/`to` params.
-   - Two date buttons that open the `RangeDatePickerCalendar` portal (reuse the same pattern already in `SearchForm`).
-   - Adults count +/- counter.
-   - A "Search" button that builds new URL params and calls `setSearchParams(...)` to refresh results in place.
-   - A close (×) button to dismiss.
-4. The route pill button changes from `onClick={() => navigate(-1)}` to `onClick={() => setEditSearchOpen(true)}`.
-
-**File:** `src/pages/FlightResults.tsx`
+**New:** Wrap the `DatePriceStrip` in a proper white card container:
+- Outer wrapper: `bg-card border border-border rounded-xl shadow-sm mx-2 my-2`
+- Remove the full-width `border-b` styling; the strip now sits as a standalone boxed element inside the sticky bar area.
+- The individual date buttons inside the strip retain their `border-b-2` bottom accent.
 
 ---
 
-### Fix 4 — Cheapest / Fastest / Fewest stops tab style + position (image-52.png)
-**Reference:** The green highlight shows these tabs should look like rounded pill-style buttons, not underline tabs. The red highlight shows they should sit to the right of the filter sidebar spacer, inside the content column — matching the screenshot exactly.
+## Fix 5 — Navbar text: ensure full white (not white/70)
 
-**Current:** The tabs are underlined tab-style buttons inside a border-bottom bar.
+**Current:** Nav items use `text-white/70 hover:text-white`. The active link uses `text-primary`.
 
-**New:**
-- Style each sort button as a rounded pill: `rounded-xl border border-border px-5 py-2.5 text-sm font-semibold`. When active: `bg-primary/10 border-primary text-primary`. When inactive: `bg-card hover:bg-secondary text-foreground`.
-- Move the entire "Cheapest / Fastest / Fewest stops" row out of the full-width bar and INTO the results column (inside the `flex-1` results div), above the results count. This way it sits right-aligned with the cards, not spanning the full page width including the sidebar.
-- Remove the separate `<div className="bg-card border-b border-border">` sort bar wrapper entirely — the sort pills live above the `<p>{sorted.length} results</p>` line inside the results div.
+**New:** Change all nav item text from `text-white/70` to `text-white` so they are fully bright white at all times. The hover state becomes `hover:text-white/80` to give subtle feedback. The active link retains `text-primary`.
 
-**File:** `src/pages/FlightResults.tsx`
+**File:** `src/components/Navbar.tsx` — update the `className` on nav `<Link>` elements.
+
+---
+
+## Fix 6 — "See Whole Month" button with calendar + price chart dropdown
+
+**New feature:** Add a "See Whole Month" button to the sticky bar, right of the date pills.
+
+**When clicked:** Opens a dropdown panel (attached below the button) showing:
+1. A **monthly calendar grid** (31 cells) where each day shows the date number + a price (cheapest from `flights` for that date if it matches, `—` otherwise). The selected date is highlighted in primary colour.
+2. A **bar chart** below it (using `recharts` already installed) showing the 7 days in the `DatePriceStrip` range as bars, with price on the Y-axis and dates on the X-axis, allowing visual comparison of cheapest fares across dates.
+
+**Implementation:**
+- Add `showMonthView` boolean state.
+- Add a `SeeWholeMonthPanel` sub-component rendered as a `motion.div` dropdown below the button.
+- The calendar grid uses CSS Grid `grid-cols-7` with day-of-week headers.
+- The `BarChart` from `recharts` uses the 7 `DatePriceStrip` dates as data (price from `flights` if depart matches, null otherwise).
+- Clicking a date in the calendar calls `shiftDates()` to jump to that date.
+
+---
+
+## Fix 7 — Edit search modal: properly centred, not offset
+
+**Current problem (image-57.png):** The modal appears shifted (not centred) — it's `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2` but may be constrained by the parent container width.
+
+**Fix:**
+- Ensure the modal wrapper is `fixed inset-0 flex items-center justify-center z-[60]` (a flex centering container) rather than relying on translate hacks.
+- The inner card becomes `w-full max-w-2xl mx-4 rounded-2xl bg-card shadow-2xl`.
+- This guarantees true viewport-centred rendering regardless of scroll position or container widths.
+- The calendar portal keeps its `position: fixed` with coordinates relative to the viewport, so it remains unaffected.
 
 ---
 
 ## Technical Summary
 
 ```text
-SearchForm.tsx
-└── handleSearch: validate checkIn before navigate; if missing,
-    call openCalendar(departBtnRef) + set formError
+src/pages/FlightResults.tsx:
+├── Fix 1: FlightCard — add PartnerLogos row + "+N options from" above price
+├── Fix 2: Root div — Maldives bg-fixed image + white content overlays
+├── Fix 3: FilterSidebar — remove overflow-hidden from card wrapper
+├── Fix 4: DatePriceStrip container — white card box with border/shadow
+├── Fix 6: New SeeWholeMonthPanel — calendar grid + recharts BarChart
+└── Fix 7: editSearchOpen modal — use flex centering container
 
-FlightResults.tsx
-├── Container: reduce padding/max-width to push content left
-├── Sort bar: remove full-width bar, move pills into results column
-│   └── Style: rounded-xl pill buttons (active = primary, inactive = ghost)
-├── Route pill: onClick → setEditSearchOpen(true) not navigate(-1)
-└── New: editSearchOpen overlay
-    ├── Fixed backdrop (backdrop-blur-sm bg-black/40 z-50)
-    └── Compact inline edit card with:
-        ├── AirportAutocompleteInput (From, To)
-        ├── Date pickers (portal-based RangeDatePickerCalendar)
-        ├── Adults counter
-        └── Search button → setSearchParams(new params)
+src/components/Navbar.tsx:
+└── Fix 5: nav link text-white/70 → text-white
 ```
 
-No new dependencies. No database changes. No edge function changes.
+No new packages needed (recharts already installed).
+No database or edge function changes.
+No new files needed.
