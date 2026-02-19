@@ -47,11 +47,38 @@ const HotelSearchForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
-  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [calTop, setCalTop] = useState(0);
+  const [calLeft, setCalLeft] = useState(0);
+  const checkInBtnRef = useRef<HTMLButtonElement>(null);
+  const checkOutBtnRef = useRef<HTMLButtonElement>(null);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [travellersOpen, setTravellersOpen] = useState(false);
+
+  const openCal = useCallback((ref: React.RefObject<HTMLButtonElement>) => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setCalTop(r.bottom + 6);
+      setCalLeft(Math.min(r.left, window.innerWidth - 680));
+    }
+    setDateOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (!dateOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        !checkInBtnRef.current?.contains(target) &&
+        !checkOutBtnRef.current?.contains(target) &&
+        !(document.getElementById("hotel-cal-portal")?.contains(target))
+      ) setDateOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dateOpen]);
 
   // Portal dropdown positioning
   const [dropdownTop, setDropdownTop] = useState(0);
@@ -241,55 +268,49 @@ const HotelSearchForm = () => {
               {showSuggestions && createPortal(dropdownContent, document.body)}
             </div>
 
-            {/* Check-in / Check-out — unified dual-month calendar */}
-            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-                >
-                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Check-in</span>
-                  <span className={cn("text-lg", checkIn ? "text-foreground" : "text-muted-foreground")}>
-                    {checkIn ? format(checkIn, "dd MMM yyyy") : "Add date"}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
-                <RangeDatePickerCalendar
-                  departDate={checkIn}
-                  returnDate={checkOut}
-                  onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
-                  onReturnChange={(d) => setCheckOut(d)}
-                  onApply={() => setDatePopoverOpen(false)}
-                  hint="Select check-out date"
-                />
-              </PopoverContent>
-            </Popover>
+            {/* Check-in — portal-based calendar */}
+            <button
+              ref={checkInBtnRef}
+              type="button"
+              onClick={() => openCal(checkInBtnRef)}
+              className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+            >
+              <span className="absolute left-5 top-3 text-base font-bold text-foreground">Check-in</span>
+              <span className={cn("text-lg", checkIn ? "text-foreground" : "text-muted-foreground")}>
+                {checkIn ? format(checkIn, "dd MMM yyyy") : "Add date"}
+              </span>
+            </button>
 
-            {/* Check-out — opens same calendar */}
-            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-                >
-                  <span className="absolute left-5 top-3 text-base font-bold text-foreground">Check-out</span>
-                  <span className={cn("text-lg", checkOut ? "text-foreground" : "text-muted-foreground")}>
-                    {checkOut ? format(checkOut, "dd MMM yyyy") : "Add date"}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+            {/* Check-out — portal-based calendar */}
+            <button
+              ref={checkOutBtnRef}
+              type="button"
+              onClick={() => openCal(checkOutBtnRef)}
+              className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+            >
+              <span className="absolute left-5 top-3 text-base font-bold text-foreground">Check-out</span>
+              <span className={cn("text-lg", checkOut ? "text-foreground" : "text-muted-foreground")}>
+                {checkOut ? format(checkOut, "dd MMM yyyy") : "Add date"}
+              </span>
+            </button>
+
+            {/* Portal calendar */}
+            {dateOpen && createPortal(
+              <div
+                id="hotel-cal-portal"
+                style={{ position: "fixed", top: calTop, left: calLeft, zIndex: 99999 }}
+              >
                 <RangeDatePickerCalendar
                   departDate={checkIn}
                   returnDate={checkOut}
                   onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
                   onReturnChange={(d) => setCheckOut(d)}
-                  onApply={() => setDatePopoverOpen(false)}
+                  onApply={() => setDateOpen(false)}
                   hint="Select check-out date"
                 />
-              </PopoverContent>
-            </Popover>
+              </div>,
+              document.body
+            )}
 
             {/* Guests and Rooms */}
             <Popover open={travellersOpen} onOpenChange={setTravellersOpen}>
