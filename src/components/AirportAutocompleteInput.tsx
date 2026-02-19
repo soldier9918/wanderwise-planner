@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Plane, MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,22 +36,21 @@ const AirportAutocompleteInput = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [iataSelected, setIataSelected] = useState(false);
-  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [dropdownTop, setDropdownTop] = useState(0);
+  const [dropdownLeft, setDropdownLeft] = useState(0);
+  const [dropdownWidth, setDropdownWidth] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Update dropdown position
-  const updateDropdownPosition = useCallback(() => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    setDropdownRect({
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
-      width: rect.width,
-    });
+  const updatePosition = useCallback(() => {
+    if (containerRef.current) {
+      const r = containerRef.current.getBoundingClientRect();
+      setDropdownTop(r.bottom + 4);
+      setDropdownLeft(r.left);
+      setDropdownWidth(r.width);
+    }
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -61,50 +61,42 @@ const AirportAutocompleteInput = ({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, []);
 
-  // Update position on scroll/resize
   useEffect(() => {
     if (!showDropdown) return;
-    const update = () => updateDropdownPosition();
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
     return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
     };
-  }, [showDropdown, updateDropdownPosition]);
+  }, [showDropdown, updatePosition]);
 
   const fetchSuggestions = useCallback(async (keyword: string) => {
+    updatePosition();
     setIsLoading(true);
-    updateDropdownPosition();
+    setShowDropdown(true);
     try {
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/amadeus-airport-search?keyword=${encodeURIComponent(keyword)}`,
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       const data = await res.json();
-      // Client-side filter: only show results where name/cityName starts with the keyword (case-insensitive)
       const kw = keyword.trim().toLowerCase();
       const all: AirportSuggestion[] = data.suggestions || [];
       const filtered = all.filter((s) => {
         const city = (s.cityName || "").toLowerCase();
         const name = (s.name || "").toLowerCase();
         const iata = (s.iataCode || "").toLowerCase();
-        return (
-          city.startsWith(kw) ||
-          name.startsWith(kw) ||
-          iata.startsWith(kw)
-        );
+        return city.startsWith(kw) || name.startsWith(kw) || iata.startsWith(kw);
       });
       setSuggestions(filtered);
-      setShowDropdown(true);
     } catch {
       setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
-  }, [updateDropdownPosition]);
+  }, [updatePosition]);
 
-  // Debounced search — triggers from 1 character
   useEffect(() => {
     if (iataSelected) return;
     if (value.length < 1) {
@@ -136,6 +128,69 @@ const AirportAutocompleteInput = ({
     onChange(e.target.value);
   };
 
+  const dropdownContent = (
+    <div
+      style={{
+        position: "fixed",
+        top: dropdownTop,
+        left: dropdownLeft,
+        minWidth: dropdownWidth,
+        width: "max-content",
+        maxWidth: "420px",
+        zIndex: 99999,
+      }}
+      className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm whitespace-nowrap px-5">
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          Searching airports…
+        </div>
+      ) : suggestions.length === 0 ? (
+        <div className="py-4 px-5 text-sm text-muted-foreground text-center whitespace-nowrap">
+          No results found
+        </div>
+      ) : (
+        <ul>
+          {suggestions.map((s, i) => (
+            <li key={`${s.iataCode}-${i}`}>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(s);
+                }}
+                className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border last:border-0"
+              >
+                {s.subType === "CITY" ? (
+                  <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                ) : (
+                  <Plane className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-foreground text-sm">
+                      {s.cityName && s.cityName !== s.name ? s.cityName : s.name}
+                    </span>
+                    <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                      {s.iataCode}
+                    </span>
+                    {s.subType === "AIRPORT" && s.cityName && s.cityName !== s.name && (
+                      <span className="text-xs text-muted-foreground">· {s.name}</span>
+                    )}
+                  </div>
+                  {s.countryName && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.countryName}</p>
+                  )}
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   return (
     <div ref={containerRef} className={cn("relative flex-1 border-r border-border", className)}>
       <label className="absolute left-5 top-3 text-base font-bold text-foreground z-10 pointer-events-none">
@@ -154,68 +209,7 @@ const AirportAutocompleteInput = ({
         className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
         autoComplete="off"
       />
-
-      {/* Dropdown — fixed position to escape overflow:hidden ancestors */}
-      {showDropdown && dropdownRect && (
-        <div
-          className="fixed z-[9999] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
-          style={{
-            top: dropdownRect.top + 4,
-            left: dropdownRect.left,
-            minWidth: dropdownRect.width,
-            width: "max-content",
-            maxWidth: "420px",
-          }}
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm whitespace-nowrap px-5">
-              <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-              Searching airports…
-            </div>
-          ) : suggestions.length === 0 ? (
-            <div className="py-4 px-5 text-sm text-muted-foreground text-center whitespace-nowrap">
-              No results found
-            </div>
-          ) : (
-            <ul>
-              {suggestions.map((s, i) => (
-                <li key={`${s.iataCode}-${i}`}>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleSelect(s);
-                    }}
-                    className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-primary/5 transition-colors border-b border-border last:border-0"
-                  >
-                    {s.subType === "CITY" ? (
-                      <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    ) : (
-                      <Plane className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-foreground text-sm">
-                          {s.cityName && s.cityName !== s.name ? s.cityName : s.name}
-                        </span>
-                        <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                          {s.iataCode}
-                        </span>
-                        {s.subType === "AIRPORT" && s.cityName && s.cityName !== s.name && (
-                          <span className="text-xs text-muted-foreground">· {s.name}</span>
-                        )}
-                      </div>
-                      {s.countryName && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{s.countryName}</p>
-                      )}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {showDropdown && createPortal(dropdownContent, document.body)}
     </div>
   );
 };
