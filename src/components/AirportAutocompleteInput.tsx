@@ -35,8 +35,20 @@ const AirportAutocompleteInput = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [iataSelected, setIataSelected] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Update dropdown position
+  const updateDropdownPosition = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setDropdownRect({
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX,
+      width: rect.width,
+    });
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -49,22 +61,48 @@ const AirportAutocompleteInput = ({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, []);
 
+  // Update position on scroll/resize
+  useEffect(() => {
+    if (!showDropdown) return;
+    const update = () => updateDropdownPosition();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [showDropdown, updateDropdownPosition]);
+
   const fetchSuggestions = useCallback(async (keyword: string) => {
     setIsLoading(true);
+    updateDropdownPosition();
     try {
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/amadeus-airport-search?keyword=${encodeURIComponent(keyword)}`,
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       const data = await res.json();
-      setSuggestions(data.suggestions || []);
+      // Client-side filter: only show results where name/cityName starts with the keyword (case-insensitive)
+      const kw = keyword.trim().toLowerCase();
+      const all: AirportSuggestion[] = data.suggestions || [];
+      const filtered = all.filter((s) => {
+        const city = (s.cityName || "").toLowerCase();
+        const name = (s.name || "").toLowerCase();
+        const iata = (s.iataCode || "").toLowerCase();
+        return (
+          city.startsWith(kw) ||
+          name.startsWith(kw) ||
+          iata.startsWith(kw)
+        );
+      });
+      setSuggestions(filtered);
       setShowDropdown(true);
     } catch {
       setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [updateDropdownPosition]);
 
   // Debounced search — triggers from 1 character
   useEffect(() => {
@@ -117,10 +155,17 @@ const AirportAutocompleteInput = ({
         autoComplete="off"
       />
 
-      {/* Dropdown */}
-      {showDropdown && (
-        <div className="absolute top-full left-0 z-50 mt-1 bg-card border border-border rounded-xl shadow-elevated overflow-hidden"
-          style={{ minWidth: "100%", width: "max-content", maxWidth: "420px" }}
+      {/* Dropdown — fixed position to escape overflow:hidden ancestors */}
+      {showDropdown && dropdownRect && (
+        <div
+          className="fixed z-[9999] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+          style={{
+            top: dropdownRect.top + 4,
+            left: dropdownRect.left,
+            minWidth: dropdownRect.width,
+            width: "max-content",
+            maxWidth: "420px",
+          }}
         >
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm whitespace-nowrap px-5">
@@ -161,9 +206,7 @@ const AirportAutocompleteInput = ({
                         )}
                       </div>
                       {s.countryName && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {[s.cityName && s.cityName !== s.name ? "" : "", s.countryName].filter(Boolean).join(", ") || s.countryName}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{s.countryName}</p>
                       )}
                     </div>
                   </button>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, CalendarIcon, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { format, startOfMonth } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import AirportAutocompleteInput from "@/components/AirportAutocompleteInput";
-import FlightPriceCalendar from "@/components/FlightPriceCalendar";
+import RangeDatePickerCalendar from "@/components/RangeDatePickerCalendar";
 
 interface FlightLeg {
   from: string;
@@ -35,7 +35,7 @@ const SearchForm = () => {
   const [checkOut, setCheckOut] = useState<Date>();
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
-  const [departPopoverOpen, setDepartPopoverOpen] = useState(false);
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [travellersOpen, setTravellersOpen] = useState(false);
   const [multiTravellersOpen, setMultiTravellersOpen] = useState(false);
   const [cabinClass, setCabinClass] = useState("Economy");
@@ -387,8 +387,8 @@ const SearchForm = () => {
               className="flex-1"
             />
 
-            {/* Depart */}
-            <Popover open={departPopoverOpen} onOpenChange={setDepartPopoverOpen}>
+            {/* Depart + Return — unified dual-month calendar */}
+            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -401,42 +401,21 @@ const SearchForm = () => {
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="p-0" style={{ width: fromIata ? "380px" : "auto" }} align="start">
-                {fromIata ? (
-                  <FlightPriceCalendar
-                    origin={fromIata}
-                    month={checkIn ? startOfMonth(checkIn) : startOfMonth(new Date())}
-                    selectedDate={checkIn}
-                    returnDate={checkOut}
-                    onDaySelect={(date) => {
-                      setCheckIn(date);
-                      // Auto-close depart popover only if return date already selected
-                      if (checkOut) setDepartPopoverOpen(false);
-                    }}
-                    onReturnSelect={(date) => {
-                      setCheckOut(date);
-                      setDepartPopoverOpen(false);
-                    }}
-                  />
-                ) : (
-                  <Calendar
-                    mode="single"
-                    selected={checkIn}
-                    onSelect={(d) => {
-                      setCheckIn(d);
-                      setDepartPopoverOpen(false);
-                    }}
-                    disabled={(date) => date < new Date()}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                )}
+              <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+                <RangeDatePickerCalendar
+                  departDate={checkIn}
+                  returnDate={checkOut}
+                  onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
+                  onReturnChange={(d) => setCheckOut(d)}
+                  onApply={() => setDatePopoverOpen(false)}
+                  hint={tripType === "One way" ? "One way — select departure date" : "Select return date"}
+                />
               </PopoverContent>
             </Popover>
 
-            {/* Return */}
+            {/* Return trigger — opens same unified calendar */}
             {tripType !== "One way" && (
-              <Popover>
+              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
@@ -449,18 +428,14 @@ const SearchForm = () => {
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{ from: checkIn, to: checkOut }}
-                    onSelect={(range) => {
-                      if (range?.to) setCheckOut(range.to);
-                      else if (range?.from) setCheckOut(range.from);
-                    }}
-                    disabled={(date) => date < (checkIn || new Date())}
-                    defaultMonth={checkIn || new Date()}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+                  <RangeDatePickerCalendar
+                    departDate={checkIn}
+                    returnDate={checkOut}
+                    onDepartChange={(d) => { setCheckIn(d); setCheckOut(undefined); }}
+                    onReturnChange={(d) => setCheckOut(d)}
+                    onApply={() => setDatePopoverOpen(false)}
+                    hint="Select return date"
                   />
                 </PopoverContent>
               </Popover>
