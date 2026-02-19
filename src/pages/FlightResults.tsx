@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, Plane, AlertCircle, Loader2, ChevronDown,
   Sparkles, Search, SlidersHorizontal, X, ChevronUp, ChevronLeft,
-  Luggage, Briefcase, BaggageClaim, Plus, Minus, CalendarIcon,
+  Luggage, Briefcase, BaggageClaim, Plus, Minus, CalendarIcon, Users,
 } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 import AirportAutocompleteInput from "@/components/AirportAutocompleteInput";
@@ -124,17 +124,14 @@ function LuggageIcons({ includedCheckedBags }: { includedCheckedBags?: number })
   const hasChecked = includedCheckedBags != null ? includedCheckedBags > 0 : false;
   return (
     <div className="flex items-center gap-1.5 mt-1">
-      {/* Personal item — always included */}
       <div className="flex flex-col items-center gap-0.5" title="Personal item included">
         <Briefcase className="w-4 h-4 text-primary" />
         <span className="text-[9px] text-primary font-semibold leading-none">Item</span>
       </div>
-      {/* Cabin bag — always included */}
       <div className="flex flex-col items-center gap-0.5" title="Cabin bag included">
         <Luggage className="w-4 h-4 text-primary" />
         <span className="text-[9px] text-primary font-semibold leading-none">Cabin</span>
       </div>
-      {/* Checked bag — based on fare data */}
       <div className="flex flex-col items-center gap-0.5 relative" title={hasChecked ? "Checked bag included" : "Checked bag not included"}>
         <BaggageClaim className={`w-4 h-4 ${hasChecked ? "text-primary" : "text-muted-foreground/40"}`} />
         {!hasChecked && (
@@ -150,7 +147,7 @@ function LuggageIcons({ includedCheckedBags }: { includedCheckedBags?: number })
   );
 }
 
-// ── Itinerary Row — Skyscanner-style ───────────────────────────────────────────
+// ── Itinerary Row ──────────────────────────────────────────────────────────────
 function ItineraryRow({ itinerary, carrierCode, includedCheckedBags }: {
   itinerary: FlightItinerary;
   carrierCode: string;
@@ -163,19 +160,14 @@ function ItineraryRow({ itinerary, carrierCode, includedCheckedBags }: {
 
   return (
     <div className="flex items-center gap-0 w-full">
-      {/* Airline logo + name */}
       <div className="shrink-0 mr-3 flex flex-col items-center gap-0.5">
         <AirlineLogo code={carrierCode} name={airline} />
         <p className="text-[9px] text-muted-foreground text-center max-w-[40px] leading-tight truncate">{airline}</p>
       </div>
-
-      {/* Depart */}
       <div className="text-center shrink-0 w-14">
         <p className="text-xl font-black text-foreground leading-none">{formatTime(first.departure.at)}</p>
         <p className="text-sm font-bold text-muted-foreground mt-0.5">{first.departure.iataCode}</p>
       </div>
-
-      {/* Duration line */}
       <div className="flex-1 flex flex-col items-center gap-0.5 px-3 min-w-0">
         <p className="text-sm text-muted-foreground">{parseDuration(itinerary.duration)}</p>
         <div className="relative w-full flex items-center">
@@ -192,8 +184,6 @@ function ItineraryRow({ itinerary, carrierCode, includedCheckedBags }: {
           <p className="text-sm font-semibold text-warning">{stops} stop{stops > 1 ? "s" : ""}</p>
         )}
       </div>
-
-      {/* Arrive + luggage */}
       <div className="text-center shrink-0 w-14">
         <p className="text-xl font-black text-foreground leading-none">{formatTime(last.arrival.at)}</p>
         <p className="text-sm font-bold text-muted-foreground mt-0.5">{last.arrival.iataCode}</p>
@@ -203,7 +193,7 @@ function ItineraryRow({ itinerary, carrierCode, includedCheckedBags }: {
   );
 }
 
-// ── Flight Card — Skyscanner two-column layout ─────────────────────────────────
+// ── Flight Card ────────────────────────────────────────────────────────────────
 function FlightCard({ offer, index, from, to, depart, returnDate, adults, children, cabin, isExpanded, onToggle }: {
   offer: FlightOffer; index: number;
   from: string; to: string; depart: string; returnDate: string;
@@ -226,10 +216,7 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
         isExpanded ? "border-primary/40 shadow-elevated" : "border-border hover:shadow-card"
       }`}
     >
-      {/* Main row: left (flight info) | right (price) */}
       <div className="flex items-stretch cursor-pointer" onClick={onToggle}>
-
-        {/* LEFT — flight segments */}
         <div className="flex-1 min-w-0 p-3 px-4 space-y-2">
           <ItineraryRow itinerary={outbound} carrierCode={carrierCode} />
           {inbound && (
@@ -238,8 +225,6 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
             </div>
           )}
         </div>
-
-        {/* RIGHT — price + CTA (vertical separator) */}
         <div className="shrink-0 w-36 border-l border-border flex flex-col items-stretch justify-center p-3 gap-2">
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">from</p>
@@ -268,7 +253,6 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
         </div>
       </div>
 
-      {/* Booking panel */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -361,6 +345,7 @@ interface FilterState {
 
 function FilterSidebar({
   filters, setFilters, priceRange, durationRange, airlineOptions, hasReturn, onClose,
+  stopPrices,
 }: {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
@@ -369,6 +354,7 @@ function FilterSidebar({
   airlineOptions: { code: string; name: string; minPrice: number }[];
   hasReturn: boolean;
   onClose?: () => void;
+  stopPrices: { direct: number | null; one: number | null; two: number | null };
 }) {
   const set = <K extends keyof FilterState>(key: K, val: FilterState[K]) =>
     setFilters((prev) => ({ ...prev, [key]: val }));
@@ -381,12 +367,27 @@ function FilterSidebar({
       </div>
       <div className="px-5 divide-y divide-border">
 
-        {/* Stops */}
+        {/* Stops — with price labels */}
         <FilterSection title="Stops" defaultOpen={true}>
           <div className="space-y-0.5">
-            <CheckRow checked={filters.stopsDirect} onChange={(v) => set("stopsDirect", v)} label="Direct" />
-            <CheckRow checked={filters.stopsOne} onChange={(v) => set("stopsOne", v)} label="1 stop" />
-            <CheckRow checked={filters.stopsTwo} onChange={(v) => set("stopsTwo", v)} label="2+ stops" />
+            <CheckRow
+              checked={filters.stopsDirect}
+              onChange={(v) => set("stopsDirect", v)}
+              label="Direct"
+              sub={stopPrices.direct != null ? `from £${stopPrices.direct}` : undefined}
+            />
+            <CheckRow
+              checked={filters.stopsOne}
+              onChange={(v) => set("stopsOne", v)}
+              label="1 stop"
+              sub={stopPrices.one != null ? `from £${stopPrices.one}` : undefined}
+            />
+            <CheckRow
+              checked={filters.stopsTwo}
+              onChange={(v) => set("stopsTwo", v)}
+              label="2+ stops"
+              sub={stopPrices.two != null ? `from £${stopPrices.two}` : undefined}
+            />
           </div>
         </FilterSection>
 
@@ -483,6 +484,173 @@ function FilterSidebar({
   );
 }
 
+// ── Date Price Strip ───────────────────────────────────────────────────────────
+function DatePriceStrip({
+  centerDate,
+  flights,
+  onShift,
+}: {
+  centerDate: string;
+  flights: FlightOffer[];
+  onShift: (days: number) => void;
+}) {
+  const dates = [-3, -2, -1, 0, 1, 2, 3].map((d) => shiftDate(centerDate, d));
+  const cheapestPrice = flights.length > 0
+    ? Math.floor(parseFloat([...flights].sort((a, b) => parseFloat(a.price.grandTotal) - parseFloat(b.price.grandTotal))[0].price.grandTotal))
+    : null;
+
+  return (
+    <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide">
+      {dates.map((d, i) => {
+        const offset = i - 3;
+        const isCenter = offset === 0;
+        const label = format(parseISO(d), "EEE d");
+        return (
+          <button
+            key={d}
+            onClick={() => onShift(offset)}
+            className={cn(
+              "flex-1 min-w-[80px] flex flex-col items-center py-2 px-1 border-b-2 transition-all text-center",
+              isCenter
+                ? "border-primary bg-primary/5"
+                : "border-transparent hover:bg-secondary"
+            )}
+          >
+            <span className={cn("text-xs font-semibold", isCenter ? "text-primary" : "text-muted-foreground")}>{label}</span>
+            {isCenter && cheapestPrice != null ? (
+              <span className="text-sm font-black text-primary mt-0.5">£{cheapestPrice}</span>
+            ) : (
+              <span className="text-[10px] text-muted-foreground mt-0.5">—</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Travellers Edit Popover ────────────────────────────────────────────────────
+function TravellersPopover({
+  adults, children: childCount, cabin,
+  onApply,
+}: {
+  adults: number; children: number; cabin: string;
+  onApply: (a: number, c: number, cab: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [a, setA] = useState(adults);
+  const [c, setC] = useState(childCount);
+  const [cab, setCab] = useState(cabin);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const cabinOptions = [
+    { value: "ECONOMY", label: "Economy" },
+    { value: "PREMIUM_ECONOMY", label: "Premium Economy" },
+    { value: "BUSINESS", label: "Business" },
+    { value: "FIRST", label: "First Class" },
+  ];
+  const cabinMap: Record<string, string> = { ECONOMY: "Economy", PREMIUM_ECONOMY: "Premium Economy", BUSINESS: "Business", FIRST: "First Class" };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => { setA(adults); setC(childCount); setCab(cabin); setOpen(!open); }}
+        className="flex items-center gap-1.5 bg-secondary hover:bg-muted rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-colors"
+      >
+        <Users className="w-3.5 h-3.5 text-muted-foreground" />
+        {adults + childCount} traveller{adults + childCount !== 1 ? "s" : ""} · {cabinMap[cabin.toUpperCase().replace(" ", "_")] || cabin}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full mt-2 left-0 z-50 bg-card border border-border rounded-2xl shadow-2xl p-4 w-72"
+          >
+            {/* Adults */}
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Adults</p>
+                <p className="text-xs text-muted-foreground">Age 16+</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setA(Math.max(1, a - 1))}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-30"
+                  disabled={a <= 1}>
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-sm font-bold text-foreground w-4 text-center">{a}</span>
+                <button onClick={() => setA(Math.min(9, a + 1))}
+                  className="w-8 h-8 rounded-full border border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors disabled:opacity-30"
+                  disabled={a >= 9}>
+                  <Plus className="w-3.5 h-3.5 text-primary" />
+                </button>
+              </div>
+            </div>
+
+            {/* Children */}
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Children</p>
+                <p className="text-xs text-muted-foreground">Age 2–15</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setC(Math.max(0, c - 1))}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-30"
+                  disabled={c <= 0}>
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-sm font-bold text-foreground w-4 text-center">{c}</span>
+                <button onClick={() => setC(Math.min(8, c + 1))}
+                  className="w-8 h-8 rounded-full border border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors disabled:opacity-30"
+                  disabled={c >= 8}>
+                  <Plus className="w-3.5 h-3.5 text-primary" />
+                </button>
+              </div>
+            </div>
+
+            {/* Cabin class */}
+            <div className="py-3">
+              <p className="text-sm font-semibold text-foreground mb-2">Cabin class</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {cabinOptions.map((opt) => (
+                  <button key={opt.value} onClick={() => setCab(opt.value)}
+                    className={cn(
+                      "py-2 px-3 rounded-xl text-xs font-semibold text-left transition-colors border",
+                      cab === opt.value
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-secondary border-border text-foreground hover:border-primary/40"
+                    )}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => { onApply(a, c, cab); setOpen(false); }}
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors mt-1"
+            >
+              Apply
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 const cabinMap: Record<string, string> = {
   ECONOMY: "Economy", PREMIUM_ECONOMY: "Premium Economy",
@@ -561,7 +729,6 @@ const FlightResults = () => {
     baggageCabin: false, baggageChecked: false,
   });
 
-  // Navigate dates via arrow buttons in the search bar
   const shiftDates = (days: number) => {
     const newParams = new URLSearchParams(searchParams);
     if (depart) newParams.set("depart", shiftDate(depart, days));
@@ -625,6 +792,25 @@ const FlightResults = () => {
     };
   }, [flights]);
 
+  // Stop-based minimum prices
+  const stopPrices = useMemo(() => {
+    const direct: number[] = [];
+    const one: number[] = [];
+    const two: number[] = [];
+    flights.forEach((f) => {
+      const stops = f.itineraries[0].segments.length - 1;
+      const p = parseFloat(f.price.grandTotal);
+      if (stops === 0) direct.push(p);
+      else if (stops === 1) one.push(p);
+      else two.push(p);
+    });
+    return {
+      direct: direct.length ? Math.floor(Math.min(...direct)) : null,
+      one: one.length ? Math.floor(Math.min(...one)) : null,
+      two: two.length ? Math.floor(Math.min(...two)) : null,
+    };
+  }, [flights]);
+
   const sorted = useMemo(() => {
     return [...flights]
       .filter((f) => {
@@ -659,6 +845,7 @@ const FlightResults = () => {
       priceRange={priceRange} durationRange={durationRange}
       airlineOptions={airlineOptions}
       hasReturn={!!returnDate}
+      stopPrices={stopPrices}
       onClose={() => setShowMobileFilters(false)}
     />
   );
@@ -668,10 +855,29 @@ const FlightResults = () => {
       <Navbar />
       <div className="pt-16">
 
-        {/* ── Sticky search summary bar with date arrows ── */}
+        {/* ── Sticky search summary bar ── */}
         <div className="bg-card border-b border-border sticky top-16 z-30 shadow-sm">
-          <div className="max-w-[1400px] mx-auto px-2 py-3 flex items-center gap-2 flex-wrap">
-            {/* Route pill — opens inline edit overlay */}
+          {/* Date price strip (below sticky bar) */}
+          {!loading && !error && flights.length > 0 && depart && (
+            <div className="border-b border-border bg-background">
+              <div className="max-w-[1400px] mx-auto px-2">
+                <DatePriceStrip
+                  centerDate={depart}
+                  flights={flights}
+                  onShift={(days) => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.set("depart", shiftDate(depart, days));
+                    if (returnDate) newParams.set("return", shiftDate(returnDate, days));
+                    setSearchParams(newParams);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Main pill row */}
+          <div className="max-w-[1400px] mx-auto px-2 py-2 flex items-center gap-2 flex-wrap">
+            {/* Route pill */}
             <button onClick={() => setEditSearchOpen(true)}
               className="flex items-center gap-2 bg-secondary hover:bg-muted rounded-xl px-4 py-2 text-sm font-bold text-foreground transition-colors">
               <span>{from.toUpperCase()}</span>
@@ -715,16 +921,59 @@ const FlightResults = () => {
               </div>
             )}
 
-            <div className="bg-secondary rounded-xl px-3 py-2 text-sm text-foreground font-medium">
-              {adults + children} traveller{adults + children !== 1 ? "s" : ""} · {cabinMap[cabin.toUpperCase().replace(" ", "_")] || cabin}
-            </div>
-            <button onClick={() => setEditSearchOpen(true)} className="ml-auto text-sm font-semibold text-primary hover:text-primary/80">
-              Edit search
-            </button>
+            {/* Travellers — editable popover */}
+            <TravellersPopover
+              adults={adults}
+              children={children}
+              cabin={cabin}
+              onApply={(a, c, cab) => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set("adults", String(a));
+                newParams.set("children", String(c));
+                newParams.set("cabin", cab);
+                setSearchParams(newParams);
+              }}
+            />
+
+            {/* Sort pills — same row, right side */}
+            {!loading && !error && flights.length > 0 && (
+              <div className="flex items-center gap-1.5 ml-auto">
+                {([
+                  { key: "price" as const, label: "Cheapest", price: cheapest },
+                  { key: "duration" as const, label: "Fastest", price: fastest },
+                  { key: "stops" as const, label: "Fewer stops", price: null },
+                ]).map((opt) => (
+                  <button key={opt.key} onClick={() => setSortBy(opt.key)}
+                    className={cn(
+                      "flex items-center gap-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-all whitespace-nowrap",
+                      sortBy === opt.key
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-card border-border text-foreground hover:bg-secondary"
+                    )}>
+                    <span>{opt.label}</span>
+                    {opt.price != null && (
+                      <span className={cn("font-bold text-xs", sortBy === opt.key ? "text-primary" : "text-muted-foreground")}>
+                        £{opt.price}
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <button onClick={() => setEditSearchOpen(true)} className="text-sm font-semibold text-primary hover:text-primary/80 pl-2">
+                  Edit search
+                </button>
+              </div>
+            )}
+
+            {/* Edit search fallback (when no flights yet) */}
+            {(loading || error || flights.length === 0) && (
+              <button onClick={() => setEditSearchOpen(true)} className="ml-auto text-sm font-semibold text-primary hover:text-primary/80">
+                Edit search
+              </button>
+            )}
           </div>
         </div>
 
-        {/* ── Body: sidebar + results ── */}
+        {/* ── Body: sidebar + results + ad column ── */}
         <div className="max-w-[1400px] mx-auto px-2 py-5">
           <div className="flex gap-4 items-start">
 
@@ -733,39 +982,8 @@ const FlightResults = () => {
               {sidebar}
             </aside>
 
-            {/* Results column — sort pills live here */}
+            {/* Results column */}
             <div className="flex-1 min-w-0">
-
-              {/* ── Sort pills (Fix 4: inside results column, pill style) ── */}
-              {!loading && !error && flights.length > 0 && (
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  {([
-                    { key: "price" as const, label: "Cheapest", price: cheapest },
-                    { key: "duration" as const, label: "Fastest", price: fastest },
-                    { key: "stops" as const, label: "Fewest stops", price: null },
-                  ]).map((opt) => (
-                    <button key={opt.key} onClick={() => setSortBy(opt.key)}
-                      className={cn(
-                        "rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all text-left",
-                        sortBy === opt.key
-                          ? "bg-primary/10 border-primary text-primary"
-                          : "bg-card border-border text-foreground hover:bg-secondary"
-                      )}>
-                      <span>{opt.label}</span>
-                      {opt.price != null && (
-                        <span className={cn("ml-1.5 font-bold", sortBy === opt.key ? "text-primary" : "text-foreground")}>
-                          £{opt.price}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                  <button onClick={() => setShowMobileFilters(true)}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-secondary transition-all lg:hidden">
-                    <SlidersHorizontal className="w-4 h-4" /> Filters
-                  </button>
-                </div>
-              )}
-
               {loading && (
                 <div className="flex flex-col items-center justify-center py-32 gap-5">
                   <div className="relative">
@@ -810,125 +1028,163 @@ const FlightResults = () => {
                   </p>
                   <div className="space-y-2">
                     {sorted.map((offer, i) => (
-                      <FlightCard key={offer.id} offer={offer} index={i}
-                        from={from} to={to} depart={depart} returnDate={returnDate}
-                        adults={adults} children={children} cabin={cabin}
-                        isExpanded={selectedOfferId === offer.id}
-                        onToggle={() => setSelectedOfferId((p) => p === offer.id ? null : offer.id)}
-                      />
+                      <>
+                        <FlightCard key={offer.id} offer={offer} index={i}
+                          from={from} to={to} depart={depart} returnDate={returnDate}
+                          adults={adults} children={children} cabin={cabin}
+                          isExpanded={selectedOfferId === offer.id}
+                          onToggle={() => setSelectedOfferId((p) => p === offer.id ? null : offer.id)}
+                        />
+                        {/* Ad slot every 5 results */}
+                        {(i + 1) % 5 === 0 && i < sorted.length - 1 && (
+                          <div key={`ad-${i}`} className="rounded-2xl border border-dashed border-border bg-secondary/30 flex items-center justify-center h-20 text-xs text-muted-foreground/50 font-medium tracking-wider uppercase select-none">
+                            Advertisement
+                          </div>
+                        )}
+                      </>
                     ))}
                   </div>
                 </>
               )}
             </div>
+
+            {/* Right ad column */}
+            <div className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[8.5rem]">
+              {/* Top ad slot */}
+              <div className="rounded-2xl border border-dashed border-border bg-secondary/30 flex flex-col items-center justify-center h-[250px] text-xs text-muted-foreground/50 font-medium tracking-wider uppercase select-none">
+                <span>Advertisement</span>
+                <span className="mt-1 text-[10px]">300 × 250</span>
+              </div>
+              {/* Tall ad slot */}
+              <div className="rounded-2xl border border-dashed border-border bg-secondary/30 flex flex-col items-center justify-center h-[600px] text-xs text-muted-foreground/50 font-medium tracking-wider uppercase select-none">
+                <span>Advertisement</span>
+                <span className="mt-1 text-[10px]">300 × 600</span>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
-      {/* ── Inline search edit overlay (Fix 3) ── */}
+      {/* ── Inline search edit overlay — Skyscanner-style ── */}
       <AnimatePresence>
         {editSearchOpen && (
           <>
-            {/* Blurred backdrop */}
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
               onClick={() => { setEditSearchOpen(false); setEditCalOpen(false); }}
             />
-            {/* Edit card */}
             <motion.div
-              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              initial={{ opacity: 0, y: -20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -16, scale: 0.97 }}
-              transition={{ duration: 0.2 }}
-              className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-full max-w-2xl mx-auto px-4"
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] w-full max-w-3xl mx-auto px-4"
             >
-              <div className="bg-card rounded-2xl border border-border shadow-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-foreground">Edit search</h2>
+              <div className="bg-[hsl(var(--background))] rounded-2xl shadow-2xl overflow-hidden">
+                {/* Header */}
+                <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Plane className="w-5 h-5 text-primary" />
+                    <span className="font-bold text-foreground text-base">Edit your search</span>
+                  </div>
                   <button onClick={() => { setEditSearchOpen(false); setEditCalOpen(false); }}
                     className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center transition-colors">
                     <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
 
-                {/* From / To */}
-                <div className="flex gap-2 mb-3">
-                  <div className="flex-1 border border-border rounded-xl overflow-hidden">
-                    <AirportAutocompleteInput
-                      label="From"
-                      placeholder="City or airport"
-                      value={editFrom}
-                      onChange={(v) => { setEditFrom(v); if (!v) setEditFromIata(""); }}
-                      onSelect={(iata, display) => { setEditFrom(display); setEditFromIata(iata); }}
-                    />
-                  </div>
-                  <div className="flex-1 border border-border rounded-xl overflow-hidden">
-                    <AirportAutocompleteInput
-                      label="To"
-                      placeholder="City or airport"
-                      value={editTo}
-                      onChange={(v) => { setEditTo(v); if (!v) setEditToIata(""); }}
-                      onSelect={(iata, display) => { setEditTo(display); setEditToIata(iata); }}
-                    />
-                  </div>
-                </div>
-
-                {/* Dates + adults */}
-                <div className="flex gap-2 mb-4">
-                  {/* Depart date */}
-                  <button
-                    ref={editDepartBtnRef}
-                    type="button"
-                    onClick={openEditCal}
-                    className="flex-1 flex items-center gap-2 border border-border rounded-xl px-4 py-3 text-sm bg-card hover:bg-secondary transition-colors text-left"
-                  >
-                    <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold">Depart</p>
-                      <p className={cn("font-semibold", editDepart ? "text-foreground" : "text-muted-foreground")}>
-                        {editDepart ? format(editDepart, "dd MMM yyyy") : "Add date"}
-                      </p>
+                {/* Body */}
+                <div className="p-6 space-y-4">
+                  {/* From / swap / To — full-width horizontal like Skyscanner */}
+                  <div className="flex items-stretch gap-0 rounded-xl border border-border overflow-hidden">
+                    <div className="flex-1 min-w-0">
+                      <AirportAutocompleteInput
+                        label="From"
+                        placeholder="City or airport"
+                        value={editFrom}
+                        onChange={(v) => { setEditFrom(v); if (!v) setEditFromIata(""); }}
+                        onSelect={(iata, display) => { setEditFrom(display); setEditFromIata(iata); }}
+                      />
                     </div>
-                  </button>
-                  {/* Return date */}
+                    <div className="w-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const tmpLabel = editFrom; const tmpIata = editFromIata;
+                        setEditFrom(editTo); setEditFromIata(editToIata);
+                        setEditTo(tmpLabel); setEditToIata(tmpIata);
+                      }}
+                      className="w-10 shrink-0 flex items-center justify-center bg-card hover:bg-secondary transition-colors border-x border-border"
+                    >
+                      <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90" />
+                    </button>
+                    <div className="w-px bg-border" />
+                    <div className="flex-1 min-w-0">
+                      <AirportAutocompleteInput
+                        label="To"
+                        placeholder="City or airport"
+                        value={editTo}
+                        onChange={(v) => { setEditTo(v); if (!v) setEditToIata(""); }}
+                        onSelect={(iata, display) => { setEditTo(display); setEditToIata(iata); }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dates + Adults row */}
+                  <div className="flex gap-3">
+                    <button
+                      ref={editDepartBtnRef}
+                      type="button"
+                      onClick={openEditCal}
+                      className="flex-1 flex flex-col items-start border border-border rounded-xl px-4 py-3 bg-card hover:bg-secondary transition-colors text-left"
+                    >
+                      <span className="text-xs text-muted-foreground font-semibold">Depart</span>
+                      <span className={cn("text-sm font-bold mt-0.5", editDepart ? "text-foreground" : "text-muted-foreground")}>
+                        {editDepart ? format(editDepart, "EEE, d MMM yyyy") : "Add date"}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={openEditCal}
+                      className="flex-1 flex flex-col items-start border border-border rounded-xl px-4 py-3 bg-card hover:bg-secondary transition-colors text-left"
+                    >
+                      <span className="text-xs text-muted-foreground font-semibold">Return</span>
+                      <span className={cn("text-sm font-bold mt-0.5", editReturn ? "text-foreground" : "text-muted-foreground")}>
+                        {editReturn ? format(editReturn, "EEE, d MMM yyyy") : "No return"}
+                      </span>
+                    </button>
+                    {/* Adults counter */}
+                    <div className="flex flex-col border border-border rounded-xl px-4 py-3 bg-card gap-1">
+                      <span className="text-xs text-muted-foreground font-semibold">Adults</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <button type="button" onClick={() => setEditAdults(Math.max(1, editAdults - 1))}
+                          className="w-6 h-6 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-30"
+                          disabled={editAdults <= 1}>
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-sm font-bold text-foreground w-4 text-center">{editAdults}</span>
+                        <button type="button" onClick={() => setEditAdults(Math.min(9, editAdults + 1))}
+                          className="w-6 h-6 rounded-full border border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors disabled:opacity-30"
+                          disabled={editAdults >= 9}>
+                          <Plus className="w-3 h-3 text-primary" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Search button */}
                   <button
                     type="button"
-                    onClick={openEditCal}
-                    className="flex-1 flex items-center gap-2 border border-border rounded-xl px-4 py-3 text-sm bg-card hover:bg-secondary transition-colors text-left"
+                    onClick={handleEditSearch}
+                    disabled={!editFromIata || !editToIata || !editDepart}
+                    className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold">Return</p>
-                      <p className={cn("font-semibold", editReturn ? "text-foreground" : "text-muted-foreground")}>
-                        {editReturn ? format(editReturn, "dd MMM yyyy") : "No return"}
-                      </p>
-                    </div>
+                    <Search className="w-5 h-5" />
+                    Search flights
                   </button>
-                  {/* Adults */}
-                  <div className="flex items-center gap-2 border border-border rounded-xl px-4 py-3 bg-card">
-                    <button type="button" onClick={() => setEditAdults(Math.max(1, editAdults - 1))}
-                      className="w-7 h-7 rounded-lg border border-border flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-30"
-                      disabled={editAdults <= 1}>
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-sm font-bold text-foreground w-6 text-center">{editAdults}</span>
-                    <button type="button" onClick={() => setEditAdults(Math.min(9, editAdults + 1))}
-                      className="w-7 h-7 rounded-lg border border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors disabled:opacity-30"
-                      disabled={editAdults >= 9}>
-                      <Plus className="w-3 h-3 text-primary" />
-                    </button>
-                  </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleEditSearch}
-                  disabled={!editFromIata || !editToIata || !editDepart}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Search flights
-                </button>
               </div>
             </motion.div>
 
@@ -976,4 +1232,3 @@ const FlightResults = () => {
 };
 
 export default FlightResults;
-
