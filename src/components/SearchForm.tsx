@@ -111,13 +111,19 @@ const SearchForm = () => {
       return;
     }
 
+    const cabinAmadeusMap: Record<string, string> = {
+      "Economy": "ECONOMY",
+      "Premium Economy": "PREMIUM_ECONOMY",
+      "Business": "BUSINESS",
+      "First": "FIRST",
+    };
     const params = new URLSearchParams({
       from: fromIata,
       to: toIata,
       depart: format(checkIn, "yyyy-MM-dd"),
       adults: String(adults),
       children: String(children),
-      cabin: cabinClass,
+      cabin: cabinAmadeusMap[cabinClass] || cabinClass.toUpperCase().replace(/\s+/g, "_"),
       direct: String(directFlights),
     });
     if (checkOut && tripType !== "One way") params.set("return", format(checkOut, "yyyy-MM-dd"));

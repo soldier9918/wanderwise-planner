@@ -828,7 +828,8 @@ const FlightResults = () => {
   const returnDate = searchParams.get("return") || "";
   const adults = parseInt(searchParams.get("adults") || "1");
   const children = parseInt(searchParams.get("children") || "0");
-  const cabin = searchParams.get("cabin") || "ECONOMY";
+  const cabinRaw = searchParams.get("cabin") || "ECONOMY";
+  const cabin = cabinRaw.toUpperCase().replace(/\s+/g, "_");
   const direct = searchParams.get("direct") === "true";
 
   const [flights, setFlights] = useState<FlightOffer[]>([]);
@@ -924,7 +925,12 @@ const FlightResults = () => {
           },
         });
         if (fnError) throw new Error(fnError.message);
-        if (data?.error) throw new Error(data.error);
+        if (data?.error) {
+          const msg = String(data.error);
+          if (msg.toLowerCase().includes("past")) throw new Error("The departure date is in the past. Please choose a future date.");
+          if (msg.toLowerCase().includes("travelclass") || msg.toLowerCase().includes("enumeration")) throw new Error("Invalid cabin class. Please search again.");
+          throw new Error(msg);
+        }
         const results: FlightOffer[] = data?.data || [];
         setFlights(results);
         if (results.length > 0) {
