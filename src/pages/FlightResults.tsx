@@ -47,14 +47,9 @@ const airlineNames: Record<string, string> = {
   EY: "Etihad", SQ: "Singapore Airlines", CX: "Cathay Pacific", TK: "Turkish Airlines",
 };
 
-const airlineLogoDomains: Record<string, string> = {
-  FR: "ryanair.com", U2: "easyjet.com", BA: "britishairways.com",
-  EK: "emirates.com", LH: "lufthansa.com", AF: "airfrance.com",
-  KL: "klm.com", IB: "iberia.com", TK: "turkishairlines.com",
-  QR: "qatarairways.com", EY: "etihad.com", SQ: "singaporeair.com",
-  AA: "aa.com", DL: "delta.com", UA: "united.com", VY: "vueling.com",
-  LS: "jet2.com", W9: "wizzair.com", CX: "cathaypacific.com",
-};
+// Using aviationstack logo CDN — more reliable than clearbit for airlines
+const airlineLogoUrl = (code: string) =>
+  `https://www.gstatic.com/flights/airline_logos/70px/${code}.png`;
 
 const directAirlineUrls: Record<string, string> = {
   FR: "https://www.ryanair.com/gb/en/trip/flights/select",
@@ -347,18 +342,21 @@ const FlightResults = () => {
                       <div className="flex items-center gap-6 flex-wrap">
                         {/* Airline */}
                         <div className="w-36 shrink-0 flex items-center gap-2">
-                          {airlineLogoDomains[carrierCode] ? (
-                            <img
-                              src={`https://logo.clearbit.com/${airlineLogoDomains[carrierCode]}`}
-                              alt={airline}
-                              className="w-9 h-9 rounded-lg object-contain bg-white p-0.5 border border-border shrink-0"
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground border border-border shrink-0">
-                              {carrierCode.slice(0, 2)}
-                            </div>
-                          )}
+                          <img
+                            src={airlineLogoUrl(carrierCode)}
+                            alt={airline}
+                            className="w-9 h-9 rounded-lg object-contain bg-white p-1 border border-border shrink-0"
+                            onError={(e) => {
+                              const img = e.currentTarget as HTMLImageElement;
+                              img.onerror = null;
+                              img.style.display = "none";
+                              const fallback = img.nextElementSibling as HTMLElement | null;
+                              if (fallback) fallback.style.display = "flex";
+                            }}
+                          />
+                          <div className="w-9 h-9 rounded-lg bg-secondary items-center justify-center text-xs font-bold text-muted-foreground border border-border shrink-0 hidden">
+                            {carrierCode.slice(0, 2)}
+                          </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-foreground text-sm leading-tight truncate">{airline}</p>
                             <p className="text-xs text-muted-foreground">{carrierCode} {firstSeg.number}</p>
@@ -431,33 +429,24 @@ const FlightResults = () => {
                               Only {offer.numberOfBookableSeats} seats left!
                             </p>
                           )}
-                          <div className="flex items-center gap-2">
-                            <PriceAlertButton
-                              from={from}
-                              to={to}
-                              depart={depart}
-                              returnDate={returnDate || undefined}
-                              adults={adults}
-                              cabin={cabin}
-                              currentPrice={priceGBP}
-                            />
-                            <a
-                              href={primaryLink.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => setSelectedOfferId((prev) => prev === offer.id ? null : offer.id)}
-                              className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-                            >
-                              Select <ArrowRight className="w-3.5 h-3.5" />
-                            </a>
-                            <button
-                              onClick={() => setSelectedOfferId((prev) => prev === offer.id ? null : offer.id)}
-                              className="p-2 rounded-full border border-border hover:bg-secondary transition-colors"
-                              aria-label="See all booking options"
-                            >
-                              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-                            </button>
-                          </div>
+                           <div className="flex items-center gap-2">
+                             <PriceAlertButton
+                               from={from}
+                               to={to}
+                               depart={depart}
+                               returnDate={returnDate || undefined}
+                               adults={adults}
+                               cabin={cabin}
+                               currentPrice={priceGBP}
+                             />
+                             <button
+                               type="button"
+                               onClick={() => setSelectedOfferId((prev) => prev === offer.id ? null : offer.id)}
+                               className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                             >
+                               Select <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                             </button>
+                           </div>
                         </div>
                       </div>
 
