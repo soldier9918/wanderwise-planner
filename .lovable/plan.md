@@ -1,87 +1,84 @@
 
-# Flight Results Page — 6 Fixes
+# Flight Results Page — 4 Fixes
 
-## Issues to Fix
+## What's Being Changed
 
-### 1. Autocomplete showing irrelevant results (e.g. typing "i" returns airports not starting with "i")
-**Root cause:** The Amadeus API uses keyword matching across the full name, city, country, and IATA code — not just the prefix. So "I" might match "Madrid International" or "Ibiza" via the country field. The fix is to client-side filter the returned suggestions, keeping only those where the airport name, city name, IATA code, or country name **starts with** the typed keyword (case-insensitive).
+### Fix 1 — Auto-open calendar when no date is entered on Search
+**Problem:** The `handleSearch` function in `SearchForm.tsx` currently does nothing when `checkIn` (depart date) is missing — it just builds a URL with an empty `depart` param, which navigates to the results page and triggers "Search failed" because the API call gets no date.
 
-**Files:** `src/components/AirportAutocompleteInput.tsx`
+**Fix:** In `handleSearch`, before navigating, add validation: if `!checkIn`, call `openCalendar(departBtnRef)` to programmatically open the date picker and show a form error message. The user stays on the search form and the calendar pops open automatically.
 
----
-
-### 2. Reduce result box sizes to match Skyscanner
-**Reference:** The screenshots show compact cards with less vertical padding. Times are large but the surrounding padding is tighter. The right price column is narrower (~140px). The airline logo is smaller.
-
-**Changes:**
-- Reduce `p-5` to `p-3 px-4` on left flight info section
-- Reduce `space-y-4` to `space-y-2` between outbound/inbound rows  
-- Make times slightly smaller (`text-xl` instead of `text-2xl`)
-- Narrow the right price column from `w-44` to `w-36`
-- Tighten airline logo size from `w-9 h-9` to `w-8 h-8`
-
-**Files:** `src/pages/FlightResults.tsx` — `FlightCard` and `ItineraryRow`
+**File:** `src/components/SearchForm.tsx`
 
 ---
 
-### 3. Filter sidebar: sticky and scrollable with the page
-**Root cause:** The sidebar uses `sticky top-36` but the filter sections expand/collapse inside a fixed-height container, so the filter panel itself doesn't scroll. 
+### Fix 2 — Remove blank space: push content left, pull scrollbar right
+**Reference (image-49.png):** The red circle on the left indicates empty space to the left of the Filters sidebar. The green circle on the right indicates the scrollbar is too far inside the content area.
 
-**Fix:** Make the sidebar `sticky top-20` (just below the fixed navbar+sort bar), give it `max-h-[calc(100vh-5rem)] overflow-y-auto` so it scrolls independently within the viewport, keeping filters visible as the user scrolls through results.
-
-**Files:** `src/pages/FlightResults.tsx` — sidebar `<aside>` element
-
----
-
-### 4. Larger, more accessible text
-**Reference image 47** shows large bold departure/arrival times, clear airline names, and prominent pricing. Changes:
-- Times: keep `text-2xl` but make them `font-black`
-- IATA codes below times: increase from `text-xs` to `text-sm font-bold`
-- Duration/stops label in the middle: increase from `text-xs` to `text-sm`
-- Price: increase from `text-3xl` to `text-3xl font-black`
-- "per person" label: increase from `text-xs` to `text-sm`
-- Sort bar labels (Cheapest/Fastest): increase from `text-xs` to `text-sm font-semibold`
-
-**Files:** `src/pages/FlightResults.tsx`
-
----
-
-### 5. Luggage icons on flight cards
-**Reference image 47** shows small luggage icons between the arrival time and the price column: a personal item bag icon, a crossed-out checked bag icon (not included), and a suitcase icon.
-
-Implementation:
-- Add three small SVG/lucide icons in a row: `Briefcase` (personal item), `Luggage` (cabin bag), `Package` (checked bag)
-- These appear to the right of the arrival IATA, before the price divider
-- Show them as grey (not included) or coloured (included) based on Amadeus `fareDetailsBySegment.includedCheckedBags` data if available, otherwise show standard economy defaults (cabin bag ✓, no checked bag ✗)
-
-**Files:** `src/pages/FlightResults.tsx` — `ItineraryRow` or `FlightCard`
-
----
-
-### 6. Results and sort bar alignment — reduce left space
-**Root cause:** The sort bar (`max-w-screen-xl`) is full-width but the results column starts after the 240px sidebar, creating misalignment. The sort tabs should align with the results, not span the full width including sidebar space.
+**Root cause:** The `max-w-screen-xl` container uses `mx-auto` centering. On wide screens, if the content doesn't fill the full xl width, there's empty space on both sides. The filter sidebar starts too far from the left edge.
 
 **Fix:**
-- Wrap the sort bar content in the same `flex gap-4` layout as the body, with a matching `w-60 shrink-0` spacer div on the left (desktop only), so the "Cheapest / Fastest / Fewest stops" tabs line up exactly with the result cards.
-- Reduce overall sidebar width from `w-60` to `w-56` to save space for ad reservations on the right.
+- Change the outer container from `max-w-screen-xl mx-auto px-4` to `max-w-[1400px] mx-auto px-2` so the layout stretches closer to screen edges.
+- In both the sort bar and the body, reduce the spacer `div` width from `w-56` to `w-52` to bring content closer to the left.
+- The sidebar width stays `w-56` but the outer container padding reduces, naturally pushing it left.
 
-**Files:** `src/pages/FlightResults.tsx` — sort bar and body layout
+**File:** `src/pages/FlightResults.tsx`
+
+---
+
+### Fix 3 — Route pill (LHR → ATL) opens inline search editor instead of navigating away
+**Reference (image-50.png):** On Skyscanner, clicking the route in the sticky bar reveals an inline edit panel over the results (with a blurred background) that lets users change From/To/Dates/Travellers without leaving the page.
+
+**Current behaviour:** Clicking the route pill does `navigate(-1)` which goes back to the Flights page.
+
+**New behaviour:**
+1. Add `editSearchOpen` state (boolean) to `FlightResults`.
+2. When the route pill is clicked, set `editSearchOpen = true` — this shows a fixed overlay with a blurred backdrop (`backdrop-blur-sm bg-black/40`) covering the results.
+3. In the overlay, render a compact inline edit form with:
+   - Two `AirportAutocompleteInput` fields (From / To), pre-populated with the current `from`/`to` params.
+   - Two date buttons that open the `RangeDatePickerCalendar` portal (reuse the same pattern already in `SearchForm`).
+   - Adults count +/- counter.
+   - A "Search" button that builds new URL params and calls `setSearchParams(...)` to refresh results in place.
+   - A close (×) button to dismiss.
+4. The route pill button changes from `onClick={() => navigate(-1)}` to `onClick={() => setEditSearchOpen(true)}`.
+
+**File:** `src/pages/FlightResults.tsx`
+
+---
+
+### Fix 4 — Cheapest / Fastest / Fewest stops tab style + position (image-52.png)
+**Reference:** The green highlight shows these tabs should look like rounded pill-style buttons, not underline tabs. The red highlight shows they should sit to the right of the filter sidebar spacer, inside the content column — matching the screenshot exactly.
+
+**Current:** The tabs are underlined tab-style buttons inside a border-bottom bar.
+
+**New:**
+- Style each sort button as a rounded pill: `rounded-xl border border-border px-5 py-2.5 text-sm font-semibold`. When active: `bg-primary/10 border-primary text-primary`. When inactive: `bg-card hover:bg-secondary text-foreground`.
+- Move the entire "Cheapest / Fastest / Fewest stops" row out of the full-width bar and INTO the results column (inside the `flex-1` results div), above the results count. This way it sits right-aligned with the cards, not spanning the full page width including the sidebar.
+- Remove the separate `<div className="bg-card border-b border-border">` sort bar wrapper entirely — the sort pills live above the `<p>{sorted.length} results</p>` line inside the results div.
+
+**File:** `src/pages/FlightResults.tsx`
 
 ---
 
 ## Technical Summary
 
 ```text
-FlightResults.tsx changes:
-├── ItineraryRow: larger accessible text, luggage icons, tighter padding
-├── FlightCard: compact layout, narrower price column
-├── FilterSidebar <aside>: sticky + max-height + overflow-y-auto
-├── Sort bar: add left spacer to align with results
-└── Body layout: sidebar w-56, results flex-1
+SearchForm.tsx
+└── handleSearch: validate checkIn before navigate; if missing,
+    call openCalendar(departBtnRef) + set formError
 
-AirportAutocompleteInput.tsx:
-└── Client-side filter: keep only suggestions where name/city/IATA
-    starts with the typed keyword (case-insensitive)
+FlightResults.tsx
+├── Container: reduce padding/max-width to push content left
+├── Sort bar: remove full-width bar, move pills into results column
+│   └── Style: rounded-xl pill buttons (active = primary, inactive = ghost)
+├── Route pill: onClick → setEditSearchOpen(true) not navigate(-1)
+└── New: editSearchOpen overlay
+    ├── Fixed backdrop (backdrop-blur-sm bg-black/40 z-50)
+    └── Compact inline edit card with:
+        ├── AirportAutocompleteInput (From, To)
+        ├── Date pickers (portal-based RangeDatePickerCalendar)
+        ├── Adults counter
+        └── Search button → setSearchParams(new params)
 ```
 
-All changes are contained to two files. No new dependencies needed. No database changes.
+No new dependencies. No database changes. No edge function changes.
