@@ -198,7 +198,7 @@ const SearchForm = () => {
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-36 p-1" align="start">
+            <PopoverContent className="w-36 p-1 bg-card" align="start">
               {["Return", "One way", "Multi-city"].map((type) => (
                 <button
                   key={type}
@@ -293,7 +293,7 @@ const SearchForm = () => {
                           </span>
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 bg-card" align="start">
                         <Calendar
                           mode="single"
                           selected={leg.depart}
@@ -348,7 +348,7 @@ const SearchForm = () => {
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+                <PopoverContent className="w-80 p-0 bg-card" align="end" sideOffset={8}>
                   <div className="p-5 space-y-5">
                     <div className="flex items-center justify-between">
                       <div>
@@ -499,7 +499,7 @@ const SearchForm = () => {
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+              <PopoverContent className="w-80 p-0 bg-card" align="end" sideOffset={8}>
                 <div className="p-5 space-y-5">
                   <div className="flex items-center justify-between">
                     <div>
