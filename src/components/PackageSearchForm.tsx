@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftRight, Minus, Plus } from "lucide-react";
+import { ArrowLeftRight, CalendarIcon, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,43 @@ const PackageSearchForm = () => {
   const [children, setChildren] = useState(0);
   const [cabinClass, setCabinClass] = useState("Economy");
   const [travellersOpen, setTravellersOpen] = useState(false);
+
+  // Portal-based calendar positioning
+  const departBtnRef = useRef<HTMLButtonElement>(null);
+  const returnBtnRef = useRef<HTMLButtonElement>(null);
+  const [calTop, setCalTop] = useState(0);
+  const [calLeft, setCalLeft] = useState(0);
+
+  const openCalendar = useCallback((ref: React.RefObject<HTMLButtonElement>) => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      const calHeight = 480;
+      const spaceBelow = window.innerHeight - r.bottom - 8;
+      const top = spaceBelow >= calHeight
+        ? r.bottom + 6
+        : Math.max(8, r.top - calHeight - 6);
+      setCalTop(top);
+      setCalLeft(Math.max(8, Math.min(r.left, window.innerWidth - 680)));
+    }
+    setDatePopoverOpen(true);
+  }, []);
+
+  // Close calendar on outside click
+  useEffect(() => {
+    if (!datePopoverOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        !departBtnRef.current?.contains(target) &&
+        !returnBtnRef.current?.contains(target) &&
+        !(document.getElementById("pkg-cal-portal")?.contains(target))
+      ) {
+        setDatePopoverOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [datePopoverOpen]);
 
   const totalTravellers = adults + children;
 
@@ -82,45 +120,40 @@ const PackageSearchForm = () => {
             className="flex-1"
           />
 
-          {/* Depart — unified dual-month calendar */}
-          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-              >
-                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
-                <span className={cn("text-lg", depart ? "text-foreground" : "text-muted-foreground")}>
-                  {depart ? format(depart, "dd MMM yyyy") : "Add date"}
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
-              <RangeDatePickerCalendar
-                departDate={depart}
-                returnDate={returnDate}
-                onDepartChange={(d) => { setDepart(d); setReturnDate(undefined); }}
-                onReturnChange={(d) => setReturnDate(d)}
-                onApply={() => setDatePopoverOpen(false)}
-                hint="Select return date"
-              />
-            </PopoverContent>
-          </Popover>
+          {/* Depart — portal-based calendar */}
+          <button
+            ref={departBtnRef}
+            type="button"
+            onClick={() => openCalendar(departBtnRef)}
+            className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+          >
+            <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
+            <span className={cn("text-lg flex items-center gap-2", depart ? "text-foreground" : "text-muted-foreground")}>
+              <CalendarIcon className="w-4 h-4" />
+              {depart ? format(depart, "dd MMM yyyy") : "Add date"}
+            </span>
+          </button>
 
-          {/* Return — opens same calendar */}
-          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
-              >
-                <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
-                <span className={cn("text-lg", returnDate ? "text-foreground" : "text-muted-foreground")}>
-                  {returnDate ? format(returnDate, "dd MMM yyyy") : "Add date"}
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="p-0 w-auto" align="start" sideOffset={8}>
+          {/* Return — portal-based calendar */}
+          <button
+            ref={returnBtnRef}
+            type="button"
+            onClick={() => openCalendar(returnBtnRef)}
+            className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-card hover:bg-primary/5 transition-all cursor-pointer"
+          >
+            <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
+            <span className={cn("text-lg flex items-center gap-2", returnDate ? "text-foreground" : "text-muted-foreground")}>
+              <CalendarIcon className="w-4 h-4" />
+              {returnDate ? format(returnDate, "dd MMM yyyy") : "Add date"}
+            </span>
+          </button>
+
+          {/* Portal calendar */}
+          {datePopoverOpen && createPortal(
+            <div
+              id="pkg-cal-portal"
+              style={{ position: "fixed", top: calTop, left: calLeft, zIndex: 99999 }}
+            >
               <RangeDatePickerCalendar
                 departDate={depart}
                 returnDate={returnDate}
@@ -129,8 +162,9 @@ const PackageSearchForm = () => {
                 onApply={() => setDatePopoverOpen(false)}
                 hint="Select return date"
               />
-            </PopoverContent>
-          </Popover>
+            </div>,
+            document.body
+          )}
 
           {/* Travellers */}
           <Popover open={travellersOpen} onOpenChange={setTravellersOpen}>
@@ -145,7 +179,7 @@ const PackageSearchForm = () => {
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+            <PopoverContent className="w-80 p-0 bg-card" align="end" sideOffset={8}>
               <div className="p-5 space-y-5">
                 {/* Adults */}
                 <div className="flex items-center justify-between">

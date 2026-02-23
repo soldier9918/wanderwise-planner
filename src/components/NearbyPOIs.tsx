@@ -182,9 +182,9 @@ const singleWithDistance = (hotelLat: number, hotelLng: number, poi: RawPOI): PO
 type DropdownKey = "airport" | "transport" | "hotspot" | "restaurant" | "shopping";
 
 const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activePOI }: NearbyPOIsProps) => {
-  // Cap airports at 5 nearest
+  // Cap airports at 2 nearest
   const airports = useMemo(
-    () => withDistance(hotelLat, hotelLng, rawSpainAirports).slice(0, 5),
+    () => withDistance(hotelLat, hotelLng, rawSpainAirports).slice(0, 2),
     [hotelLat, hotelLng]
   );
 
@@ -196,23 +196,24 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
 
   const hotspots = useMemo(() => withDistance(hotelLat, hotelLng, rawTouristHotspots), [hotelLat, hotelLng]);
 
-  // Restaurants — filtered to 5-mile radius
+  // Restaurants — closest 2 within 5-mile radius
   const restaurantList = useMemo(
-    () => withDistance(hotelLat, hotelLng, rawRestaurants).filter((p) => p.distance <= RADIUS_KM),
+    () => withDistance(hotelLat, hotelLng, rawRestaurants).filter((p) => p.distance <= RADIUS_KM).slice(0, 2),
     [hotelLat, hotelLng]
   );
 
-  const SHOPPING_RADIUS_KM = 16.09; // 10 miles
+  // Shopping — filtered to 5-mile radius (changed from 10 miles)
   const shopping = useMemo(
-    () => withDistance(hotelLat, hotelLng, rawShoppingMalls).filter((p) => p.distance <= SHOPPING_RADIUS_KM),
+    () => withDistance(hotelLat, hotelLng, rawShoppingMalls).filter((p) => p.distance <= RADIUS_KM),
     [hotelLat, hotelLng]
   );
 
-  // Nearest beach from the full list
-  const beach = useMemo(
-    () => withDistance(hotelLat, hotelLng, rawBeaches)[0],
-    [hotelLat, hotelLng]
-  );
+  // Nearest beach within 5-mile radius
+  const beach = useMemo(() => {
+    const all = withDistance(hotelLat, hotelLng, rawBeaches);
+    const nearby = all.filter((p) => p.distance <= RADIUS_KM);
+    return nearby.length > 0 ? nearby[0] : null;
+  }, [hotelLat, hotelLng]);
 
   // Hospital — single, dynamic distance
   const hospital = useMemo(() => singleWithDistance(hotelLat, hotelLng, rawHospital), [hotelLat, hotelLng]);
@@ -356,7 +357,9 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
       {renderDropdownOrDisabled("shopping", <ShoppingBag className="w-4 h-4 text-primary" />, "Shopping", activeShopping, shopping, setSelectedShopping)}
       {renderDropdown("hotspot", <Palmtree className="w-4 h-4 text-primary" />, "Tourist Hotspots", activeHotspot, hotspots, setSelectedHotspot)}
       {renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
-      {renderFixed(beach, "Nearest Beach", <Waves className="w-4 h-4 text-primary" />)}
+      {beach
+        ? renderFixed(beach, "Nearest Beach", <Waves className="w-4 h-4 text-primary" />)
+        : renderDisabled("Nearest Beach", <Waves className="w-4 h-4 text-primary" />)}
       {spa
         ? renderFixed(spa, "SPA / Fitness", <Dumbbell className="w-4 h-4 text-primary" />)
         : renderDisabled("SPA / Fitness", <Dumbbell className="w-4 h-4 text-primary" />)}
