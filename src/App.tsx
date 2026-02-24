@@ -20,6 +20,8 @@ import WhoWeAre from "./pages/WhoWeAre";
 import ContactUs from "./pages/ContactUs";
 import Login from "./pages/Login";
 import FlightResults from "./pages/FlightResults";
+import PriceAlerts from "./pages/PriceAlerts";
+import AISuggestions from "./pages/AISuggestions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
             <Route path="/who-we-are" element={<WhoWeAre />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/price-alerts" element={<PriceAlerts />} />
+            <Route path="/ai-suggestions" element={<AISuggestions />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

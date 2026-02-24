@@ -16,5 +16,6 @@ export interface LiveHotel {
   rating: number;
   lat: number;
   lng: number;
+  chainCode?: string;
   offers: LiveHotelOffer[];
 }

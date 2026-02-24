@@ -356,7 +356,9 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
       {renderDropdownOrDisabled("restaurant", <Utensils className="w-4 h-4 text-primary" />, "Restaurants", activeRestaurant, restaurantList, setSelectedRestaurant)}
       {renderDropdownOrDisabled("shopping", <ShoppingBag className="w-4 h-4 text-primary" />, "Shopping", activeShopping, shopping, setSelectedShopping)}
       {renderDropdown("hotspot", <Palmtree className="w-4 h-4 text-primary" />, "Tourist Hotspots", activeHotspot, hotspots, setSelectedHotspot)}
-      {renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
+      {hospital.distance <= RADIUS_KM
+        ? renderFixed(hospital, "Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)
+        : renderDisabled("Nearest Hospital", <Cross className="w-4 h-4 text-primary" />)}
       {beach
         ? renderFixed(beach, "Nearest Beach", <Waves className="w-4 h-4 text-primary" />)
         : renderDisabled("Nearest Beach", <Waves className="w-4 h-4 text-primary" />)}
