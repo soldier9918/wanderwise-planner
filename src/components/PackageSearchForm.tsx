@@ -89,7 +89,7 @@ const PackageSearchForm = () => {
       className="w-full max-w-7xl mx-auto"
     >
       <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-4 shadow-elevated border border-white/10">
-        <div className="flex items-stretch rounded-xl overflow-visible bg-card">
+        <div className="flex items-stretch rounded-xl overflow-visible border border-border bg-white">
           {/* From */}
           <AirportAutocompleteInput
             label="From"
@@ -104,7 +104,7 @@ const PackageSearchForm = () => {
           <button
             type="button"
             onClick={swapCities}
-            className="flex items-center justify-center w-12 bg-white border-r border-border hover:bg-secondary transition-colors shrink-0"
+            className="flex items-center justify-center w-12 bg-white border-r border-border hover:bg-primary/5 transition-colors shrink-0"
             title="Swap cities"
           >
             <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
@@ -125,7 +125,7 @@ const PackageSearchForm = () => {
             ref={departBtnRef}
             type="button"
             onClick={() => openCalendar(departBtnRef)}
-            className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-white hover:bg-secondary/50 transition-all cursor-pointer"
+            className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-white hover:bg-primary/5 transition-all cursor-pointer"
           >
             <span className="absolute left-5 top-3 text-base font-bold text-foreground">Depart</span>
             <span className={cn("text-lg flex items-center gap-2", depart ? "text-foreground" : "text-muted-foreground")}>
@@ -139,7 +139,7 @@ const PackageSearchForm = () => {
             ref={returnBtnRef}
             type="button"
             onClick={() => openCalendar(returnBtnRef)}
-            className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-white hover:bg-secondary/50 transition-all cursor-pointer"
+            className="relative border-r border-border text-left flex-1 px-5 pt-10 pb-4 bg-white hover:bg-primary/5 transition-all cursor-pointer"
           >
             <span className="absolute left-5 top-3 text-base font-bold text-foreground">Return</span>
             <span className={cn("text-lg flex items-center gap-2", returnDate ? "text-foreground" : "text-muted-foreground")}>
@@ -171,7 +171,7 @@ const PackageSearchForm = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-white hover:bg-secondary/50 transition-all cursor-pointer"
+                className="relative text-left flex-1 border-r border-border px-5 pt-10 pb-4 bg-white hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="absolute left-5 top-3 text-base font-bold text-foreground">Travellers</span>
                 <span className="text-lg text-foreground flex items-center gap-1.5">
