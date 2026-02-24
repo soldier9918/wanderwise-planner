@@ -323,7 +323,7 @@ const AirportAutocompleteInput = ({
             fetchSuggestions(value);
           }
         }}
-        className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5"
+        className="w-full px-5 pt-10 pb-4 bg-card text-foreground placeholder:text-muted-foreground text-lg outline-none transition-all focus:bg-primary/5 active:bg-primary/5"
         autoComplete="off"
       />
       {showDropdown && createPortal(dropdownContent, document.body)}
