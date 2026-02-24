@@ -8,12 +8,14 @@ interface WeatherDay {
   tempMax: number;
   tempMin: number;
   code: number;
+  rainfall: number;
 }
 
 interface MonthlyData {
   month: string;
   avgTemp: number;
   sunshine: number;
+  rainfall: number;
 }
 
 const weatherIcon = (code: number) => {
@@ -55,7 +57,7 @@ const WeatherForecast = ({ lat, lng, cityName }: WeatherForecastProps) => {
       try {
         // 7-day forecast
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto&forecast_days=7`
         );
         const data = await res.json();
         const days: WeatherDay[] = (data.daily?.time || []).map((d: string, i: number) => ({
@@ -63,6 +65,7 @@ const WeatherForecast = ({ lat, lng, cityName }: WeatherForecastProps) => {
           tempMax: Math.round(data.daily.temperature_2m_max[i]),
           tempMin: Math.round(data.daily.temperature_2m_min[i]),
           code: data.daily.weather_code[i],
+          rainfall: Math.round((data.daily.precipitation_sum?.[i] || 0) * 10) / 10,
         }));
         setForecast(days);
 
@@ -73,7 +76,11 @@ const WeatherForecast = ({ lat, lng, cityName }: WeatherForecastProps) => {
           const seasonal = Math.cos(((i - 6) * Math.PI) / 6) * (lat > 0 ? 12 : -12);
           const avgTemp = Math.round(18 + baseTempOffset + seasonal);
           const sunshine = Math.round(Math.max(3, Math.min(12, 7 + seasonal / 3)));
-          return { month: m, avgTemp, sunshine };
+          // Simulate rainfall — wetter in winter, drier in summer for most destinations
+          const rainfallBase = Math.abs(lat) > 40 ? 60 : Math.abs(lat) > 25 ? 30 : 80;
+          const rainfallSeasonal = Math.cos(((i - 6) * Math.PI) / 6) * (lat > 0 ? -25 : 25);
+          const rainfall = Math.round(Math.max(5, rainfallBase + rainfallSeasonal));
+          return { month: m, avgTemp, sunshine, rainfall };
         });
         setMonthly(monthlyData);
       } catch (err) {
@@ -119,6 +126,11 @@ const WeatherForecast = ({ lat, lng, cityName }: WeatherForecastProps) => {
                 <span className="text-sm font-bold text-foreground">{day.tempMax}°</span>
                 <span className="text-xs text-muted-foreground">{day.tempMin}°</span>
               </div>
+              {day.rainfall > 0 && (
+                <p className="text-[10px] text-primary flex items-center justify-center gap-0.5">
+                  <Droplets className="w-3 h-3" /> {day.rainfall}mm
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -142,10 +154,11 @@ const WeatherForecast = ({ lat, lng, cityName }: WeatherForecastProps) => {
               />
               <Bar dataKey="avgTemp" name="Avg Temp (°C)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="sunshine" name="Sunshine (hrs)" fill="hsl(var(--gold))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="rainfall" name="Rainfall (mm)" fill="hsl(210 80% 60%)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            Monthly average temperature and sunshine hours — plan your trip for the best weather
+            Monthly average temperature, sunshine hours, and rainfall — plan your trip for the best weather
           </p>
         </div>
       </div>

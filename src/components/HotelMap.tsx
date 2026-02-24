@@ -1,4 +1,5 @@
 import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from "@react-google-maps/api";
+import { useCallback, useRef, useEffect } from "react";
 
 interface HotelMapProps {
   lat: number;
@@ -25,6 +26,26 @@ const HotelMap = ({ lat, lng, name, destination }: HotelMapProps) => {
     id: "google-map-script",
   });
 
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+
+  // Auto-zoom to fit both hotel and destination
+  useEffect(() => {
+    if (!mapRef.current || !isLoaded) return;
+    if (destination) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat, lng });
+      bounds.extend({ lat: destination.lat, lng: destination.lng });
+      mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
+    } else {
+      mapRef.current.setCenter({ lat, lng });
+      mapRef.current.setZoom(14);
+    }
+  }, [destination, lat, lng, isLoaded]);
+
   if (!isLoaded) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-secondary rounded-xl">
@@ -33,21 +54,12 @@ const HotelMap = ({ lat, lng, name, destination }: HotelMapProps) => {
     );
   }
 
-  // If destination is set, fit both points
-  const center = destination
-    ? {
-        lat: (lat + destination.lat) / 2,
-        lng: (lng + destination.lng) / 2,
-      }
-    : { lat, lng };
-
-  const zoom = destination ? 10 : 14;
-
   return (
     <GoogleMap
       mapContainerStyle={{ width: "100%", height: "100%" }}
-      center={center}
-      zoom={zoom}
+      center={{ lat, lng }}
+      zoom={14}
+      onLoad={onLoad}
       options={{
         styles: mapStyles,
         disableDefaultUI: false,
@@ -64,7 +76,7 @@ const HotelMap = ({ lat, lng, name, destination }: HotelMapProps) => {
             position={{ lat: destination.lat, lng: destination.lng }}
             title={destination.name}
             icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+              url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
             }}
           />
           <PolylineF
@@ -73,7 +85,7 @@ const HotelMap = ({ lat, lng, name, destination }: HotelMapProps) => {
               { lat: destination.lat, lng: destination.lng },
             ]}
             options={{
-              strokeColor: "#2563eb",
+              strokeColor: "#E83E6C",
               strokeOpacity: 0.8,
               strokeWeight: 3,
               geodesic: true,

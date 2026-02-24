@@ -156,8 +156,7 @@ const AirportAutocompleteInput = ({
       const filtered = all.filter((s) =>
         s.iataCode?.toLowerCase().startsWith(kw) ||
         (s.cityName || "").toLowerCase().startsWith(kw) ||
-        s.name?.toLowerCase().startsWith(kw) ||
-        (s.countryName || "").toLowerCase().startsWith(kw)
+        s.name?.toLowerCase().startsWith(kw)
       );
       setSuggestions(filtered);
     } catch {
