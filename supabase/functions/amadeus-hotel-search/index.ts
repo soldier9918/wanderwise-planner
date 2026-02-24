@@ -50,6 +50,7 @@ interface AmadeusHotelListItem {
   cityCode: string;
   countryCode: string;
   iataCode?: string;
+  chainCode?: string;
   geoCode?: { latitude: number; longitude: number };
 }
 
@@ -247,9 +248,10 @@ Deno.serve(async (req) => {
           cityCode: r.hotel.cityCode || meta?.cityCode || cityCode,
           countryCode: r.hotel.countryCode || meta?.countryCode || "",
           stars,
-          rating: stars, // Amadeus rating is 1-5 star scale
+          rating: stars,
           lat,
           lng,
+          chainCode: meta?.chainCode || "",
           offers,
         };
       });

@@ -1,1 +1,19 @@
 project_id = "rarqwsbilnmmrhfkdwpb"
+
+[functions.amadeus-flight-search]
+verify_jwt = false
+
+[functions.amadeus-hotel-search]
+verify_jwt = false
+
+[functions.amadeus-airport-search]
+verify_jwt = false
+
+[functions.amadeus-hotel-autocomplete]
+verify_jwt = false
+
+[functions.amadeus-flight-inspiration]
+verify_jwt = false
+
+[functions.ai-trip-suggestions]
+verify_jwt = false

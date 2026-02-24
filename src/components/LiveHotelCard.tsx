@@ -1,20 +1,27 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, ExternalLink, AlertCircle, Calendar } from "lucide-react";
+import { Star, ExternalLink, AlertCircle, Calendar, ChevronDown, ChevronUp, Building2 } from "lucide-react";
 import { LiveHotel } from "@/types/liveHotel";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import HotelImageCarousel from "@/components/HotelImageCarousel";
+import PriceComparisonPanel from "@/components/PriceComparisonPanel";
+
+// Chain code to name mapping
+const CHAIN_NAMES: Record<string, string> = {
+  RT: "Marriott", MC: "Marriott", HI: "Hilton", IH: "IHG", HY: "Hyatt",
+  BW: "Best Western", AC: "Accor", WI: "Wyndham", CW: "Carlson", SI: "Starwood",
+  YX: "Radisson", EC: "Choice Hotels", UZ: "Meliá", EH: "NH Hotels",
+  GI: "Iberostar", RA: "Ramada", SB: "Barceló", OZ: "Lopesan", RZ: "Riu",
+};
 
 interface LiveHotelCardProps {
   hotel: LiveHotel;
   index: number;
   cityName?: string;
+  priceMode?: "night" | "person";
+  adults?: number;
 }
-
-// Unsplash source image based on city name
-const cityImage = (cityCode: string, cityName?: string) => {
-  const query = encodeURIComponent(cityName || cityCode);
-  return `https://source.unsplash.com/featured/480x320/?${query},hotel,city`;
-};
 
 const boardTypeBg: Record<string, string> = {
   "All Inclusive": "bg-primary",
@@ -24,17 +31,26 @@ const boardTypeBg: Record<string, string> = {
   "Room Only": "bg-muted text-muted-foreground",
 };
 
-const LiveHotelCard = ({ hotel, index, cityName }: LiveHotelCardProps) => {
+const LiveHotelCard = ({ hotel, index, cityName, priceMode = "night", adults = 2 }: LiveHotelCardProps) => {
   const { formatPrice } = useCurrency();
+  const [showComparison, setShowComparison] = useState(false);
 
   const cheapestOffer = hotel.offers.length
     ? hotel.offers.reduce((a, b) => (a.price < b.price ? a : b))
     : null;
 
+  const displayPrice = cheapestOffer
+    ? priceMode === "person"
+      ? cheapestOffer.price / Math.max(1, adults)
+      : cheapestOffer.price
+    : 0;
+
   const boardType = cheapestOffer?.boardType || "Room Only";
   const badgeClass = boardTypeBg[boardType] || "bg-primary text-primary-foreground";
+  const chainName = hotel.chainCode ? CHAIN_NAMES[hotel.chainCode] || hotel.chainCode : null;
 
-  const bookingUrl = `https://www.amadeus.com/en/portfolio/travel-agency/amadeus-hotels-and-accommodations`;
+  const hotelQuery = encodeURIComponent(`${hotel.name} ${cityName || hotel.cityCode}`);
+  const bookingUrl = `https://www.booking.com/search.html?ss=${hotelQuery}`;
 
   return (
     <motion.div
@@ -43,26 +59,14 @@ const LiveHotelCard = ({ hotel, index, cityName }: LiveHotelCardProps) => {
       transition={{ delay: index * 0.07 }}
     >
       <div className="flex flex-col md:flex-row bg-card rounded-2xl overflow-hidden border border-border shadow-card hover:border-primary/30 hover:shadow-elevated transition-all group">
-        {/* Image */}
+        {/* Image Carousel */}
         <div className="md:w-72 h-48 md:h-auto overflow-hidden relative shrink-0">
-          <img
-            src={cityImage(hotel.cityCode, cityName)}
-            alt={hotel.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://source.unsplash.com/featured/480x320/?hotel`;
-            }}
-          />
-          {/* Board type badge */}
-          <span
-            className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold text-primary-foreground ${badgeClass}`}
-          >
+          <HotelImageCarousel hotelName={hotel.name} cityName={cityName} className="w-full h-full" />
+          <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold text-primary-foreground ${badgeClass} z-10`}>
             {boardType}
           </span>
-          {/* Stars badge */}
           {hotel.stars > 0 && (
-            <span className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-card/90 text-foreground text-[10px] font-semibold flex items-center gap-0.5">
+            <span className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-card/90 text-foreground text-[10px] font-semibold flex items-center gap-0.5 z-10">
               {Array.from({ length: Math.min(hotel.stars, 5) }).map((_, i) => (
                 <Star key={i} className="w-2.5 h-2.5 fill-gold text-gold" />
               ))}
@@ -83,25 +87,30 @@ const LiveHotelCard = ({ hotel, index, cityName }: LiveHotelCardProps) => {
                   {hotel.countryCode ? `, ${hotel.countryCode}` : ""}
                 </p>
               </div>
-              {hotel.stars === 0 && (
-                <span className="shrink-0 text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg">
-                  Unrated
-                </span>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {chainName && (
+                  <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    {chainName}
+                  </span>
+                )}
+                {hotel.stars === 0 && (
+                  <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg">
+                    Unrated
+                  </span>
+                )}
+              </div>
             </div>
 
             {cheapestOffer ? (
               <div className="space-y-1.5 mb-3">
-                <p className="text-sm text-muted-foreground">
-                  {cheapestOffer.roomType}
-                </p>
+                <p className="text-sm text-muted-foreground">{cheapestOffer.roomType}</p>
                 {cheapestOffer.cancellationDeadline && (
                   <p className="text-xs text-teal flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     Free cancellation until{" "}
                     {new Date(cheapestOffer.cancellationDeadline).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
+                      day: "numeric", month: "short",
                     })}
                   </p>
                 )}
@@ -116,8 +125,17 @@ const LiveHotelCard = ({ hotel, index, cityName }: LiveHotelCardProps) => {
 
           {/* Price row */}
           <div className="flex items-end justify-between border-t border-border pt-3 mt-1 gap-3">
-            <div className="text-xs text-muted-foreground">
-              Live pricing via Amadeus
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Live pricing via Amadeus</div>
+              {cheapestOffer && (
+                <button
+                  onClick={() => setShowComparison(!showComparison)}
+                  className="text-xs text-primary font-medium flex items-center gap-1 hover:text-primary/80 transition-colors"
+                >
+                  Compare prices
+                  {showComparison ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
@@ -125,9 +143,9 @@ const LiveHotelCard = ({ hotel, index, cityName }: LiveHotelCardProps) => {
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">from</p>
                   <p className="font-display text-2xl font-bold text-primary leading-none">
-                    {formatPrice(cheapestOffer.price)}
+                    {formatPrice(displayPrice)}
                   </p>
-                  <p className="text-xs text-muted-foreground">/ night</p>
+                  <p className="text-xs text-muted-foreground">/ {priceMode === "person" ? "person" : "night"}</p>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground italic">No availability</p>
@@ -146,6 +164,17 @@ const LiveHotelCard = ({ hotel, index, cityName }: LiveHotelCardProps) => {
           </div>
         </div>
       </div>
+
+      {/* Price Comparison Panel (expandable) */}
+      {showComparison && cheapestOffer && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-2 bg-card rounded-2xl border border-border p-5 shadow-card"
+        >
+          <PriceComparisonPanel basePrice={cheapestOffer.price} hotelName={hotel.name} cityName={cityName} />
+        </motion.div>
+      )}
     </motion.div>
   );
 };

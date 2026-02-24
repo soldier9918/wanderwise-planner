@@ -9,9 +9,9 @@ const navItems = [
   { label: "Flights + Hotels", path: "/" },
   { label: "Flights", path: "/flights" },
   { label: "Hotels", path: "/hotels" },
-  { label: "Trending Destinations", path: "/#trending-destinations" },
+  { label: "AI Suggestions", path: "/ai-suggestions" },
+  { label: "Price Alerts", path: "/price-alerts" },
   { label: "Deals", path: "/results" },
-  { label: "How It Works", path: "/#how-it-works" },
 ];
 
 const Navbar = () => {
