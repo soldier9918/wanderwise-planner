@@ -71,7 +71,7 @@ const AISuggestions = () => {
             AI Trip Decision Engine
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Tell us how you want to <span className="text-primary">feel</span>
+            Tell Us How You Want To <span className="text-primary">Feel</span>
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Don't know where to go? We'll use AI to match your mood, budget, and constraints

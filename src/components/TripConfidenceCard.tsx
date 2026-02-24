@@ -39,7 +39,35 @@ const DESTINATION_PHOTOS: Record<string, string> = {
   "gran canaria": "1500930287596-c1ecb920e12e",
   "antalya": "1568700942090-19dc36fab0c4",
   "malaga": "1509840841025-9088ba78a826",
+  "zanzibar": "1547471080-7cc2caa01a7e",
+  "morocco": "1489749798305-4fea3ae63d43",
+  "portugal": "1555881400-74d7acaacd8b",
+  "greece": "1555993539-1732b0258235",
+  "spain": "1509840841025-9088ba78a826",
+  "italy": "1552832230-c0197dd311b5",
+  "thailand": "1508009603885-50cf7c579365",
+  "japan": "1540959733332-eab352fad40d",
+  "india": "1524492412937-b28074a5d7da",
+  "turkey": "1568700942090-19dc36fab0c4",
+  "mexico": "1518105779142-d975f22f1b0a",
+  "colombia": "1533042942-a0d8cc17f0a0",
+  "peru": "1526392060635-9d6019884377",
+  "kenya": "1547471080-7cc2caa01a7e",
+  "south africa": "1580060839134-75a5edca2e99",
+  "sri lanka": "1586500887080-e74f0b5d5883",
 };
+
+// Diverse fallback images for unmapped destinations
+const FALLBACK_PHOTOS = [
+  "1507525428034-b723cf961d3e", // beach
+  "1469854523086-cc02fe5d8800", // travel
+  "1476514525535-07fb3b4ae5f1", // tropical
+  "1530789253388-582c481c54b0", // adventure
+  "1488646953014-85cb44e25828", // landscape
+  "1501785888041-af3ef285b470", // mountains
+  "1528164344705-47542687000d", // city
+  "1502920917128-1aa500764cbd", // nature
+];
 
 export interface TripRecommendation {
   destination: string;
@@ -94,12 +122,12 @@ const TripConfidenceCard = ({ rec, index, rank }: TripConfidenceCardProps) => {
       {/* Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={`https://images.unsplash.com/photo-${DESTINATION_PHOTOS[rec.destination.toLowerCase()] || "1507525428034-b723cf961d3e"}?w=800&h=400&fit=crop&auto=format`}
+          src={`https://images.unsplash.com/photo-${DESTINATION_PHOTOS[rec.destination.toLowerCase()] || FALLBACK_PHOTOS[index % FALLBACK_PHOTOS.length]}?w=800&h=400&fit=crop&auto=format`}
           alt={rec.destination}
           className="w-full h-full object-cover"
           loading="lazy"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=400&fit=crop&auto=format`;
+            (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-${FALLBACK_PHOTOS[(index + 1) % FALLBACK_PHOTOS.length]}?w=800&h=400&fit=crop&auto=format`;
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

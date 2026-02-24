@@ -64,7 +64,7 @@ const fetchOverpassPOIs = async (
   tag: string
 ): Promise<RawPOI[]> => {
   try {
-    const overpassQuery = `[out:json][timeout:10];(${query});out body ${50};`;
+    const overpassQuery = `[out:json][timeout:10];(${query});out center ${50};`;
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
       body: `data=${encodeURIComponent(overpassQuery)}`,
@@ -73,12 +73,12 @@ const fetchOverpassPOIs = async (
     if (!res.ok) return [];
     const data = await res.json();
     return (data.elements || [])
-      .filter((el: any) => el.lat && el.lon && el.tags?.name)
+      .filter((el: any) => (el.lat || el.center?.lat) && (el.lon || el.center?.lon) && el.tags?.name)
       .map((el: any) => ({
         label: tag,
         name: el.tags.name,
-        lat: el.lat,
-        lng: el.lon,
+        lat: el.center?.lat || el.lat,
+        lng: el.center?.lon || el.lon,
       }));
   } catch {
     return [];
@@ -110,17 +110,17 @@ const NearbyPOIs = ({ hotelLat, hotelLng, distanceUnit, dist, onSelectPOI, activ
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
         `node["highway"="bus_stop"]${around};node["railway"="station"]${around};node["amenity"="taxi"]${around};`, "Bus Stop"),
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
-        `node["amenity"="restaurant"]${around};`, "Restaurant"),
+        `node["amenity"="restaurant"]${around};way["amenity"="restaurant"]${around};`, "Restaurant"),
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
-        `node["shop"="mall"]${around};node["shop"="supermarket"]${around};node["shop"="department_store"]${around};`, "Shopping"),
+        `node["shop"="mall"]${around};way["shop"="mall"]${around};node["shop"="supermarket"]${around};way["shop"="supermarket"]${around};node["shop"="department_store"]${around};way["shop"="department_store"]${around};`, "Shopping"),
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
-        `node["tourism"="attraction"]${around};node["tourism"="viewpoint"]${around};node["tourism"="museum"]${around};`, "Attraction"),
+        `node["tourism"="attraction"]${around};way["tourism"="attraction"]${around};node["tourism"="viewpoint"]${around};node["tourism"="museum"]${around};way["tourism"="museum"]${around};`, "Attraction"),
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
         `node["natural"="beach"]${around};way["natural"="beach"]${around};`, "Beach"),
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
-        `node["amenity"="hospital"]${around};`, "Hospital"),
+        `node["amenity"="hospital"]${around};way["amenity"="hospital"]${around};`, "Hospital"),
       fetchOverpassPOIs(hotelLat, hotelLng, rad,
-        `node["leisure"="fitness_centre"]${around};node["leisure"="spa"]${around};node["amenity"="spa"]${around};`, "SPA/Fitness"),
+        `node["leisure"="fitness_centre"]${around};way["leisure"="fitness_centre"]${around};node["leisure"="spa"]${around};node["amenity"="spa"]${around};way["amenity"="spa"]${around};`, "SPA/Fitness"),
     ]);
 
     setLoading(true);

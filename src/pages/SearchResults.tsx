@@ -82,7 +82,7 @@ const SearchResults = () => {
   const filteredLive = useMemo(() => {
     let result = liveHotels.filter((h) => {
       const bestPrice = h.offers.length ? Math.min(...h.offers.map((o) => o.price)) : Infinity;
-      if (filters.minStars && h.stars < filters.minStars) return false;
+      if (filters.minStars && h.stars > 0 && h.stars < filters.minStars) return false;
       if (bestPrice > filters.maxPrice) return false;
       return true;
     });
@@ -103,11 +103,11 @@ const SearchResults = () => {
   const filteredMock = useMemo(() => {
     let result = mockHotels.filter((h) => {
       const bestPrice = Math.min(...h.prices.map((p) => p.price));
-      if (filters.minStars && h.stars < filters.minStars) return false;
+      if (filters.minStars && h.stars > 0 && h.stars < filters.minStars) return false;
       if (filters.boardType !== "all" && h.boardType !== filters.boardType) return false;
       if (filters.accommodationType !== "all" && h.accommodationType !== filters.accommodationType) return false;
       if (filters.flightType !== "all" && h.flightType !== filters.flightType) return false;
-      if (filters.minRating && h.rating < filters.minRating) return false;
+      if (filters.minRating && h.rating > 0 && h.rating < filters.minRating) return false;
       if (bestPrice > filters.maxPrice) return false;
       return true;
     });
@@ -176,7 +176,7 @@ const SearchResults = () => {
             ))}
 
             {!loading && (!isLiveMode || error) && filteredMock.map((hotel, i) => (
-              <HotelCard key={hotel.id} hotel={hotel} distanceUnit={distanceUnit} index={i} />
+              <HotelCard key={hotel.id} hotel={hotel} distanceUnit={distanceUnit} index={i} priceMode={priceMode} />
             ))}
 
             {!loading && isLiveMode && !error && filteredLive.length === 0 && (
