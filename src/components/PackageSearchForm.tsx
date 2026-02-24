@@ -89,7 +89,8 @@ const PackageSearchForm = () => {
       className="w-full max-w-7xl mx-auto"
     >
       <div className="bg-navy/80 backdrop-blur-sm rounded-2xl p-4 shadow-elevated border border-white/10">
-        <div className="flex items-stretch rounded-xl overflow-visible border border-border bg-card">
+        <div className="bg-card rounded-xl p-6">
+        <div className="flex items-stretch rounded-xl overflow-visible border border-border">
           {/* From */}
           <AirportAutocompleteInput
             label="From"
@@ -247,6 +248,7 @@ const PackageSearchForm = () => {
           >
             Search
           </button>
+        </div>
         </div>
       </div>
     </motion.form>

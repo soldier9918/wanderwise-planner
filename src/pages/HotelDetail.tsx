@@ -88,17 +88,17 @@ const HotelDetail = () => {
               </div>
             </motion.div>
 
-            {/* Weather */}
+            {/* Price History */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="bg-card rounded-2xl border border-border p-5 shadow-card">
+              <PriceHistoryChart basePrice={bestPrice} hotelName={hotel.name} />
+            </motion.div>
+
+            {/* Weather */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
               className="bg-card rounded-2xl border border-border p-5 shadow-card">
               <h2 className="font-display text-lg font-semibold text-foreground mb-4">Weather</h2>
               <WeatherForecast lat={hotel.lat} lng={hotel.lng} cityName={hotel.location} />
-            </motion.div>
-
-            {/* Price History */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-              className="bg-card rounded-2xl border border-border p-5 shadow-card">
-              <PriceHistoryChart basePrice={bestPrice} hotelName={hotel.name} />
             </motion.div>
 
             {/* Map */}

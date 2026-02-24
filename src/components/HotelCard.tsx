@@ -8,11 +8,12 @@ interface HotelCardProps {
   hotel: Hotel;
   distanceUnit: "km" | "mi";
   index: number;
+  priceMode?: "night" | "person";
 }
 
 const toMiles = (km: number) => (km * 0.621371).toFixed(1);
 
-const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
+const HotelCard = ({ hotel, distanceUnit, index, priceMode = "person" }: HotelCardProps) => {
   const { formatPrice } = useCurrency();
   const bestPrice = Math.min(...hotel.prices.map((p) => p.price));
   const bestProvider = hotel.prices.find((p) => p.price === bestPrice)!;
@@ -101,9 +102,9 @@ const HotelCard = ({ hotel, distanceUnit, index }: HotelCardProps) => {
                   Best: {bestProvider.provider}
                 </p>
                 <p className="font-display text-2xl font-bold text-primary">
-                  {formatPrice(bestPrice)}
+                  {formatPrice(priceMode === "night" ? bestPrice * 0.7 : bestPrice)}
                 </p>
-                <p className="text-xs text-muted-foreground">per person</p>
+                <p className="text-xs text-muted-foreground">per {priceMode === "night" ? "night" : "person"}</p>
               </div>
             </div>
           </div>

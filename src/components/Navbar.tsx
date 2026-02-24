@@ -55,7 +55,7 @@ const Navbar = () => {
               to={item.path}
               onClick={(e) => handleNavClick(e, item.path)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                location.pathname === item.path && item.label === "Flights + Hotels"
+                location.pathname === item.path
                   ? "text-primary bg-primary/10"
                   : "text-white hover:text-white/80 hover:bg-navy-lighter"
               }`}

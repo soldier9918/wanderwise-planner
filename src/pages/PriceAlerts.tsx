@@ -21,10 +21,10 @@ interface PriceAlert {
 }
 
 const getSessionId = () => {
-  let id = localStorage.getItem("ff_session_id");
+  let id = localStorage.getItem("price_alert_session_id");
   if (!id) {
     id = crypto.randomUUID();
-    localStorage.setItem("ff_session_id", id);
+    localStorage.setItem("price_alert_session_id", id);
   }
   return id;
 };
