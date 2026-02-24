@@ -1,100 +1,194 @@
 
-# Flight Search — End-to-End Bug Fix
+# Implementation Plan: FareFinder Multi-Feature Update
 
-## Root Cause Identified
-
-The "Edge Function returned a non-2xx status code" error has **one primary cause** and two secondary improvements needed:
-
-### Bug 1 (PRIMARY — causes every search from homepage to fail)
-`SearchForm.tsx` stores cabin class as human-readable strings: `"Economy"`, `"Premium Economy"`, `"Business"`, `"First"`. These are passed directly in the URL as the `cabin` param. `FlightResults.tsx` reads `cabin` and passes it directly as `travelClass` to the Amadeus API. Amadeus strictly requires: `"ECONOMY"`, `"PREMIUM_ECONOMY"`, `"BUSINESS"`, `"FIRST"`. Any mismatch returns a 400 error.
-
-Confirmed by direct API test:
-- `travelClass: "Economy"` → **400** "travelClass is not in the allowed enumeration"
-- `travelClass: "ECONOMY"` → **200** with results ✓
-
-### Bug 2 (SECONDARY — causes past-date searches to fail with generic message)
-If the user selects a date that has already passed, Amadeus returns 400 "Date/Time is in the past". The frontend currently shows a generic "Search failed" message. It should show a human-readable explanation.
-
-### Bug 3 (SECONDARY — better error reporting)
-The `catch` block in `FlightResults.tsx` shows `err.message` which is often the raw Supabase function error string. When Amadeus returns a descriptive error (like the cabin class or date error), `data?.error` is already extracted from the JSON response — this is shown correctly. But `fnError.message` from Supabase wraps it in a less helpful string.
+This is a large set of changes spanning the Flights+Hotels page, Hotels page, Hotel Detail page, and two new pages (Price Alerts Dashboard, AI Suggestions). The work is broken into 5 phases.
 
 ---
 
-## Fixes
+## Phase 1: Flights+Hotels Page Fixes
 
-### Fix 1 — Normalize cabin class to uppercase before passing to URL
-**File:** `src/components/SearchForm.tsx`
+### 1.1 Multi-city Calendar Styling
+The multi-city date picker in `SearchForm.tsx` (line 283-306) uses Shadcn's `Calendar` inside a `Popover`. This renders a standard white calendar -- not a "purple box." If it appears purple, the issue is likely the Popover background inheriting from the dark parent. Fix: ensure `PopoverContent` and `Calendar` use `bg-card` explicitly and `pointer-events-auto`.
 
-In `handleSearch`, when building URL params, convert `cabinClass` to the Amadeus-expected format:
+**Files:** `src/components/SearchForm.tsx`
 
-```typescript
-// Mapping from display label → Amadeus enum
-const cabinAmadeusMap: Record<string, string> = {
-  "Economy": "ECONOMY",
-  "Premium Economy": "PREMIUM_ECONOMY",
-  "Business": "BUSINESS",
-  "First": "FIRST",
-};
+### 1.2 Hospital -- 5-mile Radius Only
+Currently the hospital tile always shows regardless of distance. Update `NearbyPOIs.tsx` to apply the same 5-mile radius filter: if `hospital.distance > RADIUS_KM`, render the disabled/greyed-out tile with "No results within 5 miles".
 
-const params = new URLSearchParams({
-  from: fromIata,
-  to: toIata,
-  depart: format(checkIn, "yyyy-MM-dd"),
-  adults: String(adults),
-  children: String(children),
-  cabin: cabinAmadeusMap[cabinClass] || cabinClass.toUpperCase().replace(" ", "_"),
-  direct: String(directFlights),
-});
-```
+**Files:** `src/components/NearbyPOIs.tsx`
 
-Also fix the multi-city leg search (if triggered it would also use the cabin state).
+### 1.3 Airports -- Closest 2 (Already Done)
+This is already implemented (line 186-188 in `NearbyPOIs.tsx`): `.slice(0, 2)`. No change needed.
 
-### Fix 2 — Normalize cabin in FlightResults too (defensive fix)
-**File:** `src/pages/FlightResults.tsx`
+### 1.4 Restaurants -- Fix Accuracy
+The current restaurant data is hardcoded for Lanzarote only. The sorting uses `withDistance()` which sorts by Haversine distance. Verify the coordinates are correct and ensure the 2-closest logic works for any hotel lat/lng. The fix is to audit/correct the coordinates of the restaurant entries to match their real-world locations.
 
-Even if `SearchForm` is fixed, normalise the cabin param when reading it from the URL so old bookmarked links or direct URL edits also work:
+**Files:** `src/components/NearbyPOIs.tsx`
 
-```typescript
-// Line 831 — replace:
-const cabin = searchParams.get("cabin") || "ECONOMY";
+### 1.5 Shopping -- 5-mile Radius with Disabled Fallback (Already Done)
+Already implemented via `renderDropdownOrDisabled`. No change needed.
 
-// With:
-const cabinRaw = searchParams.get("cabin") || "ECONOMY";
-const cabin = cabinRaw.toUpperCase().replace(/\s+/g, "_");
-```
+### 1.6 Nearest Beach -- 5-mile Radius (Already Done)
+Already implemented. No change needed.
 
-This means `"Economy"` → `"ECONOMY"`, `"Premium Economy"` → `"PREMIUM_ECONOMY"` etc., matching the Amadeus API requirement.
+### 1.7 Public Transport -- 5-mile Radius (Already Done)
+Already implemented via `renderDropdownOrDisabled`. No change needed.
 
-### Fix 3 — Better error messages for common API errors
-**File:** `src/pages/FlightResults.tsx`
+### 1.8 Hotel Image Carousel
+Replace the single hotel image in `LiveHotelCard.tsx` and `HotelDetail.tsx` with a scrollable image carousel. Since the Amadeus API does not return hotel images, use multiple Unsplash queries (e.g., "hotel room", "hotel lobby", "hotel pool") as placeholder images. Add left/right arrow buttons using `embla-carousel-react` (already installed).
 
-In the `fetch_` async function, improve the error handling to detect and explain common API errors:
+**Files:** `src/components/LiveHotelCard.tsx`, `src/pages/HotelDetail.tsx`, new `src/components/HotelImageCarousel.tsx`
 
-```typescript
-if (fnError) throw new Error(fnError.message);
-if (data?.error) {
-  const msg = data.error as string;
-  // Give human-friendly messages for known errors
-  if (msg.includes("past")) throw new Error("The departure date is in the past. Please choose a future date.");
-  if (msg.includes("travelClass")) throw new Error("Invalid cabin class selected. Please search again.");
-  throw new Error(msg);
-}
-```
+### 1.9 Price Per Person / Per Night Toggle
+Add a toggle switch to the hotel results page (`SearchResults.tsx`) and hotel detail page that lets users switch between "per person" and "per night" pricing display. Store the toggle state and pass it to `LiveHotelCard` and `HotelCard`.
 
-Also: on the error display UI, add a "Search Again" button that takes the user back to the search form (navigate(-1) or to /flights) so they don't get stuck.
+**Files:** `src/pages/SearchResults.tsx`, `src/components/LiveHotelCard.tsx`, `src/components/HotelCard.tsx`
+
+### 1.10 Price Comparison Panel (Multi-Provider)
+Add a price comparison section to `LiveHotelCard` showing simulated prices from: lastminute.com, booking.com, loveholidays.com, travala.com, agoda.com, vio.com, onthebeach.com, expedia.com, hotels.com, prestigia.com, algotels.com, destinia.com, direct.com, trip.com, and others. Since real affiliate APIs are not available, generate realistic price variations (+-5-15%) from the Amadeus base price and link to each provider's search page.
+
+**Files:** `src/components/LiveHotelCard.tsx`, `src/pages/HotelDetail.tsx`
+
+### 1.11 Weather Forecast Section
+Add a new section to `HotelDetail.tsx` with:
+- **7-day forecast**: Use a free weather API (Open-Meteo, no API key needed) to show temperature, conditions, and icons for the next 7 days.
+- **Annual weather guide**: A static/semi-static monthly chart (using recharts) showing average temperatures and sunshine hours to help users pick the best month.
+
+Create a new backend function `amadeus-weather` (or use Open-Meteo directly from the client since it requires no key).
+
+**Files:** `src/pages/HotelDetail.tsx`, new `src/components/WeatherForecast.tsx`, new `src/components/AnnualWeatherGuide.tsx`
 
 ---
 
-## Summary of Files Changed
+## Phase 2: Hotels Page Enhancements
 
-```text
-src/components/SearchForm.tsx
-└── handleSearch: convert cabinClass to Amadeus enum format before URL
+### 2.1 Booking Links on Hotel Results
+Add deep-link booking buttons to `LiveHotelCard.tsx` that link to the hotel on external booking sites (constructed URLs using hotel name + city).
 
-src/pages/FlightResults.tsx
-├── Line 831: normalize cabin from URL param to uppercase enum
-└── Error handler: friendly messages for past-date and invalid-cabin errors
-```
+**Files:** `src/components/LiveHotelCard.tsx`
 
-No new dependencies. No database changes. No edge function changes.
-These are pure frontend fixes — 3 targeted line changes across 2 files.
+### 2.2 Hotel Chain Display
+The Amadeus Hotel List API returns a `chainCode` field. Pass this through the edge function response and display the hotel chain name (e.g., "Marriott", "Hilton") on the card using a chainCode-to-name mapping.
+
+**Files:** `supabase/functions/amadeus-hotel-search/index.ts`, `src/types/liveHotel.ts`, `src/components/LiveHotelCard.tsx`
+
+### 2.3 Update Hotel & Packages Autocomplete
+Improve the `HotelSearchForm.tsx` autocomplete to show hotel-level suggestions (not just cities). Update `amadeus-hotel-autocomplete` edge function to also include individual hotel names when available. For the Package search form, ensure the same autocomplete improvements apply.
+
+**Files:** `src/components/HotelSearchForm.tsx`, `supabase/functions/amadeus-hotel-autocomplete/index.ts`
+
+---
+
+## Phase 3: Price Alerts Dashboard (New Page)
+
+### 3.1 New Route & Page
+Create `/price-alerts` page accessible from the Navbar. Display all saved price alerts from the `price_alerts` database table, grouped by route. Show current price, target price, and status. Allow users to delete alerts.
+
+### 3.2 Navbar Update
+Add "Price Alerts" to the navbar items array.
+
+**Files:** new `src/pages/PriceAlerts.tsx`, `src/components/Navbar.tsx`, `src/App.tsx`
+
+---
+
+## Phase 4: AI Suggestions Page (New Page)
+
+### 4.1 Trip Style Quiz
+Create `/ai-suggestions` page with a 5-7 question interactive quiz:
+- Mood (Relaxed / Adventure / Cultural / Party)
+- Budget range
+- Flight duration preference
+- Crowd tolerance
+- Climate preference
+- Travel dates flexibility
+- Previous destinations to exclude
+
+### 4.2 AI Destination Reasoning
+Wire the quiz answers to a Lovable AI backend function that:
+1. Converts vague preferences into structured constraints
+2. Generates top 3 destination recommendations with reasoning
+3. Returns "Trip Confidence Score" breakdown (Budget fit, Weather fit, Crowds, Flight comfort)
+
+Use Google Gemini (available via Lovable AI -- no API key needed) for the reasoning engine.
+
+### 4.3 Results Display
+Show AI recommendations as cards with:
+- Destination name + image
+- Confidence score (e.g., "87% Match")
+- Score breakdown (Budget: 92%, Weather: 88%, etc.)
+- "Why this destination" explanation
+- "Why not X?" comparison
+- Link to search flights/hotels for that destination
+
+### 4.4 "What if?" Sliders
+Add interactive sliders that re-rank results:
+- "What if I fly a day earlier?"
+- "What if I accept 1 stop?"
+- "What if I go in late May instead?"
+
+Each adjustment triggers an AI re-evaluation with updated reasoning.
+
+### 4.5 Navbar Update
+Add "AI Suggestions" to the navbar.
+
+**Files:** new `src/pages/AISuggestions.tsx`, new `src/components/TripStyleQuiz.tsx`, new `src/components/TripConfidenceCard.tsx`, new `src/components/WhatIfSliders.tsx`, new `supabase/functions/ai-trip-suggestions/index.ts`, `src/components/Navbar.tsx`, `src/App.tsx`
+
+---
+
+## Phase 5: Verification
+
+- Test multi-city calendar appearance on the Flights page
+- Test hospital, restaurants, shopping, beach, transport POI tiles with radius logic
+- Test hotel image carousel scrolling
+- Test price toggle (per person vs per night)
+- Test price comparison panel with multiple providers
+- Test weather forecast section loads data
+- Test booking links on hotel results
+- Test hotel chain display
+- Test autocomplete improvements
+- Test Price Alerts dashboard CRUD
+- Test AI Suggestions quiz flow end-to-end
+- Test "What if?" sliders re-ranking
+
+---
+
+## Technical Details
+
+### New Files to Create
+| File | Purpose |
+|------|---------|
+| `src/pages/PriceAlerts.tsx` | Price alerts dashboard |
+| `src/pages/AISuggestions.tsx` | AI trip decision engine page |
+| `src/components/HotelImageCarousel.tsx` | Scrollable hotel image gallery |
+| `src/components/WeatherForecast.tsx` | 7-day weather using Open-Meteo |
+| `src/components/AnnualWeatherGuide.tsx` | Monthly weather chart (recharts) |
+| `src/components/TripStyleQuiz.tsx` | Interactive quiz component |
+| `src/components/TripConfidenceCard.tsx` | AI recommendation card with scores |
+| `src/components/WhatIfSliders.tsx` | Interactive constraint sliders |
+| `supabase/functions/ai-trip-suggestions/index.ts` | AI reasoning via Lovable AI (Gemini) |
+
+### Files to Modify
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add routes for `/price-alerts` and `/ai-suggestions` |
+| `src/components/Navbar.tsx` | Add "Price Alerts" and "AI Suggestions" nav items |
+| `src/components/NearbyPOIs.tsx` | Hospital 5-mile radius, restaurant coordinate audit |
+| `src/components/SearchForm.tsx` | Fix multi-city calendar bg |
+| `src/components/LiveHotelCard.tsx` | Image carousel, chain display, booking links, price comparison |
+| `src/components/HotelCard.tsx` | Price toggle support |
+| `src/pages/HotelDetail.tsx` | Image carousel, weather section, price toggle |
+| `src/pages/SearchResults.tsx` | Price toggle state |
+| `src/types/liveHotel.ts` | Add `chainCode` field |
+| `supabase/functions/amadeus-hotel-search/index.ts` | Pass `chainCode` |
+| `supabase/functions/amadeus-hotel-autocomplete/index.ts` | Hotel-level suggestions |
+| `src/components/HotelSearchForm.tsx` | Improved autocomplete display |
+
+### Dependencies
+- `embla-carousel-react` (already installed) for image carousels
+- `recharts` (already installed) for weather charts
+- Open-Meteo API (free, no key) for weather data
+- Lovable AI (Gemini) for trip suggestions (no API key needed)
+
+### Database
+- Existing `price_alerts` table is sufficient for the dashboard
+- No new tables needed
