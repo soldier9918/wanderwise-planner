@@ -299,6 +299,7 @@ const HotelSearchForm = () => {
               <div
                 id="hotel-cal-portal"
                 style={{ position: "fixed", top: calTop, left: calLeft, zIndex: 99999 }}
+                className="pointer-events-auto"
               >
                 <RangeDatePickerCalendar
                   departDate={checkIn}

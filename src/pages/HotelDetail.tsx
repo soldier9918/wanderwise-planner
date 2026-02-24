@@ -3,12 +3,15 @@ import { mockHotels } from "@/data/mockHotels";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HotelMap from "@/components/HotelMap";
+import HotelImageCarousel from "@/components/HotelImageCarousel";
 import NearbyPOIs, { POILocation } from "@/components/NearbyPOIs";
 import WeatherForecast from "@/components/WeatherForecast";
+import PriceHistoryChart from "@/components/PriceHistoryChart";
 import { Star, ArrowLeft, ExternalLink, MapPin, Building2, Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { Switch } from "@/components/ui/switch";
 
 const HotelDetail = () => {
   const { formatPrice } = useCurrency();
@@ -16,6 +19,8 @@ const HotelDetail = () => {
   const hotel = mockHotels.find((h) => h.id === id);
   const [distanceUnit, setDistanceUnit] = useState<"km" | "mi">("km");
   const [activePOI, setActivePOI] = useState<POILocation | null>(null);
+  const [priceMode, setPriceMode] = useState<"night" | "person">("person");
+
   if (!hotel) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -49,8 +54,8 @@ const HotelDetail = () => {
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="rounded-2xl overflow-hidden shadow-card">
-                <img src={hotel.image} alt={hotel.name} className="w-full h-64 md:h-96 object-cover" />
+              <div className="rounded-2xl overflow-hidden shadow-card h-64 md:h-96">
+                <HotelImageCarousel hotelName={hotel.name} cityName={hotel.location} className="w-full h-full" />
               </div>
 
               <div className="mt-5">
@@ -83,8 +88,21 @@ const HotelDetail = () => {
               </div>
             </motion.div>
 
-            {/* Map */}
+            {/* Weather */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="bg-card rounded-2xl border border-border p-5 shadow-card">
+              <h2 className="font-display text-lg font-semibold text-foreground mb-4">Weather</h2>
+              <WeatherForecast lat={hotel.lat} lng={hotel.lng} cityName={hotel.location} />
+            </motion.div>
+
+            {/* Price History */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+              className="bg-card rounded-2xl border border-border p-5 shadow-card">
+              <PriceHistoryChart basePrice={bestPrice} hotelName={hotel.name} />
+            </motion.div>
+
+            {/* Map */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
               className="bg-card rounded-2xl border border-border p-5 shadow-card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-lg font-semibold text-foreground">Location & Nearby</h2>
@@ -104,13 +122,6 @@ const HotelDetail = () => {
                 onSelectPOI={setActivePOI} activePOI={activePOI} />
             </motion.div>
 
-            {/* Weather */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="bg-card rounded-2xl border border-border p-5 shadow-card">
-              <h2 className="font-display text-lg font-semibold text-foreground mb-4">Weather</h2>
-              <WeatherForecast lat={hotel.lat} lng={hotel.lng} cityName={hotel.location} />
-            </motion.div>
-
             {/* Amenities */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="bg-card rounded-2xl border border-border p-5 shadow-card">
@@ -128,23 +139,33 @@ const HotelDetail = () => {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
               className="bg-card rounded-2xl border border-border p-5 shadow-card sticky top-24">
               <h2 className="font-display text-lg font-semibold text-foreground mb-1">Price Comparison</h2>
-              <p className="text-xs text-muted-foreground mb-5">Per person, including flights</p>
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-xs text-muted-foreground">Including flights</p>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-medium ${priceMode === "night" ? "text-foreground" : "text-muted-foreground"}`}>Per night</span>
+                  <Switch checked={priceMode === "person"} onCheckedChange={(v) => setPriceMode(v ? "person" : "night")} />
+                  <span className={`text-[10px] font-medium ${priceMode === "person" ? "text-foreground" : "text-muted-foreground"}`}>Per person</span>
+                </div>
+              </div>
               <div className="space-y-2">
-                {hotel.prices.sort((a, b) => a.price - b.price).map((p, i) => (
-                  <a key={p.provider} href={p.url} target="_blank" rel="noopener noreferrer"
-                    className={`flex items-center justify-between p-3 rounded-xl transition-colors ${
-                      i === 0 ? "bg-primary/10 border border-primary/30" : "bg-secondary hover:bg-secondary/80"
-                    }`}>
-                    <div className="flex items-center gap-2">
-                      {i === 0 && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded">BEST</span>}
-                      <span className="text-sm font-medium text-foreground">{p.provider}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-display text-lg font-bold ${i === 0 ? "text-primary" : "text-foreground"}`}>{formatPrice(p.price)}</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                  </a>
-                ))}
+                {hotel.prices.sort((a, b) => a.price - b.price).map((p, i) => {
+                  const displayPrice = priceMode === "night" ? p.price * 0.7 : p.price;
+                  return (
+                    <a key={p.provider} href={p.url} target="_blank" rel="noopener noreferrer"
+                      className={`flex items-center justify-between p-3 rounded-xl transition-colors ${
+                        i === 0 ? "bg-primary/10 border border-primary/30" : "bg-secondary hover:bg-secondary/80"
+                      }`}>
+                      <div className="flex items-center gap-2">
+                        {i === 0 && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded">BEST</span>}
+                        <span className="text-sm font-medium text-foreground">{p.provider}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-display text-lg font-bold ${i === 0 ? "text-primary" : "text-foreground"}`}>{formatPrice(displayPrice)}</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
               <div className="mt-5 pt-4 border-t border-border text-center">
                 <p className="text-xs text-muted-foreground mb-1">You could save</p>

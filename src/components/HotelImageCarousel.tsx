@@ -52,13 +52,13 @@ const HotelImageCarousel = ({ hotelName, cityName, className = "" }: HotelImageC
       </div>
       <button
         onClick={scrollPrev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity hover:bg-card shadow-md z-10"
+        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity hover:bg-card shadow-md z-10"
       >
         <ChevronLeft className="w-4 h-4 text-foreground" />
       </button>
       <button
         onClick={scrollNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity hover:bg-card shadow-md z-10"
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity hover:bg-card shadow-md z-10"
       >
         <ChevronRight className="w-4 h-4 text-foreground" />
       </button>

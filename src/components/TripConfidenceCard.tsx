@@ -2,6 +2,45 @@ import { motion } from "framer-motion";
 import { MapPin, Plane, TrendingUp, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Curated Unsplash photo IDs for common destinations
+const DESTINATION_PHOTOS: Record<string, string> = {
+  "bali": "1537996194471-e657df975ab4",
+  "paris": "1502602898657-3e91760cbb34",
+  "santorini": "1570077188670-e3a8d69ac5ff",
+  "dubai": "1512453913172-22eca5e2cf11",
+  "maldives": "1514282401047-d79a71a590e8",
+  "rome": "1552832230-c0197dd311b5",
+  "tokyo": "1540959733332-eab352fad40d",
+  "barcelona": "1583422409516-2895a77efded",
+  "new york": "1496442226666-8d4d0e62e6e9",
+  "london": "1513635269975-59663e0ac1ad",
+  "istanbul": "1541432901042-2d8bd64b4a9b",
+  "lisbon": "1548707309459-c3b3e4ae1e1d",
+  "amsterdam": "1534351590666-13e3e96b5017",
+  "prague": "1519677100203-a0e668c92439",
+  "marrakech": "1489749798305-4fea3ae63d43",
+  "bangkok": "1508009603885-50cf7c579365",
+  "cairo": "1539768942893-daf53e448371",
+  "athens": "1555993539-1732b0258235",
+  "cape town": "1580060839134-75a5edca2e99",
+  "cancun": "1510097467424-e59d0f36e10c",
+  "sydney": "1506973035872-a4ec16b8e8d9",
+  "rio de janeiro": "1483729558449-99ef09a8c325",
+  "hawaii": "1507876466758-bc54f384809c",
+  "costa rica": "1518259102261-b40117eabbc9",
+  "vietnam": "1528127269322-539152534f3d",
+  "croatia": "1555990793-5db1da37e6f5",
+  "iceland": "1504829857797-dab3bf379b6b",
+  "mexico city": "1518105779142-d975f22f1b0a",
+  "florence": "1541370976299-4d24ebbc9077",
+  "phuket": "1537956965359-7573183d1f57",
+  "tenerife": "1500930287596-c1ecb920e12e",
+  "lanzarote": "1500930287596-c1ecb920e12e",
+  "gran canaria": "1500930287596-c1ecb920e12e",
+  "antalya": "1568700942090-19dc36fab0c4",
+  "malaga": "1509840841025-9088ba78a826",
+};
+
 export interface TripRecommendation {
   destination: string;
   country: string;
@@ -55,10 +94,13 @@ const TripConfidenceCard = ({ rec, index, rank }: TripConfidenceCardProps) => {
       {/* Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={`https://source.unsplash.com/featured/800x400/?${encodeURIComponent(rec.imageQuery)}`}
+          src={`https://images.unsplash.com/photo-${DESTINATION_PHOTOS[rec.destination.toLowerCase()] || "1507525428034-b723cf961d3e"}?w=800&h=400&fit=crop&auto=format`}
           alt={rec.destination}
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=400&fit=crop&auto=format`;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-4 left-4">
