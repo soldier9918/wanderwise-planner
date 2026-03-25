@@ -168,7 +168,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    const results: TravelpayoutsResult[] = data.data || [];
+    let results: TravelpayoutsResult[] = data.data || [];
+
+    // Fallback: if specific date returned empty, retry with month-level query
+    if (results.length === 0 && departureDate.length > 7) {
+      const monthDate = departureDate.substring(0, 7); // "YYYY-MM"
+      params.set("departure_at", monthDate);
+      if (returnDate && returnDate.length > 7) {
+        params.set("return_at", returnDate.substring(0, 7));
+      }
+      const fallbackUrl = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params}`;
+      const fallbackRes = await fetch(fallbackUrl);
+      const fallbackData = await fallbackRes.json();
+      if (fallbackData.success && fallbackData.data?.length > 0) {
+        results = fallbackData.data;
+      }
+    }
 
     // Transform to FlightOffer format matching existing frontend
     const offers = results.map((r, i) => toFlightOffer(r, i, data.currency || currencyCode));
