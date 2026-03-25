@@ -1,45 +1,38 @@
 
 
-# Plan: Legible Hero Text + Animated Backgrounds + Compact Hero Size
+# Plan: Revert Hero Size, Remove Text Shadows, Vary Fonts
 
-## 1. Compact Hero Height + Search Form Overlap
+## 1. Revert Hero Size to Full Height
 **File:** `src/components/HeroBannerSlider.tsx`
 
-Reduce hero from `min-h-[90vh]` to `min-h-[520px] md:min-h-[560px]` so the search form sits at the midpoint (like the lastminute.com attachment). Adjust bottom padding and controls positioning. The search form overlaps the bottom ~50% of the hero.
+- Change `min-h-[420px] md:min-h-[480px]` back to `min-h-[90vh]`
+- Adjust padding from `pt-24 pb-40` back to `pt-32 pb-48` for proper vertical centering
+- Move controls from `bottom-44` back to `bottom-32`
+- Remove the `-mt-28` overlap on the children container, revert to `-mt-24` or similar full-height positioning
 
-## 2. Animated Ken Burns Effect on Background Images
+## 2. Remove Text Shadow from All Slide Text
 **File:** `src/components/HeroBannerSlider.tsx`
 
-Add a slow zoom + pan animation to each slide's background image using framer-motion. Each slide slowly scales from 1.0 to 1.15 and slightly translates over 10 seconds, creating a cinematic "Ken Burns" effect.
+- Remove the `heavyShadow` variable and all `style={{ textShadow: heavyShadow }}` from the three text elements (topLine, mainText, subText)
+- Text legibility will rely on the overlay classes and text-stroke utilities already applied per-slide
 
-## 3. Stronger Text Legibility
-**File:** `src/components/HeroBannerSlider.tsx`
-
-- Apply heavier `textShadow` on all text elements: `0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)`
-- Add a subtle dark gradient backdrop behind text area for guaranteed contrast
-- Support an optional `style` prop on slides for inline styles (gradients on text, etc.)
-
-## 4. Text Texture/Gradient Styles via CSS
-**File:** `src/index.css`
-
-Add utility classes for textured/gradient text effects:
-- `.text-gradient-gold` — gold shimmer gradient on text via `background-clip: text`
-- `.text-gradient-fire` — red-to-orange gradient
-- `.text-stroke-white` — white text stroke/outline for dark backgrounds
-- `.text-stroke-dark` — dark outline for light pattern backgrounds
-
-## 5. Update Slide Data with Enhanced Legibility
+## 3. Vary Font Families Across Slides
 **Files:** `src/pages/Index.tsx`, `src/pages/Flights.tsx`, `src/pages/Hotels.tsx`
 
-- Add stronger `textShadow` inline styles or use new CSS utility classes on slides where text was hard to read (especially pattern backgrounds)
-- Use `.text-stroke-white` on pattern slides for guaranteed readability
-- Apply gradient text effects on select slides for creative variety
-- Ensure overlay classes on pattern slides use darker overlays (`bg-black/50` or `bg-navy/60`)
+Import additional Google Fonts in `src/index.css` (e.g., Playfair Display, Bebas Neue, Outfit, Lora) and apply different `font-[family]` classes across slides so the majority of hero text uses distinct typefaces rather than one uniform font. Each slide's `mainTextClass` and `topLineClass` will reference varied fonts for creative diversity.
+
+**File:** `src/index.css`
+- Add Google Fonts import for: Playfair Display, Bebas Neue, Outfit, Lora
+- Add Tailwind utility classes: `font-playfair`, `font-bebas`, `font-outfit`, `font-lora`
+
+**File:** `tailwind.config.ts`
+- Extend `fontFamily` with the new font names
 
 ## Files to Modify
-1. `src/components/HeroBannerSlider.tsx` — compact height, Ken Burns animation, stronger shadows
-2. `src/index.css` — text texture/gradient utility classes
-3. `src/pages/Index.tsx` — enhanced overlay/text classes
-4. `src/pages/Flights.tsx` — enhanced overlay/text classes
-5. `src/pages/Hotels.tsx` — enhanced overlay/text classes
+1. `src/components/HeroBannerSlider.tsx` — revert height, remove text shadows
+2. `src/index.css` — add Google Fonts import
+3. `tailwind.config.ts` — extend font families
+4. `src/pages/Index.tsx` — vary font classes on slides
+5. `src/pages/Flights.tsx` — vary font classes on slides
+6. `src/pages/Hotels.tsx` — vary font classes on slides
 
