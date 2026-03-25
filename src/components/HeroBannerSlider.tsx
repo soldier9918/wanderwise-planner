@@ -59,10 +59,8 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
     [current]
   );
 
-  const heavyShadow = "0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)";
-
   return (
-    <section className="relative min-h-[420px] md:min-h-[480px] flex flex-col justify-center overflow-hidden">
+    <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden">
       {/* Background images with crossfade + Ken Burns */}
       <div className="absolute inset-0">
         <AnimatePresence initial={false}>
@@ -92,7 +90,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Slide text */}
-      <div className="relative z-10 container mx-auto px-4 pt-24 pb-40 flex-1 flex flex-col justify-center">
+      <div className="relative z-10 container mx-auto px-4 pt-32 pb-48 flex-1 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
@@ -107,7 +105,6 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.5 }}
-              style={{ textShadow: heavyShadow }}
             >
               {slide.topLine}
             </motion.p>
@@ -116,7 +113,6 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              style={{ textShadow: heavyShadow }}
             >
               {slide.mainText}
             </motion.h2>
@@ -125,7 +121,6 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45, duration: 0.5 }}
-              style={{ textShadow: heavyShadow }}
             >
               {slide.subText}
             </motion.p>
@@ -134,7 +129,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Controls */}
-      <div className="absolute bottom-44 left-0 right-0 z-20 flex items-center justify-center gap-3">
+      <div className="absolute bottom-32 left-0 right-0 z-20 flex items-center justify-center gap-3">
         <button
           onClick={prev}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
@@ -178,7 +173,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
 
       {/* Search form overlay at bottom */}
       {children && (
-        <div className="relative z-20 -mt-28 container mx-auto px-4 pb-8">
+        <div className="relative z-20 -mt-24 container mx-auto px-4 pb-8">
           {children}
         </div>
       )}
