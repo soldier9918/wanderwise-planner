@@ -11,12 +11,12 @@ const TrustSafety = () => {
         <div className="space-y-8 text-muted-foreground leading-relaxed">
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">Your safety matters</h2>
-            <p>At FareFinder, we take the safety and security of our users seriously. We only partner with established, reputable travel brands that meet our quality and trust standards.</p>
+            <p>At TravelZentra, we take the safety and security of our users seriously. We only partner with established, reputable travel brands that meet our quality and trust standards.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">ATOL & ABTA Protection</h2>
-            <p>Many of the providers listed on FareFinder are ATOL-protected, meaning your money is safeguarded if a travel company ceases trading. We recommend always checking for ATOL or ABTA protection when booking.</p>
+            <p>Many of the providers listed on TravelZentra are ATOL-protected, meaning your money is safeguarded if a travel company ceases trading. We recommend always checking for ATOL or ABTA protection when booking.</p>
           </section>
 
           <section>

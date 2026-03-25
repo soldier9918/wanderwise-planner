@@ -1,4 +1,4 @@
-import { Plane } from "lucide-react";
+import TravelZentraLogo from "@/components/TravelZentraLogo";
 import { Link } from "react-router-dom";
 import CurrencySelector from "@/components/CurrencySelector";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -39,11 +39,9 @@ const Footer = () => {
         <div className="flex flex-col gap-10">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             <Link to="/" className="flex items-center gap-2 col-span-2 md:col-span-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Plane className="w-4 h-4 text-primary-foreground" />
-              </div>
+              <TravelZentraLogo className="w-8 h-8" />
               <span className="font-display text-lg font-bold text-foreground">
-                Fare<span className="text-primary">Finder</span>
+                Travel<span className="text-primary">Zentra</span>
               </span>
             </Link>
 
@@ -79,7 +77,7 @@ const Footer = () => {
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-border">
             <span className="text-sm text-muted-foreground">Compare. Book. Travel.</span>
-            <span className="text-sm text-muted-foreground">© {new Date().getFullYear()} FareFinder</span>
+            <span className="text-sm text-muted-foreground">© {new Date().getFullYear()} TravelZentra</span>
           </div>
         </div>
       </div>

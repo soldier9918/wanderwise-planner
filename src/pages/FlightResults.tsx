@@ -120,7 +120,7 @@ function buildBookingLinks(
     links.push({ label: airlineNames[carrierCode] || carrierCode, sublabel: "Book direct", url: directAirlineUrls[carrierCode], icon: "airline", faviconUrl: airlineLogoUrl(carrierCode) });
   }
   links.push(
-    { label: "Kiwi.com", sublabel: "Best fare finder", url: `${kiwiBase}?adults=${adults}&children=${children}`, icon: "kiwi", faviconUrl: favicon("kiwi.com") },
+    { label: "Kiwi.com", sublabel: "Compare fares", url: `${kiwiBase}?adults=${adults}&children=${children}`, icon: "kiwi", faviconUrl: favicon("kiwi.com") },
     { label: "Google Flights", sublabel: "Price overview", url: googleUrl, icon: "google", faviconUrl: favicon("google.com") },
   );
   // Deduplicate by normalized label
@@ -1281,7 +1281,7 @@ const FlightResults = () => {
                           />
                           {/* Ad slot every 5 results */}
                           {(i + 1) % 5 === 0 && i < sorted.length - 1 && (
-                            <div key={`ad-${i}`} className="rounded-2xl border border-dashed border-border bg-secondary/30 flex items-center justify-center h-20 text-xs text-muted-foreground/50 font-medium tracking-wider uppercase select-none">
+                            <div key={`ad-${i}`} className="rounded-2xl border border-dashed border-border bg-secondary/30 flex items-center justify-center h-[140px] text-xs text-muted-foreground/50 font-medium tracking-wider uppercase select-none">
                               Advertisement
                             </div>
                           )}

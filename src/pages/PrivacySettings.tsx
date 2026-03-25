@@ -25,7 +25,7 @@ const PrivacySettings = () => {
       <main className="container mx-auto px-4 py-24 max-w-3xl">
         <h1 className="font-display text-4xl font-bold text-foreground mb-4">Privacy Settings</h1>
         <p className="text-muted-foreground mb-10 leading-relaxed">
-          Manage how FareFinder uses cookies and data on your device. Essential cookies cannot be disabled as they are required for the website to function.
+          Manage how TravelZentra uses cookies and data on your device. Essential cookies cannot be disabled as they are required for the website to function.
         </p>
 
         <div className="space-y-6">
@@ -40,7 +40,7 @@ const PrivacySettings = () => {
           <div className="flex items-center justify-between p-5 rounded-xl border border-border bg-card">
             <div>
               <Label className="text-base font-semibold text-foreground">Analytics Cookies</Label>
-              <p className="text-sm text-muted-foreground mt-1">Help us understand how visitors use FareFinder.</p>
+              <p className="text-sm text-muted-foreground mt-1">Help us understand how visitors use TravelZentra.</p>
             </div>
             <Switch checked={analytics} onCheckedChange={setAnalytics} />
           </div>

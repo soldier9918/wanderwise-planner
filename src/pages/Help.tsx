@@ -10,13 +10,13 @@ const Help = () => {
 
         <div className="space-y-8 text-muted-foreground leading-relaxed">
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">How does FareFinder work?</h2>
-            <p>FareFinder searches across all major travel brands — including TUI, Jet2holidays, easyJet holidays, loveholidays, lastminute.com, and more — to compare prices for flights and package holidays. We don't sell holidays directly; instead, we redirect you to the provider offering the best deal.</p>
+            <h2 className="font-display text-xl font-semibold text-foreground mb-3">How does TravelZentra work?</h2>
+            <p>TravelZentra searches across all major travel brands — including TUI, Jet2holidays, easyJet holidays, loveholidays, lastminute.com, and more — to compare prices for flights and package holidays. We don't sell holidays directly; instead, we redirect you to the provider offering the best deal.</p>
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">Is FareFinder free to use?</h2>
-            <p>Yes, FareFinder is completely free. We earn a small commission from travel providers when you book through our links, at no extra cost to you.</p>
+            <h2 className="font-display text-xl font-semibold text-foreground mb-3">Is TravelZentra free to use?</h2>
+            <p>Yes, TravelZentra is completely free. We earn a small commission from travel providers when you book through our links, at no extra cost to you.</p>
           </section>
 
           <section>
@@ -30,7 +30,7 @@ const Help = () => {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">How do I contact FareFinder?</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground mb-3">How do I contact TravelZentra?</h2>
             <p>You can reach us via our <a href="/contact" className="text-primary hover:underline">Contact Us</a> page. We aim to respond within 24 hours.</p>
           </section>
         </div>

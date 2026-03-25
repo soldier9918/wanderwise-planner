@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
     const { answers, whatIf } = await req.json();
 
-    const systemPrompt = `You are a travel recommendation AI for FareFinder. Given a user's preferences, suggest exactly 3 destinations with detailed reasoning.
+    const systemPrompt = `You are a travel recommendation AI for TravelZentra. Given a user's preferences, suggest exactly 3 destinations with detailed reasoning.
 
 Return a JSON object with this exact structure (no markdown, just JSON):
 {
