@@ -14,6 +14,7 @@ export interface HeroSlide {
   textPosition?: "center" | "left" | "right";
   overlayClass?: string;
   showLogo?: boolean;
+  highlightClass?: string;
 }
 
 interface HeroBannerSliderProps {
@@ -116,7 +117,11 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              {slide.mainText}
+              {slide.highlightClass ? (
+                <span className={slide.highlightClass}>{slide.mainText}</span>
+              ) : (
+                slide.mainText
+              )}
             </motion.h2>
             {slide.subText && (
               <motion.p
