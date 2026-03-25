@@ -64,12 +64,12 @@ const Index = () => {
             transition={{ duration: 0.7 }}
             className="text-center mb-10"
           >
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
+            <h1 className="font-display text-6xl md:text-8xl lg:text-[7rem] font-extrabold text-white mb-4 leading-[0.95] tracking-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
               Find Your Perfect
               <br />
-              <span className="text-coral">Package Holiday</span>
+              <span className="inline-block bg-primary/90 text-primary-foreground px-4 py-1 rounded-lg mt-2">Package Holiday</span>
             </h1>
-            <p className="text-white/90 text-lg md:text-xl font-medium mt-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
+            <p className="text-white/90 text-xl md:text-2xl font-medium mt-6" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Search hotels & flights across all your favourite brands — all in one place.
             </p>
           </motion.div>
