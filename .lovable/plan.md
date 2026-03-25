@@ -1,59 +1,89 @@
 
 
-# Plan: Purple & Gold Theme + Bold Typography + New Logo
+# Plan: Rotating Hero Banners with Embedded Text (lastminute.com style)
 
-## 1. Update Color Theme to Purple & Gold
-**File:** `src/index.css`
+## Concept
+Replace the current static-text-over-rotating-images hero with a **lastminute.com-style banner carousel** where each slide has its own unique text, offer, and styling embedded directly onto the image. The search form remains static and overlays the bottom of the hero. Slides rotate every 10 seconds with crossfade. Navigation dots and pause/play controls included.
 
-Replace all CSS variables with a Purple & Gold palette:
-- **Primary:** `270 60% 50%` (rich purple #7c3aed)
-- **Accent:** `45 93% 58%` (warm gold #eab308)
-- **Background:** `270 20% 98%` (faint purple-white)
-- **Foreground:** `270 30% 12%` (deep purple-black)
-- **Navy (navbar/dark areas):** `270 35% 12%` (deep purple)
-- **Navy-light/lighter:** purple-dark variants
-- **Coral → purple, Gold → gold** custom tokens
-- **Gradients:** hero → deep purple gradient, accent gradient → purple-to-gold
-- **Secondary/muted:** soft lavender tones
-- **Ring/sidebar:** match new purple primary
+## Architecture
 
-```
---primary: 270 60% 50%;           /* #7c3aed purple */
---accent: 45 93% 58%;             /* #eab308 gold */
---background: 270 20% 98%;
---foreground: 270 30% 12%;
---navy: 270 35% 12%;
---navy-light: 270 30% 16%;
---navy-lighter: 270 25% 22%;
---coral: 270 60% 50%;
---coral-light: 270 50% 62%;
---gold: 45 93% 58%;
---gradient-hero: linear-gradient(135deg, hsl(270 35% 8%), hsl(270 40% 14%), hsl(280 30% 10%));
---gradient-coral: linear-gradient(135deg, hsl(270 60% 50%), hsl(45 93% 58%));
+Create a shared `HeroBannerSlider` component used by all 3 pages. Each page passes its own array of slide data.
+
+```text
+┌─────────────────────────────────────┐
+│  Navbar (static)                    │
+├─────────────────────────────────────┤
+│  ┌───────────────────────────────┐  │
+│  │  Hero Image (crossfades)      │  │
+│  │                               │  │
+│  │  "SUMMER SALE"  (italic)      │  │
+│  │  "£200 OFF"     (huge bold)   │  │
+│  │  "Book now!"    (underline)   │  │
+│  │                               │  │
+│  │  ⏸  ‹ ●━━●●● ›               │  │
+│  └───────────────────────────────┘  │
+│  ┌───────────────────────────────┐  │
+│  │  Search Form (static)         │  │
+│  └───────────────────────────────┘  │
+├─────────────────────────────────────┤
+│  Rest of page...                    │
+└─────────────────────────────────────┘
 ```
 
-## 2. Bold & Large Typography
-**File:** `src/pages/Index.tsx`
+## New Component
+**File:** `src/components/HeroBannerSlider.tsx`
 
-Hero heading is already `text-6xl md:text-8xl lg:text-[7rem] font-extrabold` — keep this. Update the highlight block from `bg-primary/90` to use a gold accent instead for contrast:
-```
-<span className="inline-block bg-[hsl(45,93%,58%)] text-foreground px-4 py-1 rounded-lg mt-2">
-```
+- Accepts `slides[]` prop — each slide has: `image`, `topLine`, `mainText`, `subText`, `textColor`, `textPosition`, `fontStyle` (italic/bold/etc), `overlayColor`
+- 10-second auto-rotation with crossfade
+- Pause/play button + dot navigation (like lastminute.com)
+- Left/right arrow navigation
+- Text animates in (fade + slide) on each slide change
 
-**File:** `src/components/HowItWorks.tsx`
-- Bump section heading to `text-4xl md:text-5xl font-extrabold`
+## Slide Data (~20 slides per page)
 
-## 3. New Logo Design
-**File:** `src/components/TravelZentraLogo.tsx`
+**Index page (Flight+Hotel packages):** 20 slides with varied offers
+- "SUMMER SALE / Save up to £300 / on package holidays"
+- "EASTER GETAWAY / From £199pp / Flights + Hotel included"
+- "LAST MINUTE DEALS / Up to 40% OFF / Book by midnight"
+- "TROPICAL ESCAPES / Bali from £499 / All-inclusive packages"
+- etc. — each with different font styling (italic headers, huge price text, underlined CTAs)
 
-Replace with a new SVG — a stylized globe with a "Z" path, using purple fill and gold accent ring:
-- Purple rounded-rect background
-- White "Z" letterform
-- Gold compass/clock accent circle
+**Flights page:** 20 flight-specific slides
+- "FLASH SALE / £50 OFF / all European flights"
+- "FLY FOR LESS / Compare 500+ airlines / Best price guaranteed"
+- etc.
 
-## Files to Modify
-1. `src/index.css` — full color variable swap
-2. `src/pages/Index.tsx` — gold highlight on hero text
-3. `src/components/TravelZentraLogo.tsx` — new logo design
-4. `src/components/HowItWorks.tsx` — bolder heading
+**Hotels page:** 20 hotel-specific slides
+- "HOTEL DEALS / Save 30% / on luxury stays"
+- "CITY BREAKS / From £79/night / Top-rated hotels"
+- etc.
+
+Each slide uses a different combination of:
+- Font weight (bold, extrabold, black)
+- Font style (italic vs normal for taglines)
+- Text size variations (huge prices, smaller subtitles)
+- Text colors (white, gold accent, pink highlight)
+- Text alignment (center, left-aligned)
+
+## Page Updates
+
+**Files:** `src/pages/Index.tsx`, `src/pages/Flights.tsx`, `src/pages/Hotels.tsx`
+
+Replace the current hero section with `<HeroBannerSlider slides={packageSlides} />` followed by the static search form. The search form overlaps the bottom of the hero (positioned with negative margin or absolute positioning).
+
+## Images
+
+Reuse the existing ~11 hero images per page (already imported). For the 20 slides, images will be cycled/reused with different text overlays — each slide still feels unique because the text, styling, and overlay color differ.
+
+## Technical Details
+
+- Slide interface: `{ image: string; topLine: string; mainText: string; subText: string; topLineClass: string; mainTextClass: string; subTextClass: string; overlayClass: string }`
+- Crossfade via framer-motion `AnimatePresence` with opacity transition (2s)
+- Text entrance: fade-in + translateY with staggered delay
+- Dot indicators: active = elongated bar (like lastminute.com), inactive = circle
+- Pause/play toggle stops/resumes the interval
+- Arrow buttons for manual navigation
+
+**Files to create:** 1 (`HeroBannerSlider.tsx`)
+**Files to modify:** 3 (`Index.tsx`, `Flights.tsx`, `Hotels.tsx`)
 
