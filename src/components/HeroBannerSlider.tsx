@@ -21,11 +21,11 @@ interface HeroBannerSliderProps {
 
 // Random Ken Burns variants for variety
 const kenBurnsVariants = [
-  { scale: [1, 1.15], x: ["0%", "3%"], y: ["0%", "2%"] },
-  { scale: [1, 1.12], x: ["0%", "-3%"], y: ["0%", "3%"] },
-  { scale: [1.05, 1.18], x: ["2%", "-2%"], y: ["-1%", "2%"] },
-  { scale: [1, 1.1], x: ["0%", "2%"], y: ["0%", "-2%"] },
-  { scale: [1.02, 1.16], x: ["-2%", "3%"], y: ["1%", "-1%"] },
+  { scale: [1, 1.12], x: ["0%", "3%"], y: ["0%", "2%"] },
+  { scale: [1, 1.10], x: ["0%", "-3%"], y: ["0%", "3%"] },
+  { scale: [1, 1.14], x: ["0%", "-2%"], y: ["0%", "2%"] },
+  { scale: [1, 1.08], x: ["0%", "2%"], y: ["0%", "-2%"] },
+  { scale: [1, 1.11], x: ["0%", "3%"], y: ["0%", "-1%"] },
 ];
 
 const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
