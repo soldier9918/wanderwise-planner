@@ -129,7 +129,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Controls */}
-      <div className="absolute bottom-44 left-0 right-0 z-20 flex items-center justify-center gap-3">
+      <div className="absolute bottom-[13rem] left-0 right-0 z-20 flex items-center justify-center gap-3">
         <button
           onClick={prev}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
