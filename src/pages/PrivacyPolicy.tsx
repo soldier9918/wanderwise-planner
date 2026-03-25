@@ -13,7 +13,7 @@ const PrivacyPolicy = () => {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">Information we collect</h2>
-            <p>When you use FareFinder, we may collect information such as your search queries, device type, browser information, and IP address. If you contact us, we also collect the information you provide in your message.</p>
+            <p>When you use TravelZentra, we may collect information such as your search queries, device type, browser information, and IP address. If you contact us, we also collect the information you provide in your message.</p>
           </section>
 
           <section>

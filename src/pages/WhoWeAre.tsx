@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Plane, Users, Globe, ShieldCheck } from "lucide-react";
+import { Users, Globe, ShieldCheck } from "lucide-react";
 
 const values = [
   { icon: Globe, title: "Transparency", description: "We show you real prices from real providers — no hidden fees, no tricks." },
@@ -17,12 +17,12 @@ const WhoWeAre = () => {
 
         <div className="space-y-8 text-muted-foreground leading-relaxed">
           <section>
-            <p className="text-lg">FareFinder is a travel comparison platform that helps you find the best deals on package holidays and flights by searching across all major travel brands — all in one place.</p>
+            <p className="text-lg">TravelZentra is a travel comparison platform that helps you find the best deals on package holidays and flights by searching across all major travel brands — all in one place.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">Our Mission</h2>
-            <p>We believe finding the perfect holiday shouldn't mean opening 20 browser tabs. FareFinder was built to bring every top travel provider together so you can compare prices instantly and book with confidence.</p>
+            <p>We believe finding the perfect holiday shouldn't mean opening 20 browser tabs. TravelZentra was built to bring every top travel provider together so you can compare prices instantly and book with confidence.</p>
           </section>
 
           <section>
