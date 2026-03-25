@@ -43,40 +43,8 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch live data when cityCode is present
-  useEffect(() => {
-    if (!cityCode) return;
-    const fetchLiveHotels = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams({ cityCode });
-        if (checkInDate) params.set("checkInDate", checkInDate);
-        if (checkOutDate) params.set("checkOutDate", checkOutDate);
-        params.set("adults", adults);
-        params.set("roomQuantity", roomQuantity);
-
-        const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/amadeus-hotel-search?${params}`,
-          {
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-          }
-        );
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch hotels");
-        setLiveHotels(data.hotels || []);
-      } catch (err) {
-        console.error("Live hotel fetch error:", err);
-        setError(err instanceof Error ? err.message : "Failed to load hotels");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLiveHotels();
-  }, [cityCode, checkInDate, checkOutDate, adults, roomQuantity]);
+  // Live hotel data is currently disabled (Travelpayouts hotel API unavailable)
+  // Using mock data only
 
   // Filter/sort live hotels
   const filteredLive = useMemo(() => {

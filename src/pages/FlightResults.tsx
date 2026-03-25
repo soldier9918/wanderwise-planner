@@ -37,8 +37,10 @@ interface FlightOffer {
   price: { total: string; currency: string; grandTotal: string };
   numberOfBookableSeats: number;
   validatingAirlineCodes: string[];
+  travelpayoutsLink?: string | null;
+  gate?: string;
 }
-interface BookingLink { label: string; sublabel: string; url: string; icon: "kiwi" | "google" | "airline"; faviconUrl?: string; }
+interface BookingLink { label: string; sublabel: string; url: string; icon: "kiwi" | "google" | "airline" | "aviasales"; faviconUrl?: string; }
 
 // ── Static data ────────────────────────────────────────────────────────────────
 const airlineNames: Record<string, string> = {
@@ -92,6 +94,7 @@ function timeToMinutes(dateStr: string) {
 function buildBookingLinks(
   from: string, to: string, depart: string, returnDate: string,
   adults: number, children: number, carrierCode: string,
+  travelpayoutsLink?: string | null, gate?: string,
 ): BookingLink[] {
   const depKiwi = toKiwiDate(depart);
   const retKiwi = returnDate ? toKiwiDate(returnDate) : "";
@@ -99,13 +102,24 @@ function buildBookingLinks(
     ? `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}/${retKiwi}`
     : `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}`;
   const googleUrl = `https://www.google.com/travel/flights?q=Flights+from+${from}+to+${to}`;
-  const links: BookingLink[] = [
+  const links: BookingLink[] = [];
+  // Add Travelpayouts deep link first if available
+  if (travelpayoutsLink) {
+    links.push({
+      label: gate || "Aviasales",
+      sublabel: "Best price found",
+      url: travelpayoutsLink,
+      icon: "aviasales",
+      faviconUrl: "https://www.aviasales.com/favicon.ico",
+    });
+  }
+  if (directAirlineUrls[carrierCode]) {
+    links.push({ label: airlineNames[carrierCode] || carrierCode, sublabel: "Book direct", url: directAirlineUrls[carrierCode], icon: "airline", faviconUrl: airlineLogoUrl(carrierCode) });
+  }
+  links.push(
     { label: "Kiwi.com", sublabel: "Best fare finder", url: `${kiwiBase}?adults=${adults}&children=${children}`, icon: "kiwi", faviconUrl: "https://www.kiwi.com/favicon.ico" },
     { label: "Google Flights", sublabel: "Price overview", url: googleUrl, icon: "google", faviconUrl: "https://www.google.com/favicon.ico" },
-  ];
-  if (directAirlineUrls[carrierCode]) {
-    links.unshift({ label: airlineNames[carrierCode] || carrierCode, sublabel: "Book direct", url: directAirlineUrls[carrierCode], icon: "airline", faviconUrl: airlineLogoUrl(carrierCode) });
-  }
+  );
   return links;
 }
 
@@ -229,7 +243,7 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
   const inbound = offer.itineraries[1];
   const carrierCode = offer.validatingAirlineCodes[0];
   const priceGBP = parseFloat(offer.price.grandTotal);
-  const bookingLinks = buildBookingLinks(from, to, depart, returnDate, adults, children, carrierCode);
+  const bookingLinks = buildBookingLinks(from, to, depart, returnDate, adults, children, carrierCode, offer.travelpayoutsLink, offer.gate);
 
   return (
     <motion.div

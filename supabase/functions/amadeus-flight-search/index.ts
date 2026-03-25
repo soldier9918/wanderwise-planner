@@ -5,44 +5,102 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Cache the Amadeus token to avoid re-authenticating on every request
-let cachedToken: { value: string; expiresAt: number } | null = null;
+interface TravelpayoutsResult {
+  origin: string;
+  destination: string;
+  origin_airport: string;
+  destination_airport: string;
+  price: number;
+  airline: string;
+  flight_number: string;
+  departure_at: string;
+  return_at?: string;
+  transfers: number;
+  return_transfers?: number;
+  duration: number;
+  duration_to: number;
+  duration_back: number;
+  link: string;
+  gate: string;
+}
 
-async function getAmadeusToken(): Promise<string> {
-  const now = Date.now();
-  if (cachedToken && now < cachedToken.expiresAt - 60000) {
-    return cachedToken.value;
+function minutesToISO(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `PT${h}H${m}M`;
+}
+
+function toFlightOffer(r: TravelpayoutsResult, index: number, currency: string) {
+  const outboundSegments = [{
+    departure: { iataCode: r.origin_airport, at: r.departure_at },
+    arrival: { iataCode: r.destination_airport, at: r.departure_at },
+    carrierCode: r.airline,
+    number: r.flight_number,
+    duration: minutesToISO(r.duration_to),
+  }];
+
+  // Add placeholder stop segments for transfers
+  if (r.transfers > 0) {
+    for (let i = 0; i < r.transfers; i++) {
+      outboundSegments.push({
+        departure: { iataCode: "VIA", at: r.departure_at },
+        arrival: { iataCode: r.destination_airport, at: r.departure_at },
+        carrierCode: r.airline,
+        number: r.flight_number,
+        duration: minutesToISO(Math.floor(r.duration_to / (r.transfers + 1))),
+      });
+    }
   }
 
-  const clientId = Deno.env.get("AMADEUS_CLIENT_ID");
-  const clientSecret = Deno.env.get("AMADEUS_CLIENT_SECRET");
+  const itineraries = [{
+    duration: minutesToISO(r.duration_to),
+    segments: outboundSegments,
+  }];
 
-  if (!clientId || !clientSecret) {
-    throw new Error("Amadeus credentials not configured");
+  // Add return itinerary if present
+  if (r.return_at && r.duration_back > 0) {
+    const returnSegments = [{
+      departure: { iataCode: r.destination_airport, at: r.return_at },
+      arrival: { iataCode: r.origin_airport, at: r.return_at },
+      carrierCode: r.airline,
+      number: r.flight_number,
+      duration: minutesToISO(r.duration_back),
+    }];
+
+    if ((r.return_transfers ?? 0) > 0) {
+      for (let i = 0; i < (r.return_transfers ?? 0); i++) {
+        returnSegments.push({
+          departure: { iataCode: "VIA", at: r.return_at! },
+          arrival: { iataCode: r.origin_airport, at: r.return_at! },
+          carrierCode: r.airline,
+          number: r.flight_number,
+          duration: minutesToISO(Math.floor(r.duration_back / ((r.return_transfers ?? 0) + 1))),
+        });
+      }
+    }
+
+    itineraries.push({
+      duration: minutesToISO(r.duration_back),
+      segments: returnSegments,
+    });
   }
 
-  const res = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  });
+  const priceStr = r.price.toFixed(2);
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Amadeus auth failed: ${err}`);
-  }
-
-  const data = await res.json();
-  cachedToken = {
-    value: data.access_token,
-    expiresAt: now + data.expires_in * 1000,
+  return {
+    id: `tp-${index}-${r.flight_number}-${r.departure_at}`,
+    itineraries,
+    price: {
+      total: priceStr,
+      currency: currency.toUpperCase(),
+      grandTotal: priceStr,
+    },
+    numberOfBookableSeats: 9,
+    validatingAirlineCodes: [r.airline],
+    // Extra fields for booking
+    travelpayoutsLink: r.link ? `https://www.aviasales.com${r.link}` : null,
+    gate: r.gate,
   };
-
-  return cachedToken.value;
 }
 
 Deno.serve(async (req) => {
@@ -58,11 +116,10 @@ Deno.serve(async (req) => {
       departureDate,
       returnDate,
       adults = 1,
-      children = 0,
       travelClass = "ECONOMY",
       nonStop = false,
       currencyCode = "GBP",
-      max = 20,
+      max = 30,
     } = body;
 
     if (!originLocationCode || !destinationLocationCode || !departureDate) {
@@ -72,46 +129,56 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = await getAmadeusToken();
+    const token = Deno.env.get("TRAVELPAYOUTS_TOKEN");
+    if (!token) {
+      throw new Error("TRAVELPAYOUTS_TOKEN not configured");
+    }
 
+    // Map travel class to trip_class (0=economy, 1=business, 2=first)
+    const classMap: Record<string, string> = {
+      ECONOMY: "0", PREMIUM_ECONOMY: "0", BUSINESS: "1", FIRST: "2",
+    };
+    const tripClass = classMap[travelClass] || "0";
+
+    // Build URL for Travelpayouts v3 prices_for_dates
     const params = new URLSearchParams({
-      originLocationCode,
-      destinationLocationCode,
-      departureDate,
-      adults: String(adults),
-      travelClass,
-      nonStop: String(nonStop),
-      currencyCode,
-      max: String(max),
+      origin: originLocationCode.toUpperCase(),
+      destination: destinationLocationCode.toUpperCase(),
+      departure_at: departureDate,
+      currency: currencyCode.toLowerCase(),
+      sorting: "price",
+      direct: nonStop ? "true" : "false",
+      limit: String(max),
+      trip_class: tripClass,
+      token,
     });
 
-    if (returnDate) params.set("returnDate", returnDate);
-    if (children > 0) params.set("children", String(children));
+    if (returnDate) {
+      params.set("return_at", returnDate);
+    }
 
-    const searchRes = await fetch(
-      `https://test.api.amadeus.com/v2/shopping/flight-offers?${params.toString()}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const url = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-    const searchData = await searchRes.json();
-
-    if (!searchRes.ok) {
+    if (!data.success) {
       return new Response(
-        JSON.stringify({ error: searchData.errors?.[0]?.detail || "Amadeus search failed", raw: searchData }),
-        { status: searchRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: data.error || "Travelpayouts search failed" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    return new Response(JSON.stringify(searchData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const results: TravelpayoutsResult[] = data.data || [];
+
+    // Transform to FlightOffer format matching existing frontend
+    const offers = results.map((r, i) => toFlightOffer(r, i, data.currency || currencyCode));
+
+    return new Response(
+      JSON.stringify({ data: offers }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
-    console.error("Edge function error:", err);
+    console.error("Flight search error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
