@@ -243,7 +243,7 @@ function FlightCard({ offer, index, from, to, depart, returnDate, adults, childr
   const inbound = offer.itineraries[1];
   const carrierCode = offer.validatingAirlineCodes[0];
   const priceGBP = parseFloat(offer.price.grandTotal);
-  const bookingLinks = buildBookingLinks(from, to, depart, returnDate, adults, children, carrierCode);
+  const bookingLinks = buildBookingLinks(from, to, depart, returnDate, adults, children, carrierCode, offer.travelpayoutsLink, offer.gate);
 
   return (
     <motion.div
