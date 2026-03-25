@@ -1,34 +1,28 @@
 
 
-# Plan: Update 5 Slides on Index Page
+# Plan: Update Slide 1 and Slide 10 on Index Page
 
-## Changes (all in `src/pages/Index.tsx`)
+## Changes (in `src/pages/Index.tsx`)
 
-### Slide 1 (index 0) — Simplify to just "TRAVELZENTRA" + logo
-- Remove `topLine`, `mainText` subtitle, and `subText` content
-- Set `mainText` to "TRAVELZENTRA" with smaller sizing (`text-4xl md:text-6xl lg:text-7xl`) and elegant tracking
-- Set `topLine` and `subText` to empty strings (or use topLine for a subtle tagline-free space)
-- To render the logo below the text, add a new optional `showLogo` boolean field to the `HeroSlide` interface in `HeroBannerSlider.tsx`, and render `<TravelZentraLogo>` centered below the main text when true
+### Slide 1 (index 0) — Match reference image style with red scheme
+The reference image shows a bold, italic heading split across two lines: "Find Your Perfect" / "Package Holiday" with "Package Holiday" highlighted with a green background pill. Below is a subtitle in italic white.
 
-**Files:** `src/components/HeroBannerSlider.tsx` (add `showLogo` support + import logo), `src/pages/Index.tsx` (update slide 0)
+Adapt this layout to TravelZentra's red brand:
+- `topLine`: "Find Your Perfect" (bold, italic, white)
+- `mainText`: "Package Holiday" (bold, italic, white with a red/accent background highlight — achieved via existing markup or a new `highlightMain` flag)
+- `subText`: "Search hotels & flights across all your favourite brands — all in one place." (italic, white)
+- Remove `showLogo: true`, remove `hidden` classes
+- Use large consistent sizing (`text-6xl md:text-8xl lg:text-9xl` for main)
 
-### Slide 3 (index 2) — Remove texture, make text white
-- Change `mainTextClass` from `text-texture-tropical text-stroke-dark` to plain `text-white`
-- Keep font, size, and weight as-is
+To achieve the highlight/pill effect on "Package Holiday", add an optional `highlightClass` property to `HeroSlide` interface. When set, wrap `mainText` in a `<span>` with that class (e.g. `bg-accent px-4 py-1 inline-block`).
 
-### Slide 6 (index 5) — Remove texture from text
-- Change `mainTextClass` from `text-texture-geometric` to plain `text-white`
-- Keep font, size, weight, and italic
+**Files:** `src/components/HeroBannerSlider.tsx` (add `highlightClass` support), `src/pages/Index.tsx` (update slide 0)
 
-### Slide 10 (index 9) — Change pink to light textured text
-- Change `mainTextClass` from `text-pink-300` to `text-texture-watercolor` for a light textured fill
-- Add `text-stroke-dark` for legibility against the Paris background
-
-### Slide 20 (index 19) — Remove texture, make plain white
-- Change `mainTextClass` from `text-texture-roses` to `text-white`
-- Keep font, size, and tracking
+### Slide 10 (index 9) — Bold white text for "From £249pp"
+- Change `mainTextClass` from `text-texture-watercolor text-stroke-dark` to plain `text-white`
+- Keep `font-black` and `font-playfair`, remove any italic
 
 ## Files to Modify
-1. `src/components/HeroBannerSlider.tsx` — add optional `showLogo` to interface, render logo component when set
-2. `src/pages/Index.tsx` — update slides at indices 0, 2, 5, 9, 19
+1. `src/components/HeroBannerSlider.tsx` — add optional `highlightClass` to interface, wrap mainText in highlighted span when set
+2. `src/pages/Index.tsx` — update slides at indices 0 and 9
 
