@@ -1,38 +1,57 @@
 
 
-# Plan: Consistent Hero Sizes, Varied Text Colors, Larger Text
+# Plan: Fix Hero Slide Issues (Index Page)
 
-## Problem Analysis
-1. **Size inconsistency**: Main text sizes vary wildly across slides — some use `text-9xl`/`text-[9rem]`, others `text-8xl`/`text-[7rem]`. This causes layout jumps between slides.
-2. **Too much red**: Many slides use `text-accent` (red) for main or top-line text. Need more color variety.
-3. **Some text too small**: Top-line text varies from `text-sm` to `text-2xl`; sub-text inconsistent too.
+## Issues & Solutions
 
-## Changes
+### 1. Consistent image sizing
+The Ken Burns animation starts different slides at different scales (e.g. `scale: [1, 1.15]` vs `scale: [1.05, 1.18]`). This causes visible size differences between slides. Fix: normalize all Ken Burns starting scales to `1` so every slide begins at the same visual size.
 
-### 1. Standardize text sizes across all slides (all 3 pages)
-Enforce consistent sizing so no slide causes a layout shift:
-- **topLine**: always `text-lg md:text-xl` (never `text-sm` or `text-2xl`)
-- **mainText**: always `text-6xl md:text-8xl lg:text-9xl` (remove all `text-[7rem]`, `text-[8rem]`, `text-[9rem]`, `text-5xl` variants)
-- **subText**: always `text-lg md:text-2xl`
+**File:** `src/components/HeroBannerSlider.tsx`
+- Update all `kenBurnsVariants` to start at `scale: 1` (keep varied end scales and x/y movements for visual interest)
 
-### 2. Diversify text colors beyond red
-Replace many `text-accent` usages with a broader palette that stays legible:
-- **White** (`text-white`) — on dark photo backgrounds
-- **Gold gradient** (`text-gradient-gold`) — on dark overlays
-- **Fire gradient** (`text-gradient-fire`) — on pattern slides
-- **Cyan/Sky** (`text-sky-300`) — cool contrast on warm images
-- **Amber/Yellow** (`text-amber-300`) — warm pop on dark scenes
-- **Emerald** (`text-emerald-300`) — fresh accent on nature/tropical
-- **Pink** (`text-pink-300`) — soft on dark backgrounds
-- Keep `text-accent` (red) on only ~20% of slides for brand presence
+### 2. Slide 1 — TravelZentra branding
+Change slide 1 (index 0) text to show the brand name and slogan:
+- `topLine`: "TRAVELZENTRA"
+- `mainText`: "Your Journey, Our Passion"
+- `subText`: "Compare flights, hotels & packages — save up to 40%"
 
-### 3. Ensure all text is large and bold
-- All `mainTextClass` entries will include `font-black` or `font-extrabold`
-- All `topLineClass` entries will include `font-bold` or `font-black`
-- All `subTextClass` entries will include `font-bold` or `font-semibold`
+**File:** `src/pages/Index.tsx` — update slide at index 0
+
+### 3. Slide 7 — "Maldives Dream" text to green
+Change `topLineClass` on slide index 6 from `text-pink-300` to `text-emerald-300`.
+
+**File:** `src/pages/Index.tsx` — update slide at index 6
+
+### 4. Slides 3 & 9 — ensure different backgrounds
+Currently slide 3 uses `patternFloral` and slide 9 uses `patternRoses` — these are different files but may look similar. Swap slide 9's background to `patternBotanical` (currently used on slide 12). Then give slide 12 `patternRoses` instead, so no adjacent pattern slides share an image.
+
+**File:** `src/pages/Index.tsx` — swap backgrounds on indices 8 and 11
+
+### 5. Slide 10 — "From £249pp" in pink, non-italic, bold
+Change the `mainTextClass` on slide index 9 from `text-accent italic` to `text-pink-300` with no italic, keeping `font-black`.
+
+**File:** `src/pages/Index.tsx` — update slide at index 9
+
+### 6. Textured/flag-fill text effects on select slides
+Add new CSS utility classes for texture-filled text using `background-clip: text`:
+- `.text-texture-tropical` — uses the tropical floral pattern as fill
+- `.text-texture-geometric` — uses the geometric pattern as fill
+- `.text-texture-watercolor` — uses the watercolor pattern as fill
+- `.text-texture-roses` — uses the roses pattern as fill
+
+Apply these to 3-4 slides where it makes creative sense (e.g. "Bali from £499" with tropical texture, "Once in a Lifetime" with watercolor texture).
+
+**File:** `src/index.css` — add texture text utilities
+**File:** `src/pages/Index.tsx` — apply texture classes to select slides
+
+### 7. Slide 20 — change pink to textured font
+Change slide index 19 ("Book Now, Save Big") from `text-pink-300` to use `.text-texture-roses` for a textured fill effect.
+
+**File:** `src/pages/Index.tsx` — update slide at index 19
 
 ## Files to Modify
-1. `src/pages/Index.tsx` — standardize sizes + diversify colors on all 20 slides
-2. `src/pages/Flights.tsx` — same treatment on all 20 slides
-3. `src/pages/Hotels.tsx` — same treatment on all 20 slides
+1. `src/components/HeroBannerSlider.tsx` — normalize Ken Burns start scales
+2. `src/index.css` — add texture-fill text utilities
+3. `src/pages/Index.tsx` — all slide content changes (items 2-7)
 
