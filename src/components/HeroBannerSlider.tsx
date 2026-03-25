@@ -90,7 +90,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Slide text */}
-      <div className="relative z-10 container mx-auto px-4 pt-32 pb-48 flex-1 flex flex-col justify-center">
+      <div className="relative z-10 container mx-auto px-4 pt-32 pb-12 flex-1 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
@@ -129,7 +129,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Controls */}
-      <div className="absolute bottom-32 left-0 right-0 z-20 flex items-center justify-center gap-3">
+      <div className="relative z-20 flex items-center justify-center gap-3 pb-6">
         <button
           onClick={prev}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
@@ -173,7 +173,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
 
       {/* Search form overlay at bottom */}
       {children && (
-        <div className="relative z-20 -mt-24 container mx-auto px-4 pb-8">
+        <div className="relative z-20 -mt-4 container mx-auto px-4 pb-8">
           {children}
         </div>
       )}
