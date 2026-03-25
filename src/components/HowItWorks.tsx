@@ -35,7 +35,7 @@ const HowItWorks = () => {
           className="text-center mb-14"
         >
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Why FareFinder?
+            Why TravelZentra?
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             We do the hard work, you pick the holiday.

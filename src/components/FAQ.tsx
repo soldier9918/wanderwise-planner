@@ -13,9 +13,9 @@ const faqs = [
       "A package holiday bundles your flights, hotel, and sometimes transfers or extras into one booking. It's a convenient way to save time and money, as providers often offer discounted rates when you book everything together.",
   },
   {
-    question: "How does FareFinder compare prices?",
+    question: "How does TravelZentra compare prices?",
     answer:
-      "FareFinder searches across all major travel brands — including TUI, Jet2holidays, easyJet holidays, loveholidays, and more — to show you the best available prices side by side, so you never overpay.",
+      "TravelZentra searches across all major travel brands — including TUI, Jet2holidays, easyJet holidays, loveholidays, and more — to show you the best available prices side by side, so you never overpay.",
   },
   {
     question: "Are package holidays cheaper than booking separately?",

@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Plane, Menu, X, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
+import TravelZentraLogo from "@/components/TravelZentraLogo";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CurrencySelector from "@/components/CurrencySelector";
@@ -40,11 +41,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy border-b border-navy-lighter">
       <div className="container mx-auto px-4 h-16 flex items-center gap-6">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <Plane className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <TravelZentraLogo className="w-9 h-9" />
           <span className="font-display text-xl font-bold text-white">
-            Fare<span className="text-primary">Finder</span>
+            Travel<span className="text-primary">Zentra</span>
           </span>
         </Link>
 
