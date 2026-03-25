@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import TravelZentraLogo from "./TravelZentraLogo";
 
 export interface HeroSlide {
   image: string;
@@ -12,6 +13,7 @@ export interface HeroSlide {
   subTextClass?: string;
   textPosition?: "center" | "left" | "right";
   overlayClass?: string;
+  showLogo?: boolean;
 }
 
 interface HeroBannerSliderProps {
@@ -116,14 +118,26 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
             >
               {slide.mainText}
             </motion.h2>
-            <motion.p
-              className={slide.subTextClass || "text-lg md:text-2xl text-white/85 font-medium mt-2"}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45, duration: 0.5 }}
-            >
-              {slide.subText}
-            </motion.p>
+            {slide.subText && (
+              <motion.p
+                className={slide.subTextClass || "text-lg md:text-2xl text-white/85 font-medium mt-2"}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.5 }}
+              >
+                {slide.subText}
+              </motion.p>
+            )}
+            {slide.showLogo && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                className="mt-4"
+              >
+                <TravelZentraLogo className="w-16 h-16 mx-auto" />
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
