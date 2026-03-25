@@ -6,66 +6,66 @@
 
 @layer base {
   :root {
-    --background: 80 40% 98%;
-    --foreground: 140 25% 12%;
+    --background: 270 20% 98%;
+    --foreground: 270 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 140 25% 12%;
+    --card-foreground: 270 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 140 25% 12%;
+    --popover-foreground: 270 30% 12%;
 
-    --primary: 84 81% 44%;
+    --primary: 270 60% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 80 30% 92%;
-    --secondary-foreground: 140 22% 22%;
+    --secondary: 270 20% 92%;
+    --secondary-foreground: 270 25% 22%;
 
-    --muted: 80 20% 90%;
-    --muted-foreground: 140 12% 45%;
+    --muted: 270 15% 90%;
+    --muted-foreground: 270 12% 45%;
 
-    --accent: 85 78% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 93% 58%;
+    --accent-foreground: 270 30% 12%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 80 18% 86%;
-    --input: 80 18% 86%;
-    --ring: 84 81% 44%;
+    --border: 270 15% 86%;
+    --input: 270 15% 86%;
+    --ring: 270 60% 50%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 80 30% 97%;
-    --sidebar-foreground: 140 22% 22%;
-    --sidebar-primary: 84 81% 44%;
+    --sidebar-background: 270 20% 97%;
+    --sidebar-foreground: 270 25% 22%;
+    --sidebar-primary: 270 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 80 30% 92%;
-    --sidebar-accent-foreground: 140 22% 22%;
-    --sidebar-border: 80 18% 86%;
-    --sidebar-ring: 84 81% 44%;
+    --sidebar-accent: 270 20% 92%;
+    --sidebar-accent-foreground: 270 25% 22%;
+    --sidebar-border: 270 15% 86%;
+    --sidebar-ring: 270 60% 50%;
 
-    /* Custom tokens — Fresh Lime + Forest Green */
-    --coral: 84 81% 44%;
-    --coral-light: 85 78% 55%;
-    --navy: 140 25% 12%;
-    --navy-light: 140 22% 16%;
-    --navy-lighter: 140 18% 22%;
-    --sand: 80 30% 96%;
-    --sand-muted: 80 20% 82%;
-    --teal: 100 70% 40%;
+    /* Custom tokens — Purple + Gold */
+    --coral: 270 60% 50%;
+    --coral-light: 270 50% 62%;
+    --navy: 270 35% 12%;
+    --navy-light: 270 30% 16%;
+    --navy-lighter: 270 25% 22%;
+    --sand: 270 20% 96%;
+    --sand-muted: 270 15% 82%;
+    --teal: 280 50% 45%;
     --teal-foreground: 0 0% 100%;
-    --gold: 85 78% 55%;
+    --gold: 45 93% 58%;
     --success: 142 71% 35%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 40%;
     --warning-foreground: 0 0% 100%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(140 25% 8%), hsl(140 30% 14%), hsl(150 22% 10%));
-    --gradient-coral: linear-gradient(135deg, hsl(84 81% 44%), hsl(100 70% 40%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(80 30% 98%));
-    --shadow-card: 0 4px 24px -4px hsl(140 25% 12% / 0.08);
-    --shadow-elevated: 0 12px 40px -8px hsl(140 25% 12% / 0.12);
+    --gradient-hero: linear-gradient(135deg, hsl(270 35% 8%), hsl(270 40% 14%), hsl(280 30% 10%));
+    --gradient-coral: linear-gradient(135deg, hsl(270 60% 50%), hsl(45 93% 58%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(270 20% 98%));
+    --shadow-card: 0 4px 24px -4px hsl(270 30% 12% / 0.08);
+    --shadow-elevated: 0 12px 40px -8px hsl(270 30% 12% / 0.12);
   }
 }
 
@@ -110,6 +110,6 @@
   .glass {
     background: hsl(0 0% 100% / 0.85);
     backdrop-filter: blur(16px);
-    border: 1px solid hsl(80 15% 85% / 0.5);
+    border: 1px solid hsl(270 15% 85% / 0.5);
   }
 }

@@ -34,7 +34,7 @@ const HowItWorks = () => {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <h2 className="font-display text-4xl md:text-5xl font-extrabold text-foreground mb-3">
             Why TravelZentra?
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
