@@ -1,89 +1,30 @@
 
 
-# Plan: Rotating Hero Banners with Embedded Text (lastminute.com style)
+# Plan: Bold Hero Text + Floral Patterns + Correct Red Shade
 
-## Concept
-Replace the current static-text-over-rotating-images hero with a **lastminute.com-style banner carousel** where each slide has its own unique text, offer, and styling embedded directly onto the image. The search form remains static and overlays the bottom of the hero. Slides rotate every 10 seconds with crossfade. Navigation dots and pause/play controls included.
+## 1. Adjust Red Shade to Match Attachment
+**File:** `src/index.css`
 
-## Architecture
+The attachment shows a **warm pink-red** (not pure red). The shade is approximately `hsl(348, 83%, 58%)` — a vibrant coral-pink matching the "Package Holiday" text and nav buttons in the screenshot. Update `--primary`, `--accent`, `--coral`, `--ring`, `--gold`, and gradient references from `0 84% 60%` to `348 83% 58%`.
 
-Create a shared `HeroBannerSlider` component used by all 3 pages. Each page passes its own array of slide data.
-
-```text
-┌─────────────────────────────────────┐
-│  Navbar (static)                    │
-├─────────────────────────────────────┤
-│  ┌───────────────────────────────┐  │
-│  │  Hero Image (crossfades)      │  │
-│  │                               │  │
-│  │  "SUMMER SALE"  (italic)      │  │
-│  │  "£200 OFF"     (huge bold)   │  │
-│  │  "Book now!"    (underline)   │  │
-│  │                               │  │
-│  │  ⏸  ‹ ●━━●●● ›               │  │
-│  └───────────────────────────────┘  │
-│  ┌───────────────────────────────┐  │
-│  │  Search Form (static)         │  │
-│  └───────────────────────────────┘  │
-├─────────────────────────────────────┤
-│  Rest of page...                    │
-└─────────────────────────────────────┘
-```
-
-## New Component
-**File:** `src/components/HeroBannerSlider.tsx`
-
-- Accepts `slides[]` prop — each slide has: `image`, `topLine`, `mainText`, `subText`, `textColor`, `textPosition`, `fontStyle` (italic/bold/etc), `overlayColor`
-- 10-second auto-rotation with crossfade
-- Pause/play button + dot navigation (like lastminute.com)
-- Left/right arrow navigation
-- Text animates in (fade + slide) on each slide change
-
-## Slide Data (~20 slides per page)
-
-**Index page (Flight+Hotel packages):** 20 slides with varied offers
-- "SUMMER SALE / Save up to £300 / on package holidays"
-- "EASTER GETAWAY / From £199pp / Flights + Hotel included"
-- "LAST MINUTE DEALS / Up to 40% OFF / Book by midnight"
-- "TROPICAL ESCAPES / Bali from £499 / All-inclusive packages"
-- etc. — each with different font styling (italic headers, huge price text, underlined CTAs)
-
-**Flights page:** 20 flight-specific slides
-- "FLASH SALE / £50 OFF / all European flights"
-- "FLY FOR LESS / Compare 500+ airlines / Best price guaranteed"
-- etc.
-
-**Hotels page:** 20 hotel-specific slides
-- "HOTEL DEALS / Save 30% / on luxury stays"
-- "CITY BREAKS / From £79/night / Top-rated hotels"
-- etc.
-
-Each slide uses a different combination of:
-- Font weight (bold, extrabold, black)
-- Font style (italic vs normal for taglines)
-- Text size variations (huge prices, smaller subtitles)
-- Text colors (white, gold accent, pink highlight)
-- Text alignment (center, left-aligned)
-
-## Page Updates
-
+## 2. Bold Hero Text + Floral/Pattern Slide Backgrounds
 **Files:** `src/pages/Index.tsx`, `src/pages/Flights.tsx`, `src/pages/Hotels.tsx`
 
-Replace the current hero section with `<HeroBannerSlider slides={packageSlides} />` followed by the static search form. The search form overlaps the bottom of the hero (positioned with negative margin or absolute positioning).
+- Ensure every slide's `mainTextClass` uses at minimum `font-extrabold` or `font-black` — no `font-light` or `font-medium` on main headings
+- Replace 4-5 destination photo slides per page with **floral/pattern/abstract Unsplash images** (e.g., tropical leaves, floral wallpaper, geometric patterns, watercolor textures) to add visual variety
+- Keep text large and impactful — minimum `text-5xl md:text-7xl` on all main text
+- Vary the text colors between white and accent (the pink-red) for contrast against patterns
 
-## Images
+### Example pattern image URLs (Unsplash):
+- Tropical leaves: `https://images.unsplash.com/photo-1507525428034-b723cf961d3e`
+- Floral: `https://images.unsplash.com/photo-1490750967868-88aa4f44baee`
+- Abstract watercolor: `https://images.unsplash.com/photo-1557672172-298e090bd0f1`
+- Geometric pattern: `https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d`
+- Botanical: `https://images.unsplash.com/photo-1470756544705-1848092fbe5f`
 
-Reuse the existing ~11 hero images per page (already imported). For the 20 slides, images will be cycled/reused with different text overlays — each slide still feels unique because the text, styling, and overlay color differ.
-
-## Technical Details
-
-- Slide interface: `{ image: string; topLine: string; mainText: string; subText: string; topLineClass: string; mainTextClass: string; subTextClass: string; overlayClass: string }`
-- Crossfade via framer-motion `AnimatePresence` with opacity transition (2s)
-- Text entrance: fade-in + translateY with staggered delay
-- Dot indicators: active = elongated bar (like lastminute.com), inactive = circle
-- Pause/play toggle stops/resumes the interval
-- Arrow buttons for manual navigation
-
-**Files to create:** 1 (`HeroBannerSlider.tsx`)
-**Files to modify:** 3 (`Index.tsx`, `Flights.tsx`, `Hotels.tsx`)
+## Files to Modify
+1. `src/index.css` — red shade adjustment
+2. `src/pages/Index.tsx` — bold text + pattern slides
+3. `src/pages/Flights.tsx` — bold text + pattern slides
+4. `src/pages/Hotels.tsx` — bold text + pattern slides
 
