@@ -1,30 +1,45 @@
 
 
-# Plan: Bold Hero Text + Floral Patterns + Correct Red Shade
+# Plan: Legible Hero Text + Animated Backgrounds + Compact Hero Size
 
-## 1. Adjust Red Shade to Match Attachment
+## 1. Compact Hero Height + Search Form Overlap
+**File:** `src/components/HeroBannerSlider.tsx`
+
+Reduce hero from `min-h-[90vh]` to `min-h-[520px] md:min-h-[560px]` so the search form sits at the midpoint (like the lastminute.com attachment). Adjust bottom padding and controls positioning. The search form overlaps the bottom ~50% of the hero.
+
+## 2. Animated Ken Burns Effect on Background Images
+**File:** `src/components/HeroBannerSlider.tsx`
+
+Add a slow zoom + pan animation to each slide's background image using framer-motion. Each slide slowly scales from 1.0 to 1.15 and slightly translates over 10 seconds, creating a cinematic "Ken Burns" effect.
+
+## 3. Stronger Text Legibility
+**File:** `src/components/HeroBannerSlider.tsx`
+
+- Apply heavier `textShadow` on all text elements: `0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)`
+- Add a subtle dark gradient backdrop behind text area for guaranteed contrast
+- Support an optional `style` prop on slides for inline styles (gradients on text, etc.)
+
+## 4. Text Texture/Gradient Styles via CSS
 **File:** `src/index.css`
 
-The attachment shows a **warm pink-red** (not pure red). The shade is approximately `hsl(348, 83%, 58%)` — a vibrant coral-pink matching the "Package Holiday" text and nav buttons in the screenshot. Update `--primary`, `--accent`, `--coral`, `--ring`, `--gold`, and gradient references from `0 84% 60%` to `348 83% 58%`.
+Add utility classes for textured/gradient text effects:
+- `.text-gradient-gold` — gold shimmer gradient on text via `background-clip: text`
+- `.text-gradient-fire` — red-to-orange gradient
+- `.text-stroke-white` — white text stroke/outline for dark backgrounds
+- `.text-stroke-dark` — dark outline for light pattern backgrounds
 
-## 2. Bold Hero Text + Floral/Pattern Slide Backgrounds
+## 5. Update Slide Data with Enhanced Legibility
 **Files:** `src/pages/Index.tsx`, `src/pages/Flights.tsx`, `src/pages/Hotels.tsx`
 
-- Ensure every slide's `mainTextClass` uses at minimum `font-extrabold` or `font-black` — no `font-light` or `font-medium` on main headings
-- Replace 4-5 destination photo slides per page with **floral/pattern/abstract Unsplash images** (e.g., tropical leaves, floral wallpaper, geometric patterns, watercolor textures) to add visual variety
-- Keep text large and impactful — minimum `text-5xl md:text-7xl` on all main text
-- Vary the text colors between white and accent (the pink-red) for contrast against patterns
-
-### Example pattern image URLs (Unsplash):
-- Tropical leaves: `https://images.unsplash.com/photo-1507525428034-b723cf961d3e`
-- Floral: `https://images.unsplash.com/photo-1490750967868-88aa4f44baee`
-- Abstract watercolor: `https://images.unsplash.com/photo-1557672172-298e090bd0f1`
-- Geometric pattern: `https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d`
-- Botanical: `https://images.unsplash.com/photo-1470756544705-1848092fbe5f`
+- Add stronger `textShadow` inline styles or use new CSS utility classes on slides where text was hard to read (especially pattern backgrounds)
+- Use `.text-stroke-white` on pattern slides for guaranteed readability
+- Apply gradient text effects on select slides for creative variety
+- Ensure overlay classes on pattern slides use darker overlays (`bg-black/50` or `bg-navy/60`)
 
 ## Files to Modify
-1. `src/index.css` — red shade adjustment
-2. `src/pages/Index.tsx` — bold text + pattern slides
-3. `src/pages/Flights.tsx` — bold text + pattern slides
-4. `src/pages/Hotels.tsx` — bold text + pattern slides
+1. `src/components/HeroBannerSlider.tsx` — compact height, Ken Burns animation, stronger shadows
+2. `src/index.css` — text texture/gradient utility classes
+3. `src/pages/Index.tsx` — enhanced overlay/text classes
+4. `src/pages/Flights.tsx` — enhanced overlay/text classes
+5. `src/pages/Hotels.tsx` — enhanced overlay/text classes
 
