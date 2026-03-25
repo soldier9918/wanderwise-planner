@@ -1,55 +1,42 @@
 
 
-# Fix Plan: Flight Booking Logos, Duplicates & Package Price Toggle
+# Plan: Rebrand to TravelZentra + Logo + Fix Ad Sizing
 
-## Issue 1: Partner logos not appearing (Kiwi, Farefare, MyTrip, etc.)
+## 1. Rename FareFinder → TravelZentra everywhere
 
-**Root cause:** The `PartnerLogo` component uses `faviconUrl` (e.g. `https://www.kiwi.com/favicon.ico`, `https://www.aviasales.com/favicon.ico`). Many sites block cross-origin favicon requests or return non-image responses, causing `onError` to fire and showing a generic sparkle icon instead of the brand logo.
+Replace all instances of "FareFinder" and "Fare<span>Finder</span>" across **13 files**:
 
-**Fix:** Replace favicon URLs with proper brand logo URLs that are reliably accessible. Use known CDN-hosted or direct logo image URLs:
-- Kiwi.com → `https://images.kiwi.com/common/favicon.ico` or use their logo asset
-- Aviasales → use Google's favicon proxy `https://www.google.com/s2/favicons?domain=aviasales.com&sz=64`
-- Google Flights → `https://www.google.com/s2/favicons?domain=google.com&sz=64`
+| File | Changes |
+|------|---------|
+| `index.html` | Title, og:title, meta description |
+| `src/components/Navbar.tsx` | Logo text: `Travel<span>Zentra</span>` |
+| `src/components/Footer.tsx` | Logo text + copyright |
+| `src/components/FAQ.tsx` | All question/answer text |
+| `src/components/HowItWorks.tsx` | Section heading |
+| `src/pages/Help.tsx` | All references |
+| `src/pages/WhoWeAre.tsx` | All references |
+| `src/pages/TermsOfService.tsx` | All references |
+| `src/pages/PrivacyPolicy.tsx` | All references |
+| `src/pages/PrivacySettings.tsx` | All references |
+| `src/pages/CookiePolicy.tsx` | All references |
+| `src/pages/ContactUs.tsx` | Any references |
+| `src/pages/FlightResults.tsx` | "Best fare finder" sublabel |
 
-Use Google's favicon service (`https://www.google.com/s2/favicons?domain=DOMAIN&sz=64`) universally for all partners — it's reliable and returns proper images.
+## 2. Design a logo
 
-**File:** `src/pages/FlightResults.tsx` — update `buildBookingLinks` (lines 94-124) to use `https://www.google.com/s2/favicons?domain=...&sz=64` for all `faviconUrl` values.
+Generate an SVG logo for TravelZentra using the existing coral/primary color scheme. The logo will feature a stylized compass or globe mark integrated with a "Z" letterform, rendered as an inline SVG component replacing the current `<Plane>` icon in both Navbar and Footer. The logo will be clean, modern, and work at small sizes (32-40px).
 
-## Issue 2: Duplicate brands (e.g. Kiwi appearing twice)
+**Approach:** Create a `src/components/TravelZentraLogo.tsx` component with an SVG mark, then import it in Navbar and Footer to replace the plane icon.
 
-**Root cause:** The Travelpayouts `gate` field can return "Kiwi.com" as the gate name, so `buildBookingLinks` adds it as an Aviasales-type link. Then Kiwi.com is also always added as a hardcoded link (line 120). This creates two Kiwi entries.
+## 3. Fix inline advertisement size
 
-**Fix:** After building the links array, deduplicate by normalizing label names. Before returning, filter out any hardcoded link whose label matches the `gate` value (case-insensitive). Also use `link.url` or normalized label as the `key` in the React map to avoid key collisions.
+The user's screenshot shows flight result cards are roughly 120-140px tall (two itinerary rows). The current inline ad placeholder is only `h-20` (80px). Change it to match the flight card height so it sits flush in the list.
 
-**File:** `src/pages/FlightResults.tsx` — add deduplication logic at end of `buildBookingLinks` (before return on line 123), and update the `key` prop in the booking links grid (line 316).
-
-## Issue 3: Flights+Hotels per night / per person toggle
-
-**Status:** Already working correctly. The Flights+Hotels page (`PackageSearchForm.tsx`) navigates to `/results` which renders `SearchResults.tsx`. That page has a working per night/per person toggle (line 118-123) that passes `priceMode` to both `LiveHotelCard` and `HotelCard`. Since hotel search is now mock-only, `HotelCard` handles price mode via the `priceMode` prop (multiplying by 0.7 for per-night). No changes needed here.
-
----
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/pages/FlightResults.tsx` | Use Google favicon proxy for all partner logos; deduplicate booking links by normalized label |
+**Change in `FlightResults.tsx`:** Update the inline ad div from `h-20` to approximately `h-[140px]` to match the flight card dimensions, and style it to feel more integrated.
 
 ## Technical Details
 
-In `buildBookingLinks`:
-```
-faviconUrl: `https://www.google.com/s2/favicons?domain=kiwi.com&sz=64`
-```
-
-Deduplication:
-```typescript
-const seen = new Set<string>();
-return links.filter(l => {
-  const key = l.label.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (seen.has(key)) return false;
-  seen.add(key);
-  return true;
-});
-```
+- Logo SVG: Simple geometric mark (compass rose / abstract Z) using `hsl(347 87% 60%)` (the primary coral color)
+- All text replacements are straightforward find-and-replace of "FareFinder" → "TravelZentra" and "Fare<span...>Finder</span>" → "Travel<span...>Zentra</span>"
+- Ad slot: remove fixed `h-20`, use padding-based height (~140px) to match card rhythm
 
