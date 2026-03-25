@@ -103,24 +103,34 @@ function buildBookingLinks(
     : `https://www.kiwi.com/en/search/results/${from}/${to}/${depKiwi}`;
   const googleUrl = `https://www.google.com/travel/flights?q=Flights+from+${from}+to+${to}`;
   const links: BookingLink[] = [];
+  const favicon = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
   // Add Travelpayouts deep link first if available
   if (travelpayoutsLink) {
+    const gateDomain = gate?.toLowerCase().replace(/[^a-z0-9.]/g, '') || "aviasales.com";
+    const domainForFav = gateDomain.includes('.') ? gateDomain : `${gateDomain}.com`;
     links.push({
       label: gate || "Aviasales",
       sublabel: "Best price found",
       url: travelpayoutsLink,
       icon: "aviasales",
-      faviconUrl: "https://www.aviasales.com/favicon.ico",
+      faviconUrl: favicon(domainForFav),
     });
   }
   if (directAirlineUrls[carrierCode]) {
     links.push({ label: airlineNames[carrierCode] || carrierCode, sublabel: "Book direct", url: directAirlineUrls[carrierCode], icon: "airline", faviconUrl: airlineLogoUrl(carrierCode) });
   }
   links.push(
-    { label: "Kiwi.com", sublabel: "Best fare finder", url: `${kiwiBase}?adults=${adults}&children=${children}`, icon: "kiwi", faviconUrl: "https://www.kiwi.com/favicon.ico" },
-    { label: "Google Flights", sublabel: "Price overview", url: googleUrl, icon: "google", faviconUrl: "https://www.google.com/favicon.ico" },
+    { label: "Kiwi.com", sublabel: "Best fare finder", url: `${kiwiBase}?adults=${adults}&children=${children}`, icon: "kiwi", faviconUrl: favicon("kiwi.com") },
+    { label: "Google Flights", sublabel: "Price overview", url: googleUrl, icon: "google", faviconUrl: favicon("google.com") },
   );
-  return links;
+  // Deduplicate by normalized label
+  const seen = new Set<string>();
+  return links.filter(l => {
+    const key = l.label.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // ── Partner logo small circle ──────────────────────────────────────────────────
