@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
@@ -16,8 +16,17 @@ export interface HeroSlide {
 
 interface HeroBannerSliderProps {
   slides: HeroSlide[];
-  children?: React.ReactNode; // search form
+  children?: React.ReactNode;
 }
+
+// Random Ken Burns variants for variety
+const kenBurnsVariants = [
+  { scale: [1, 1.15], x: ["0%", "3%"], y: ["0%", "2%"] },
+  { scale: [1, 1.12], x: ["0%", "-3%"], y: ["0%", "3%"] },
+  { scale: [1.05, 1.18], x: ["2%", "-2%"], y: ["-1%", "2%"] },
+  { scale: [1, 1.1], x: ["0%", "2%"], y: ["0%", "-2%"] },
+  { scale: [1.02, 1.16], x: ["-2%", "3%"], y: ["1%", "-1%"] },
+];
 
 const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
   const [current, setCurrent] = useState(0);
@@ -45,9 +54,16 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
         ? "items-end text-right"
         : "items-center text-center";
 
+  const kenBurns = useMemo(
+    () => kenBurnsVariants[current % kenBurnsVariants.length],
+    [current]
+  );
+
+  const heavyShadow = "0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)";
+
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden">
-      {/* Background images with crossfade */}
+    <section className="relative min-h-[420px] md:min-h-[480px] flex flex-col justify-center overflow-hidden">
+      {/* Background images with crossfade + Ken Burns */}
       <div className="absolute inset-0">
         <AnimatePresence initial={false}>
           <motion.img
@@ -55,10 +71,20 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
             src={slide.image}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, scale: kenBurns.scale[0] }}
+            animate={{
+              opacity: 1,
+              scale: kenBurns.scale[1],
+              x: kenBurns.x[1],
+              y: kenBurns.y[1],
+            }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 2, ease: "easeInOut" }}
+            transition={{
+              opacity: { duration: 2, ease: "easeInOut" },
+              scale: { duration: 10, ease: "linear" },
+              x: { duration: 10, ease: "linear" },
+              y: { duration: 10, ease: "linear" },
+            }}
           />
         </AnimatePresence>
         <div className={slide.overlayClass || "absolute inset-0 bg-navy/40"} />
@@ -66,7 +92,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Slide text */}
-      <div className="relative z-10 container mx-auto px-4 pt-24 pb-48 flex-1 flex flex-col justify-center">
+      <div className="relative z-10 container mx-auto px-4 pt-24 pb-40 flex-1 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
@@ -81,7 +107,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.5 }}
-              style={{ textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}
+              style={{ textShadow: heavyShadow }}
             >
               {slide.topLine}
             </motion.p>
@@ -90,7 +116,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              style={{ textShadow: "0 4px 24px rgba(0,0,0,0.7)" }}
+              style={{ textShadow: heavyShadow }}
             >
               {slide.mainText}
             </motion.h2>
@@ -99,7 +125,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45, duration: 0.5 }}
-              style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
+              style={{ textShadow: heavyShadow }}
             >
               {slide.subText}
             </motion.p>
@@ -108,7 +134,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
       </div>
 
       {/* Controls */}
-      <div className="absolute bottom-52 left-0 right-0 z-20 flex items-center justify-center gap-3">
+      <div className="absolute bottom-44 left-0 right-0 z-20 flex items-center justify-center gap-3">
         <button
           onClick={prev}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 transition-colors"
@@ -152,7 +178,7 @@ const HeroBannerSlider = ({ slides, children }: HeroBannerSliderProps) => {
 
       {/* Search form overlay at bottom */}
       {children && (
-        <div className="relative z-20 -mt-32 container mx-auto px-4 pb-8">
+        <div className="relative z-20 -mt-28 container mx-auto px-4 pb-8">
           {children}
         </div>
       )}
