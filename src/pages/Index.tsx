@@ -64,7 +64,7 @@ const Index = () => {
             transition={{ duration: 0.7 }}
             className="text-center mb-10"
           >
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight">
+            <h1 className="font-display text-6xl md:text-8xl lg:text-9xl font-extrabold text-white mb-4 leading-none tracking-tight">
               Find Your Perfect
               <br />
               <span className="text-coral">Package Holiday</span>
