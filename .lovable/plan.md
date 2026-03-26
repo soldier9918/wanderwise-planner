@@ -1,28 +1,16 @@
 
 
-# Plan: Update Slide 1 and Slide 10 on Index Page
+# Plan: Revert Slide 1 to "Find Your Perfect / Package Holiday"
 
-## Changes (in `src/pages/Index.tsx`)
+## Current State
+Slide 1 already has the correct content: "Find Your Perfect" / "Package Holiday" with accent color and the subtitle. The Ken Burns moving background effect is already active in `HeroBannerSlider.tsx`.
 
-### Slide 1 (index 0) — Match reference image style with red scheme
-The reference image shows a bold, italic heading split across two lines: "Find Your Perfect" / "Package Holiday" with "Package Holiday" highlighted with a green background pill. Below is a subtitle in italic white.
+## Analysis
+Looking at the current code, slide 1 (index 0) already matches what you're asking for — it shows "Find Your Perfect" (white) and "Package Holiday" (red/accent) with the moving background. No changes are needed.
 
-Adapt this layout to TravelZentra's red brand:
-- `topLine`: "Find Your Perfect" (bold, italic, white)
-- `mainText`: "Package Holiday" (bold, italic, white with a red/accent background highlight — achieved via existing markup or a new `highlightMain` flag)
-- `subText`: "Search hotels & flights across all your favourite brands — all in one place." (italic, white)
-- Remove `showLogo: true`, remove `hidden` classes
-- Use large consistent sizing (`text-6xl md:text-8xl lg:text-9xl` for main)
+If the preview you're viewing is from an older commit, you may just need to restore to the latest version where this is already in place.
 
-To achieve the highlight/pill effect on "Package Holiday", add an optional `highlightClass` property to `HeroSlide` interface. When set, wrap `mainText` in a `<span>` with that class (e.g. `bg-accent px-4 py-1 inline-block`).
-
-**Files:** `src/components/HeroBannerSlider.tsx` (add `highlightClass` support), `src/pages/Index.tsx` (update slide 0)
-
-### Slide 10 (index 9) — Bold white text for "From £249pp"
-- Change `mainTextClass` from `text-texture-watercolor text-stroke-dark` to plain `text-white`
-- Keep `font-black` and `font-playfair`, remove any italic
-
-## Files to Modify
-1. `src/components/HeroBannerSlider.tsx` — add optional `highlightClass` to interface, wrap mainText in highlighted span when set
-2. `src/pages/Index.tsx` — update slides at indices 0 and 9
+<lov-actions>
+  <lov-open-history>View History</lov-open-history>
+</lov-actions>
 
