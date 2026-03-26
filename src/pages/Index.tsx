@@ -69,7 +69,7 @@ const Index = () => {
               <br />
               <span className="text-success-foreground text-9xl">Package Holiday</span>
             </h1>
-            <p className="text-white/90 text-lg md:text-xl font-medium mt-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
+            <p className="text-white/90 text-lg md:text-xl mt-4 font-extrabold" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Search hotels & flights across all your favourite brands — all in one place.
             </p>
           </motion.div>
