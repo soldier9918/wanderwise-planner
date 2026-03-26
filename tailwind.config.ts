@@ -16,10 +16,6 @@ export default {
       fontFamily: {
         display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        playfair: ['"Playfair Display"', 'serif'],
-        bebas: ['"Bebas Neue"', 'sans-serif'],
-        outfit: ['"Outfit"', 'sans-serif'],
-        lora: ['"Lora"', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

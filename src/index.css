@@ -2,70 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&family=Lora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 215 25% 12%;
+    --background: 240 20% 97%;
+    --foreground: 226 30% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 12%;
+    --card-foreground: 226 30% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 12%;
+    --popover-foreground: 226 30% 14%;
 
-    --primary: 348 83% 58%;
+    --primary: 347 87% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 15% 93%;
-    --secondary-foreground: 215 20% 22%;
+    --secondary: 240 15% 92%;
+    --secondary-foreground: 226 25% 25%;
 
-    --muted: 0 10% 90%;
-    --muted-foreground: 215 10% 45%;
+    --muted: 240 12% 90%;
+    --muted-foreground: 226 12% 48%;
 
-    --accent: 348 83% 58%;
+    --accent: 262 60% 68%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 15% 86%;
-    --input: 215 15% 86%;
-    --ring: 348 83% 58%;
+    --border: 240 12% 86%;
+    --input: 240 12% 86%;
+    --ring: 347 87% 60%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 215 20% 22%;
-    --sidebar-primary: 348 83% 58%;
+    --sidebar-background: 240 18% 97%;
+    --sidebar-foreground: 226 25% 25%;
+    --sidebar-primary: 347 87% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 15% 93%;
-    --sidebar-accent-foreground: 215 20% 22%;
-    --sidebar-border: 215 15% 86%;
-    --sidebar-ring: 348 83% 58%;
+    --sidebar-accent: 240 15% 92%;
+    --sidebar-accent-foreground: 226 25% 25%;
+    --sidebar-border: 240 12% 86%;
+    --sidebar-ring: 347 87% 60%;
 
-    /* Custom tokens — Red & White */
-    --coral: 348 83% 58%;
-    --coral-light: 348 70% 68%;
-    --navy: 215 30% 12%;
-    --navy-light: 215 25% 18%;
-    --navy-lighter: 215 20% 25%;
-    --sand: 0 0% 96%;
-    --sand-muted: 215 10% 82%;
-    --teal: 215 50% 45%;
+    /* Custom tokens — Rose + Slate */
+    --coral: 347 87% 60%;
+    --coral-light: 347 87% 72%;
+    --navy: 226 30% 14%;
+    --navy-light: 226 28% 18%;
+    --navy-lighter: 226 22% 24%;
+    --sand: 240 18% 96%;
+    --sand-muted: 240 12% 82%;
+    --teal: 262 60% 58%;
     --teal-foreground: 0 0% 100%;
-    --gold: 348 83% 58%;
+    --gold: 262 60% 68%;
     --success: 142 71% 35%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 40%;
     --warning-foreground: 0 0% 100%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(215 30% 8%), hsl(215 35% 14%), hsl(215 25% 10%));
-    --gradient-coral: linear-gradient(135deg, hsl(348 83% 58%), hsl(348 70% 48%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
-    --shadow-card: 0 4px 24px -4px hsl(215 25% 12% / 0.08);
-    --shadow-elevated: 0 12px 40px -8px hsl(215 25% 12% / 0.12);
+    --gradient-hero: linear-gradient(135deg, hsl(226 30% 10%), hsl(226 35% 18%), hsl(234 28% 14%));
+    --gradient-coral: linear-gradient(135deg, hsl(347 87% 60%), hsl(330 80% 55%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(240 18% 98%));
+    --shadow-card: 0 4px 24px -4px hsl(226 30% 12% / 0.08);
+    --shadow-elevated: 0 12px 40px -8px hsl(226 30% 12% / 0.12);
   }
 }
 
@@ -110,66 +110,6 @@
   .glass {
     background: hsl(0 0% 100% / 0.85);
     backdrop-filter: blur(16px);
-    border: 1px solid hsl(215 15% 85% / 0.5);
-  }
-
-  .text-gradient-gold {
-    background: linear-gradient(135deg, #f6d365, #fda085, #f6d365);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-fire {
-    background: linear-gradient(135deg, hsl(348 83% 58%), #ff6a00, hsl(348 83% 58%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-stroke-white {
-    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.9);
-    paint-order: stroke fill;
-  }
-
-  .text-stroke-dark {
-    -webkit-text-stroke: 2px rgba(0, 0, 0, 0.6);
-    paint-order: stroke fill;
-  }
-
-  .text-texture-tropical {
-    background-image: url('/src/assets/pattern-floral-tropical.jpg');
-    background-size: cover;
-    background-position: center;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-texture-geometric {
-    background-image: url('/src/assets/pattern-geometric.jpg');
-    background-size: cover;
-    background-position: center;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-texture-watercolor {
-    background-image: url('/src/assets/pattern-watercolor.jpg');
-    background-size: cover;
-    background-position: center;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-texture-roses {
-    background-image: url('/src/assets/pattern-floral-roses.jpg');
-    background-size: cover;
-    background-position: center;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    border: 1px solid hsl(200 15% 85% / 0.5);
   }
 }

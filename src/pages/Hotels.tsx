@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import heroBg1 from "@/assets/hero-bg.jpg";
 import heroSantorini from "@/assets/hero-dest-santorini.jpg";
 import heroBali from "@/assets/hero-dest-bali.jpg";
@@ -9,47 +11,69 @@ import heroParis from "@/assets/hero-dest-paris.jpg";
 import heroBg2 from "@/assets/hero-bg-2.jpg";
 import heroBg3 from "@/assets/hero-bg-3.jpg";
 import heroMachuPicchu from "@/assets/hero-dest-machupicchu.jpg";
-import patternFloral from "@/assets/pattern-floral-tropical.jpg";
-import patternRoses from "@/assets/pattern-floral-roses.jpg";
-import patternGeometric from "@/assets/pattern-geometric.jpg";
-import patternBotanical from "@/assets/pattern-botanical.jpg";
-import patternWatercolor from "@/assets/pattern-watercolor.jpg";
-import HeroBannerSlider, { type HeroSlide } from "@/components/HeroBannerSlider";
 import HotelSearchForm from "@/components/HotelSearchForm";
 import HotelDeals from "@/components/HotelDeals";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const hotelSlides: HeroSlide[] = [
-  { image: heroBg1, topLine: "HOTEL DEALS", mainText: "Save 30% Today", subText: "On luxury stays worldwide • Limited time offer", topLineClass: "text-lg md:text-xl font-black text-sky-300 uppercase tracking-[0.3em] font-outfit", mainTextClass: "font-bebas text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-wide", subTextClass: "text-lg md:text-2xl text-white/90 font-bold font-body", textPosition: "center" },
-  { image: heroSantorini, topLine: "CITY BREAKS", mainText: "From £79/night", subText: "Top-rated hotels in Europe's best cities", topLineClass: "text-lg md:text-xl font-bold text-white uppercase tracking-widest italic font-lora", mainTextClass: "font-playfair text-6xl md:text-8xl lg:text-9xl font-black text-amber-300 italic", subTextClass: "text-lg md:text-2xl text-white/85 font-bold font-outfit", textPosition: "left" },
-  { image: patternRoses, topLine: "BEACH RESORTS", mainText: "All-Inclusive", subText: "From £99/night • Beachfront properties • Spa included", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-wide text-stroke-dark font-outfit", mainTextClass: "font-lora text-6xl md:text-8xl lg:text-9xl font-black text-gradient-gold italic text-stroke-dark", subTextClass: "text-lg md:text-2xl text-white font-bold text-stroke-dark font-body", textPosition: "center", overlayClass: "absolute inset-0 bg-black/50" },
-  { image: heroDubai, topLine: "5-STAR LUXURY", mainText: "Dubai Hotels", subText: "Palm Jumeirah suites from £199/night", topLineClass: "text-lg md:text-xl font-black text-emerald-300 uppercase tracking-[0.4em] font-body", mainTextClass: "font-outfit text-6xl md:text-8xl lg:text-9xl font-extrabold text-white", subTextClass: "text-lg md:text-2xl text-white/80 font-bold italic font-lora", textPosition: "right" },
-  { image: heroMachuPicchu, topLine: "BOUTIQUE STAYS", mainText: "Unique Hotels", subText: "Handpicked boutique properties • Character & charm", topLineClass: "text-lg md:text-xl font-bold text-white/90 uppercase tracking-widest font-lora", mainTextClass: "font-playfair text-6xl md:text-8xl lg:text-9xl font-black text-pink-300 italic", subTextClass: "text-lg md:text-2xl text-white/90 font-bold font-outfit", textPosition: "left" },
-  { image: patternFloral, topLine: "LAST MINUTE", mainText: "Up to 50% OFF", subText: "Tonight's stays at rock-bottom prices", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-wide text-stroke-dark font-body", mainTextClass: "font-bebas text-6xl md:text-8xl lg:text-9xl font-black text-gradient-fire tracking-wider", subTextClass: "text-lg md:text-2xl text-white/90 font-bold italic text-stroke-dark font-outfit", textPosition: "center", overlayClass: "absolute inset-0 bg-black/50" },
-  { image: heroMaldives, topLine: "OVERWATER VILLAS", mainText: "Maldives £299", subText: "Per night • Private pool • Sunset views", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-[0.35em] font-outfit", mainTextClass: "font-lora text-6xl md:text-8xl lg:text-9xl font-black text-accent italic", subTextClass: "text-lg md:text-2xl text-white/85 font-bold font-body", textPosition: "center" },
-  { image: heroNewYork, topLine: "MANHATTAN HOTELS", mainText: "New York £149", subText: "Per night • Times Square area • Free cancellation", topLineClass: "text-lg md:text-xl font-bold text-amber-300 uppercase tracking-widest font-lora", mainTextClass: "font-outfit text-6xl md:text-8xl lg:text-9xl font-extrabold text-white", subTextClass: "text-lg md:text-2xl text-white/90 font-bold font-body", textPosition: "left" },
-  { image: patternGeometric, topLine: "TROPICAL RETREATS", mainText: "Thailand £59", subText: "Per night • 4-star beachfront • Breakfast included", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-wide italic text-stroke-dark font-outfit", mainTextClass: "font-bebas text-6xl md:text-8xl lg:text-9xl font-black text-white text-stroke-dark tracking-wide", subTextClass: "text-lg md:text-2xl text-white font-bold text-stroke-dark font-body", textPosition: "center", overlayClass: "absolute inset-0 bg-black/55" },
-  { image: heroParis, topLine: "ROMANTIC GETAWAY", mainText: "Paris from £109", subText: "Boutique hotels • Eiffel Tower views available", topLineClass: "text-lg md:text-xl font-bold text-white/90 uppercase tracking-[0.3em] font-body", mainTextClass: "font-playfair text-6xl md:text-8xl lg:text-9xl font-black text-sky-300 italic", subTextClass: "text-lg md:text-2xl text-white/85 font-bold italic font-outfit", textPosition: "center" },
-  { image: heroBg3, topLine: "FAMILY HOTELS", mainText: "Kids Stay Free", subText: "Selected family-friendly resorts • Pools & clubs", topLineClass: "text-lg md:text-xl font-black text-accent uppercase tracking-[0.25em] font-outfit", mainTextClass: "font-bebas text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-wide", subTextClass: "text-lg md:text-2xl text-white/90 font-bold font-lora", textPosition: "left" },
-  { image: patternBotanical, topLine: "SPA & WELLNESS", mainText: "Relax & Unwind", subText: "Spa hotels from £89/night • Treatments included", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-[0.5em] italic text-stroke-dark font-lora", mainTextClass: "font-lora text-6xl md:text-8xl lg:text-9xl font-black text-white italic text-stroke-dark", subTextClass: "text-lg md:text-2xl text-white font-bold text-stroke-dark font-outfit", textPosition: "center", overlayClass: "absolute inset-0 bg-black/55" },
-  { image: heroDubai, topLine: "APARTMENT STAYS", mainText: "Live Like a Local", subText: "Serviced apartments • Kitchen & lounge • Weekly rates", topLineClass: "text-lg md:text-xl font-bold text-white uppercase tracking-widest font-body", mainTextClass: "font-playfair text-6xl md:text-8xl lg:text-9xl font-black text-emerald-300 italic", subTextClass: "text-lg md:text-2xl text-white/80 font-bold font-outfit", textPosition: "right" },
-  { image: heroBali, topLine: "HONEYMOON SUITES", mainText: "Save £200", subText: "Romantic packages • Champagne on arrival", topLineClass: "text-lg md:text-xl font-black text-pink-300 uppercase tracking-wide font-outfit", mainTextClass: "font-outfit text-6xl md:text-8xl lg:text-9xl font-extrabold text-white", subTextClass: "text-lg md:text-2xl text-white/90 font-bold italic font-lora", textPosition: "center" },
-  { image: patternWatercolor, topLine: "ADVENTURE LODGES", mainText: "Eco Stays", subText: "Mountain lodges & treehouses • Nature immersion", topLineClass: "text-lg md:text-xl font-black text-white/90 uppercase tracking-[0.3em] text-stroke-dark font-lora", mainTextClass: "font-bebas text-6xl md:text-8xl lg:text-9xl font-black text-white text-stroke-dark tracking-wider", subTextClass: "text-lg md:text-2xl text-white font-bold text-stroke-dark font-outfit", textPosition: "center", overlayClass: "absolute inset-0 bg-black/50" },
-  { image: heroMaldives, topLine: "PRIVATE ISLANDS", mainText: "Ultimate Luxury", subText: "Exclusive island resorts • Butler service • From £599/night", topLineClass: "text-lg md:text-xl font-bold text-accent uppercase tracking-[0.4em] italic font-body", mainTextClass: "font-lora text-6xl md:text-8xl lg:text-9xl font-black text-white italic", subTextClass: "text-lg md:text-2xl text-white/85 font-bold font-outfit", textPosition: "center" },
-  { image: heroNewYork, topLine: "HISTORIC HOTELS", mainText: "Stay in History", subText: "Castle hotels & heritage properties across Europe", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-widest font-outfit", mainTextClass: "font-playfair text-6xl md:text-8xl lg:text-9xl font-black text-amber-300 italic", subTextClass: "text-lg md:text-2xl text-white/90 font-bold font-body", textPosition: "right" },
-  { image: heroPhuket, topLine: "MEMBER EXCLUSIVE", mainText: "Extra 10% OFF", subText: "Sign up for free • Unlock secret hotel deals", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-[0.25em] font-lora", mainTextClass: "font-bebas text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-wide", subTextClass: "text-lg md:text-2xl text-sky-300 font-bold font-outfit", textPosition: "center" },
-  { image: heroParis, topLine: "WINTER ESCAPES", mainText: "Cosy Hotels", subText: "Log cabins & ski chalets from £119/night", topLineClass: "text-lg md:text-xl font-bold text-white uppercase tracking-[0.35em] font-body", mainTextClass: "font-outfit text-6xl md:text-8xl lg:text-9xl font-extrabold text-white", subTextClass: "text-lg md:text-2xl text-amber-300 font-bold italic font-lora", textPosition: "left" },
-  { image: heroBg1, topLine: "PRICE MATCH", mainText: "Best Rate Guarantee", subText: "Find it cheaper elsewhere? We'll match it + 10%", topLineClass: "text-lg md:text-xl font-black text-white uppercase tracking-wide italic font-outfit", mainTextClass: "font-playfair text-6xl md:text-8xl lg:text-9xl font-black text-accent italic", subTextClass: "text-lg md:text-2xl text-white/90 font-bold font-body", textPosition: "center" },
+const heroImages = [
+  heroBg1, heroSantorini, heroBg2, heroBali, heroDubai,
+  heroMachuPicchu, heroBg3, heroMaldives, heroNewYork, heroPhuket, heroParis,
 ];
 
 const Hotels = () => {
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <HeroBannerSlider slides={hotelSlides}>
-        <HotelSearchForm />
-      </HeroBannerSlider>
+
+      {/* Hero */}
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden text-white">
+        <div className="absolute inset-0">
+          {heroImages.map((src, index) => (
+            <motion.img
+              key={index}
+              src={src}
+              alt="Hotel destination"
+              className="w-full h-full object-cover absolute inset-0"
+              initial={false}
+              animate={{ opacity: index === currentImage ? 1 : 0 }}
+              transition={{ duration: 2, ease: "easeInOut" }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-navy/35" />
+          <div className="absolute inset-0 bg-gradient-to-b from-navy/40 via-transparent to-navy/50" />
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 pt-20">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="text-center mb-10"
+          >
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
+              Search & Compare
+              <br />
+              <span className="text-coral">Hotels</span>
+            </h1>
+            <p className="text-white/90 text-lg md:text-xl font-medium mt-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
+              Find the best hotel deals across all major booking sites.
+            </p>
+          </motion.div>
+
+          <HotelSearchForm />
+        </div>
+      </section>
+
       <HotelDeals />
       <Footer />
     </div>
