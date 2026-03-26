@@ -64,7 +64,7 @@ const Index = () => {
             transition={{ duration: 0.7 }}
             className="text-center mb-10"
           >
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight">
               Find Your Perfect
               <br />
               <span className="text-coral">Package Holiday</span>
