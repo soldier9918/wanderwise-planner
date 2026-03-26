@@ -64,10 +64,10 @@ const Index = () => {
             transition={{ duration: 0.7 }}
             className="text-center mb-10"
           >
-            <h1 className="font-display text-6xl md:text-8xl font-extrabold text-white mb-4 leading-none tracking-tight lg:text-8xl">
+            <h1 className="font-display text-6xl md:text-8xl font-extrabold text-white mb-4 leading-none tracking-tight lg:text-9xl">
               Find Your Perfect
               <br />
-              <span className="text-8xl text-success-foreground">Package Holiday</span>
+              <span className="text-success-foreground text-9xl">Package Holiday</span>
             </h1>
             <p className="text-white/90 text-lg md:text-xl font-medium mt-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Search hotels & flights across all your favourite brands — all in one place.
