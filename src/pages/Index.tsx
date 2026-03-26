@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import floralPattern from "@/assets/floral-pattern.jpg";
 import { motion, AnimatePresence } from "framer-motion";
 import heroBg1 from "@/assets/hero-bg.jpg";
 import heroBg2 from "@/assets/hero-bg-2.jpg";
@@ -67,7 +68,7 @@ const Index = () => {
             <h1 className="font-display text-6xl md:text-8xl lg:text-[7rem] font-extrabold text-white mb-4 leading-[0.95] tracking-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>
               Find Your Perfect
               <br />
-              <span className="inline-block border-4 border-coral text-white px-4 py-1 rounded-lg mt-2" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>Package Holiday</span>
+              <span className="inline-block px-6 py-2 rounded-lg mt-2 bg-cover bg-center border-2 border-white/30" style={{ backgroundImage: `url(${floralPattern})`, boxShadow: '0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.5)' }}>Package Holiday</span>
             </h1>
             <p className="text-white/90 text-xl md:text-2xl font-medium mt-6" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Search hotels & flights across all your favourite brands — all in one place.
