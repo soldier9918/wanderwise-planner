@@ -18,29 +18,53 @@ describe("wrapByChars", () => {
 });
 
 describe("typedLine", () => {
+  // 8 words across 4 lines: The octopus / has three / hearts and / blue blood
   const lines = ["The octopus", "has three", "hearts and", "blue blood"];
+
+  /** True when `shown` is a run of whole words from the start of `line`. */
+  const wholeWords = (line: string, shown: string) =>
+    shown === "" || line === shown || line.startsWith(`${shown} `);
 
   it("shows nothing before the narrator starts", () => expect(typedLine(lines, 0)).toBe(""));
 
   it("ends with the last line complete", () => expect(typedLine(lines, 1)).toBe("blue blood"));
 
-  it("only ever shows one line, typed part way through", () => {
-    for (const f of [0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9]) {
-      const shown = typedLine(lines, f);
-      expect(shown.length).toBeLessThanOrEqual(11);
-      expect(lines.some((l) => l.startsWith(shown))).toBe(true);
+  it("reveals one whole word at a time", () => {
+    expect(typedLine(lines, 0.125)).toBe("The");
+    expect(typedLine(lines, 0.25)).toBe("The octopus");
+    expect(typedLine(lines, 0.375)).toBe("has");
+    expect(typedLine(lines, 0.5)).toBe("has three");
+    expect(typedLine(lines, 0.625)).toBe("hearts");
+    expect(typedLine(lines, 0.75)).toBe("hearts and");
+    expect(typedLine(lines, 0.875)).toBe("blue");
+  });
+
+  it("never shows half a word", () => {
+    for (let i = 0; i <= 20; i++) {
+      const shown = typedLine(lines, i / 20);
+      expect(lines.some((l) => wholeWords(l, shown))).toBe(true);
+    }
+  });
+
+  it("only ever shows one line", () => {
+    for (let i = 0; i <= 20; i++) {
+      const shown = typedLine(lines, i / 20);
+      expect(lines.some((l) => wholeWords(l, shown))).toBe(true);
     }
   });
 
   it("drops the finished line instead of stacking it up", () => {
     const two = ["Hello world", "goodbye moon"];
-    expect(typedLine(two, 0.25)).toBe("Hello ");
-    const late = typedLine(two, 0.9);
-    expect(late.startsWith("goodbye")).toBe(true);
-    expect(late.includes("Hello")).toBe(false);
+    expect(typedLine(two, 0.25)).toBe("Hello");
+    expect(typedLine(two, 0.5)).toBe("Hello world");
+    expect(typedLine(two, 0.75)).toBe("goodbye");
+    expect(typedLine(two, 0.9)).toBe("goodbye moon");
+    expect(typedLine(two, 0.9).includes("Hello")).toBe(false);
   });
 
-  it("handles a single short line", () => expect(typedLine(["Hello world"], 0.5)).toBe("Hello "));
+  it("handles a single short line", () => expect(typedLine(["Hello world"], 0.5)).toBe("Hello"));
 
   it("handles no lines at all", () => expect(typedLine([], 0.5)).toBe(""));
+
+  it("handles blank narration", () => expect(typedLine(["", "  "], 0.5)).toBe(""));
 });
