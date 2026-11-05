@@ -324,9 +324,14 @@ export default function VideoEditor() {
                 label="Narrator"
                 value={video.voice ?? "Kore"}
                 options={VOICES.map((v) => ({ value: v.id, label: v.label }))}
-                onChange={(v) => {
-                  saveLook({ voice: v });
-                  toast.info("Narrator changed — use “Redo voiceover” on each scene to hear the new voice.");
+                onChange={async (v) => {
+                  await saveLook({ voice: v });
+                  toast.info("Narrator changed — re-recording every voiceover with the new voice…");
+                  for (let i = 0; i < scenes.length; i += 3) {
+                    const results = await Promise.allSettled(scenes.slice(i, i + 3).map((s) => runAsset(s, "audio")));
+                    if (results.some((r) => r.status === "rejected" && /credits|limit/i.test(String((r as PromiseRejectedResult).reason)))) return;
+                  }
+                  toast.success("All voiceovers now use the new narrator.");
                 }}
               />
             </div>
