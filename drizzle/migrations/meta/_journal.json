@@ -15,6 +15,13 @@
       "when": 1793852682982,
       "tag": "0001_add_caption_style_to_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793853007921,
+      "tag": "0002_caption_look",
+      "breakpoints": true
     }
   ]
 }

@@ -105,6 +105,9 @@ export type Database = {
       }
       videos: {
         Row: {
+          caption_color: string
+          caption_font: string
+          caption_size: string
           caption_style: string
           created_at: string
           description: string | null
@@ -117,6 +120,9 @@ export type Database = {
           voice: string
         }
         Insert: {
+          caption_color?: string
+          caption_font?: string
+          caption_size?: string
           caption_style?: string
           created_at?: string
           description?: string | null
@@ -129,6 +135,9 @@ export type Database = {
           voice?: string
         }
         Update: {
+          caption_color?: string
+          caption_font?: string
+          caption_size?: string
           caption_style?: string
           created_at?: string
           description?: string | null

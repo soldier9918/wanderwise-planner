@@ -11,6 +11,31 @@ import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
+import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+function LookSelect<T extends string>({ label, value, options, onChange, swatch }: {
+  label: string; value: string; options: readonly { value: T; label: string }[]; onChange: (v: T) => void; swatch?: boolean;
+}) {
+  return (
+    <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+      {label}
+      <Select value={value} onValueChange={(v) => onChange(v as T)}>
+        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              <span className="flex items-center gap-2">
+                {swatch && <span className="h-3 w-3 rounded-full border border-border" style={{ background: o.value }} />}
+                {o.label}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </label>
+  );
+}
 
 export default function VideoEditor() {
   const { id } = useParams<{ id: string }>();
@@ -172,6 +197,7 @@ export default function VideoEditor() {
         data.scenes.map((s) => ({ imageUrl: data.urls[s.image_path!], audioUrl: s.audio_path ? data.urls[s.audio_path] : null, caption: s.narration })),
         setExportPct,
         ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
+        { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -196,6 +222,14 @@ export default function VideoEditor() {
 
   const { video, scenes, urls } = data;
   const captionStyle = (video.caption_style ?? "typewriter") as CaptionStyle;
+  const capPx = sizePx(video.caption_size);
+  // Same proportions as the 1280px-wide export, so lines break alike.
+  const capChars = Math.max(10, Math.floor(1080 / (capPx * 0.6)));
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size">>) => {
+    qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
+    const { error } = await supabase.from("videos").update(patch).eq("id", id!);
+    if (error) { toast.error("Couldn't save caption settings"); refresh(); }
+  };
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
   const current = playing !== null ? scenes[playing] : scenes[0];
@@ -219,7 +253,7 @@ export default function VideoEditor() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div>
-            <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-muted">
+            <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-muted [container-type:inline-size]">
               {currentImg ? (
                 <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className={`h-full w-full object-cover ${playing !== null ? "animate-kenburns" : ""}`} />
               ) : (
@@ -231,12 +265,16 @@ export default function VideoEditor() {
                 </span>
               )}
               {playing !== null && current && captionStyle !== "none" && (
-                <p ref={captionRef} className="absolute inset-x-6 bottom-6 min-h-[2.5rem] whitespace-pre-line text-center font-mono text-lg font-bold leading-snug drop-shadow-[0_2px_4px_hsl(var(--background))]">
+                <p
+                  ref={captionRef}
+                  className="absolute inset-x-[7.8%] bottom-[4%] whitespace-pre-line text-center font-bold leading-[1.2] drop-shadow-[0_2px_4px_hsl(var(--background))]"
+                  style={{ fontFamily: fontCss(video.caption_font), color: safeColor(video.caption_color), fontSize: `${capPx / 12.8}cqw` }}
+                >
                   {captionStyle === "full"
-                    ? current.narration
+                    ? wrapByChars(current.narration, capChars).join("\n")
                     : captionStyle === "pop"
-                      ? typedWords(wrapByChars(current.narration, captionChars), progress).join("\n")
-                      : typedLine(wrapByChars(current.narration, captionChars), progress)}
+                      ? typedWords(wrapByChars(current.narration, capChars), progress).join("\n")
+                      : typedLine(wrapByChars(current.narration, capChars), progress)}
                 </p>
               )}
             </div>
@@ -252,6 +290,12 @@ export default function VideoEditor() {
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || done === scenes.length}>
                 Generate missing assets
               </Button>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border p-3 sm:grid-cols-4">
+              <LookSelect label="Caption" value={captionStyle} options={CAPTION_STYLES} onChange={(v) => saveLook({ caption_style: v })} />
+              <LookSelect label="Font" value={video.caption_font} options={CAPTION_FONTS} onChange={(v) => saveLook({ caption_font: v })} />
+              <LookSelect label="Colour" value={safeColor(video.caption_color)} options={CAPTION_COLORS} onChange={(v) => saveLook({ caption_color: v })} swatch />
+              <LookSelect label="Size" value={video.caption_size} options={CAPTION_SIZES} onChange={(v) => saveLook({ caption_size: v })} />
             </div>
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>

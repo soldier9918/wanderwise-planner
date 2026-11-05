@@ -1,5 +1,6 @@
 import fixWebmDuration from "fix-webm-duration";
 import { typedLine, typedWords, type CaptionStyle } from "./typewriter";
+import { fontCss, safeColor, sizePx } from "./captionLook";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -26,7 +27,10 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter"): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}): Promise<Blob> {
+  const px = sizePx(look.size ?? "medium");
+  const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
+  const color = safeColor(look.color ?? "#ffffff");
   const W = 1280, H = 720;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
@@ -81,7 +85,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         ctx.fillRect(0, 0, W, H);
         ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
         if (captionStyle !== "none") {
-          ctx.font = "bold 60px 'Courier New', monospace";
+          ctx.font = fontStr;
           const speak = buffer ? buffer.duration : dur;
           const lines = wrap(ctx, caption, W - 200);
           let draw: string[] = [];
@@ -93,12 +97,12 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
             if (line) draw = [line];
           }
           if (draw.length) {
-            ctx.fillStyle = "#fff";
+            ctx.fillStyle = color;
             ctx.shadowColor = "rgba(0,0,0,0.9)";
             ctx.shadowBlur = 8;
             ctx.shadowOffsetY = 2;
             ctx.textAlign = "center";
-            const lineHeight = 72;
+            const lineHeight = Math.round(px * 1.2);
             const y0 = H - 70 - (draw.length - 1) * lineHeight;
             draw.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * lineHeight));
             ctx.shadowColor = "transparent";

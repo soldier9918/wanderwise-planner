@@ -1,0 +1,1 @@
+ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS caption_font text NOT NULL DEFAULT 'mono', ADD COLUMN IF NOT EXISTS caption_color text NOT NULL DEFAULT '#ffffff', ADD COLUMN IF NOT EXISTS caption_size text NOT NULL DEFAULT 'medium';
