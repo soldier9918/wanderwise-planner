@@ -1,6 +1,29 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const STYLES = ["Documentary", "Cinematic", "Anime", "3D render", "Watercolor", "Retro comic", "Minimal flat"] as const;
+export const STYLES = [
+  "Documentary",
+  "Cinematic",
+  "Anime",
+  "3D render",
+  "Watercolor",
+  "Retro comic",
+  "Minimal flat",
+  "Photoreal",
+  "Film noir",
+  "Cyberpunk",
+  "Vintage film",
+  "Oil painting",
+  "Pencil sketch",
+  "Paper cutout",
+  "Claymation",
+  "Pixel art",
+  "Isometric",
+  "Neon glow",
+  "Retro VHS",
+  "Pop art",
+  "Stained glass",
+  "Low poly",
+] as const;
 export const VOICES = [
   { id: "Kore", label: "Kore — Female, firm and clear" },
   { id: "Aoede", label: "Aoede — Female, breezy" },
