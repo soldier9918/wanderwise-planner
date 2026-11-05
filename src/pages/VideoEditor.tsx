@@ -259,12 +259,9 @@ export default function VideoEditor() {
       <audio ref={audioRef} className="hidden" />
       <main className="container py-8">
         <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">← My videos</Link>
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
-            <p className="mt-2 text-muted-foreground">{video.description}</p>
-          </div>
-          <Button variant="ghost" className="text-destructive" onClick={remove}>Delete</Button>
+        <div className="mt-3 max-w-3xl">
+          <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
+          <p className="mt-2 text-muted-foreground">{video.description}</p>
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
@@ -370,6 +367,9 @@ export default function VideoEditor() {
               </li>
             ))}
           </ol>
+        </div>
+        <div className="mt-10 flex justify-end border-t border-border pt-6">
+          <Button variant="ghost" className="text-destructive" onClick={remove}>Delete video</Button>
         </div>
       </main>
     </div>
