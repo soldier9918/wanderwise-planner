@@ -14,6 +14,15 @@ export const CAPTION_FONTS = [
   { value: "serif", label: "Classic serif", css: "Georgia, 'Times New Roman', serif" },
   { value: "impact", label: "Bold impact", css: "Impact, 'Arial Black', sans-serif" },
   { value: "rounded", label: "Friendly", css: "'Trebuchet MS', Verdana, sans-serif" },
+  { value: "heavy", label: "Heavy block", css: "'Arial Black', 'Helvetica Neue', Arial, sans-serif" },
+  { value: "narrow", label: "Tall narrow", css: "'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', sans-serif" },
+  { value: "elegant", label: "Elegant", css: "Palatino, 'Palatino Linotype', 'Book Antiqua', serif" },
+  { value: "news", label: "Newspaper", css: "'Times New Roman', Times, serif" },
+  { value: "modern", label: "Modern", css: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" },
+  { value: "tahoma", label: "Crisp", css: "Tahoma, Verdana, Geneva, sans-serif" },
+  { value: "handwritten", label: "Handwritten", css: "'Comic Sans MS', 'Comic Neue', cursive" },
+  { value: "script", label: "Fancy script", css: "'Brush Script MT', 'Segoe Script', cursive" },
+  { value: "code", label: "Coder", css: "'Lucida Console', Monaco, 'Consolas', monospace" },
 ] as const;
 
 export const CAPTION_COLORS = [

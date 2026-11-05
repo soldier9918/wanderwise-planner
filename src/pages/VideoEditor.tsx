@@ -15,7 +15,7 @@ import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch }: {
-  label: string; value: string; options: readonly { value: T; label: string }[]; onChange: (v: T) => void; swatch?: boolean;
+  label: string; value: string; options: readonly { value: T; label: string; css?: string }[]; onChange: (v: T) => void; swatch?: boolean;
 }) {
   return (
     <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
@@ -27,7 +27,7 @@ function LookSelect<T extends string>({ label, value, options, onChange, swatch 
             <SelectItem key={o.value} value={o.value}>
               <span className="flex items-center gap-2">
                 {swatch && <span className="h-3 w-3 rounded-full border border-border" style={{ background: o.value }} />}
-                {o.label}
+                <span style={o.css ? { fontFamily: o.css, fontSize: "15px" } : undefined}>{o.label}</span>
               </span>
             </SelectItem>
           ))}
