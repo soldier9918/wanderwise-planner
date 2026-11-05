@@ -92,6 +92,9 @@ export const generateThumbnail = (videoId: string) =>
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>
   invoke<{ path: string }>("scene-asset", { sceneId, kind });
 
+export const editScenes = (videoId: string, sceneCount: number) =>
+  invoke<{ count: number; added: number; removed: number }>("edit-scenes", { videoId, sceneCount });
+
 export async function signedUrls(paths: string[]) {
   if (!paths.length) return {} as Record<string, string>;
   const { data, error } = await supabase.storage.from("video-assets").createSignedUrls(paths, 60 * 60);

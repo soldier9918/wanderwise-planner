@@ -7,23 +7,24 @@ import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, type Scene } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, editScenes, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { elapsedSeconds, formatSeconds, sceneSeconds } from "@/lib/durations";
+import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-function LookSelect<T extends string>({ label, value, options, onChange, swatch }: {
-  label: string; value: string; options: readonly { value: T; label: string; css?: string }[]; onChange: (v: T) => void; swatch?: boolean;
+function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
+  label: string; value: string; options: readonly { value: T; label: string; css?: string }[]; onChange: (v: T) => void; swatch?: boolean; disabled?: boolean;
 }) {
   return (
     <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
       {label}
-      <Select value={value} onValueChange={(v) => onChange(v as T)}>
+      <Select value={value} onValueChange={(v) => onChange(v as T)} disabled={disabled}>
         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
         <SelectContent>
           {options.map((o) => (
@@ -50,6 +51,7 @@ export default function VideoEditor() {
   const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
   const [thumbBusy, setThumbBusy] = useState(false);
+  const [sceneBusy, setSceneBusy] = useState(false);
   // Measured length of each voiceover clip, keyed by scene id.
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -228,6 +230,33 @@ export default function VideoEditor() {
     }
   };
 
+  const changeScenes = async (target: number) => {
+    if (!data) return;
+    const before = data.scenes;
+    const plan = planSceneChange(before.length, target);
+    if (plan.add === 0 && plan.remove === 0) return;
+    setPlaying(null);
+    setSceneBusy(true);
+    const ids = new Set(before.map((s) => s.id));
+    try {
+      const { added, removed } = await editScenes(id!, plan.target);
+      await qc.refetchQueries({ queryKey: ["video", id], type: "active" });
+      const fresh = (qc.getQueryData(["video", id]) as { scenes?: Scene[] } | undefined)?.scenes ?? [];
+      const extra = fresh.filter((s) => !ids.has(s.id));
+      if (extra.length) {
+        toast.info(`${extra.length} new scene${extra.length > 1 ? "s" : ""} written — painting images and recording voiceovers…`);
+        await generateMissing(extra);
+        toast.success("New scenes are ready.");
+      } else if (added === 0 && removed > 0) {
+        toast.success(`Trimmed to ${plan.target} scenes.`);
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSceneBusy(false);
+    }
+  };
+
   const remove = async () => {
     if (!confirm("Delete this video?")) return;
     await supabase.from("videos").delete().eq("id", id!);
@@ -323,6 +352,13 @@ export default function VideoEditor() {
               </label>
               <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES} onChange={(v) => saveLook({ quality: v })} />
               <LookSelect
+                label="Scenes"
+                value={String(scenes.length)}
+                disabled={sceneBusy || busyAny}
+                options={sceneCountOptions(scenes.length).map((n) => ({ value: String(n), label: `${n} scenes (~${formatSeconds(n * 12)})` }))}
+                onChange={(v) => changeScenes(Number(v))}
+              />
+              <LookSelect
                 label="Narrator"
                 value={video.voice ?? "Kore"}
                 options={VOICES.map((v) => ({ value: v.id, label: v.label }))}
@@ -356,7 +392,7 @@ export default function VideoEditor() {
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>
             )}
-            <p className="mt-3 text-sm text-muted-foreground">{done}/{scenes.length} scenes ready{busyAny ? " · generating…" : ""}{scenes.length ? ` · ${formatSeconds(totalSecs)} total` : ""}</p>
+            <p className="mt-3 text-sm text-muted-foreground">{done}/{scenes.length} scenes ready{busyAny ? " · generating…" : ""}{sceneBusy ? " · adjusting scenes…" : ""}{scenes.length ? ` · ${formatSeconds(totalSecs)} total` : ""}</p>
           </div>
 
           <ol className="grid gap-4">
