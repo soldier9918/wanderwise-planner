@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STYLES, VOICES, CAPTION_STYLES, generateScript } from "@/lib/videoApi";
+import { STYLES, VOICES, CAPTION_STYLES, generateScript, suggestTopic } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 
 export default function Dashboard() {
@@ -21,6 +22,19 @@ export default function Dashboard() {
   const [caption, setCaption] = useState<string>("typewriter");
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
   const [busy, setBusy] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+
+  const suggest = async () => {
+    setSuggesting(true);
+    try {
+      const { idea } = await suggestTopic(topic);
+      setTopic(idea);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const { data: videos, isLoading } = useQuery({
     queryKey: ["videos"],
@@ -55,7 +69,13 @@ export default function Dashboard() {
           <p className="mt-2 text-muted-foreground">Describe your idea. AI writes the script, then makes the scenes and voiceover.</p>
           <form onSubmit={create} className="mt-6 grid gap-5 rounded-xl border border-border bg-card p-6">
             <div className="grid gap-2">
-              <Label htmlFor="topic">Video idea</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="topic">Video idea</Label>
+                <Button type="button" variant="outline" size="sm" onClick={suggest} disabled={suggesting || busy}>
+                  <Sparkles className="h-4 w-4" />
+                  {suggesting ? "Thinking…" : "Suggest an idea"}
+                </Button>
+              </div>
               <Textarea id="topic" rows={4} required minLength={3} placeholder="e.g. Why octopuses might be the smartest animals on Earth"
                 value={topic} onChange={(e) => setTopic(e.target.value)} />
             </div>

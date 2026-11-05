@@ -60,6 +60,9 @@ async function invoke<T>(name: string, body: unknown): Promise<T> {
 export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string; aspectRatio: string }) =>
   invoke<{ videoId: string }>("generate-script", input);
 
+export const suggestTopic = (hint?: string) =>
+  invoke<{ idea: string }>("suggest-topic", { hint });
+
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>
   invoke<{ path: string }>("scene-asset", { sceneId, kind });
 
