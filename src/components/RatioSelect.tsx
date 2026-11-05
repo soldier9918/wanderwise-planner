@@ -1,12 +1,17 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ASPECT_RATIOS, shapeOf } from "@/lib/aspectRatio";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { ASPECT_RATIOS, ratioOf, shapeOf } from "@/lib/aspectRatio";
 
 /** Format menu — each option is drawn in its own shape so the choice is obvious. */
 export default function RatioSelect({ value, onChange, triggerClassName }: { value: string; onChange: (v: string) => void; triggerClassName?: string }) {
+  const selected = ratioOf(value);
+  const sel = shapeOf(selected.value);
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className={triggerClassName}>
-        <SelectValue />
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 rounded-[2px] border border-current opacity-60" style={{ width: sel.w, height: sel.h }} />
+          <span className="truncate">{selected.short}</span>
+        </span>
       </SelectTrigger>
       <SelectContent>
         {ASPECT_RATIOS.map((r) => {
