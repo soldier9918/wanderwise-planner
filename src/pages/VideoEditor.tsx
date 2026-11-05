@@ -57,6 +57,16 @@ export default function VideoEditor() {
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekRef = useRef(0);
+  const [full, setFull] = useState(false);
+  const toggleFull = () => {
+    if (full) { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); setFull(false); }
+    else { document.documentElement.requestFullscreen?.().catch(() => {}); setFull(true); }
+  };
+  useEffect(() => {
+    const onChange = () => { if (!document.fullscreenElement) setFull(false); };
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
   const [dragSecs, setDragSecs] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   useEffect(() => { if (playing === null) setPaused(false); }, [playing]);
@@ -331,9 +341,10 @@ export default function VideoEditor() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div>
+            <div className={full ? "fixed inset-0 z-50 flex flex-col justify-center bg-background p-3" : ""}>
             <div
               className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-muted [container-type:inline-size]"
-              style={{ aspectRatio: ratio.css, maxWidth: previewMaxPx(ratio.value) }}
+              style={{ aspectRatio: ratio.css, maxWidth: full ? `min(100%, calc((100dvh - 7rem) * ${ratio.w / ratio.h}))` : previewMaxPx(ratio.value) }}
             >
               {currentImg ? (
                 <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className={`h-full w-full object-cover ${playing !== null ? "animate-kenburns" : ""}`} style={{ animationPlayState: paused ? "paused" : "running" }} />
@@ -374,8 +385,20 @@ export default function VideoEditor() {
                   onValueCommit={([v]) => { setDragSecs(null); seekTo(v); }}
                 />
                 <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
+                <Button size="sm" variant="outline" aria-label={full ? "Exit full screen" : "Full screen"} onClick={toggleFull}>{full ? "✕" : "⛶"}</Button>
               </div>
             )}
+            {full && (
+              <div className="mt-3 flex justify-center gap-3">
+                {playing === null ? (
+                  <Button onClick={() => setPlaying(0)}>▶ Preview</Button>
+                ) : (
+                  <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
+                )}
+                <Button variant="outline" onClick={toggleFull}>Exit full screen</Button>
+              </div>
+            )}
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {playing === null ? (
                 <Button onClick={() => setPlaying(0)} disabled={!scenes.length}>▶ Preview</Button>
