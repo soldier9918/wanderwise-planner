@@ -47,14 +47,22 @@ function wordCountAt(flat: string[], fraction: number): number {
  * disappear as the next one starts, so captions never stack up.
  */
 export function typedLine(lines: string[], fraction: number): string {
-  const words = lines.map((l) => l.split(/\s+/).filter(Boolean));
-  const flat = words.flat();
-  let n = wordCountAt(flat, fraction);
-  for (let i = 0; i < words.length; i++) {
-    if (n <= words[i].length || i === words.length - 1) {
-      return words[i].slice(0, Math.max(0, Math.min(n, words[i].length))).join(" ");
+  const clean = lines.map((l) => l.split(/\s+/).filter(Boolean).join(" ")).filter(Boolean);
+  if (!clean.length) return "";
+  const f = Math.min(Math.max(fraction / CAPTION_LEAD, 0), 1);
+  if (f <= 0) return "";
+  if (f >= 1) return clean[clean.length - 1];
+  // Letters type one at a time; punctuation adds a short pause, line breaks a beat.
+  const cost = (ch: string) => 1 + (/[,;:]/.test(ch) ? 2 : /[.!?]/.test(ch) ? 4 : 0);
+  const lineCost = clean.map((l) => [...l].reduce((a, ch) => a + cost(ch), 0) + 1);
+  let at = f * lineCost.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < clean.length; i++) {
+    if (at < lineCost[i] || i === clean.length - 1) {
+      let out = "";
+      for (const ch of clean[i]) { if (at <= 0) break; out += ch; at -= cost(ch); }
+      return out || clean[i][0];
     }
-    n -= words[i].length;
+    at -= lineCost[i];
   }
   return "";
 }

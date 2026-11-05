@@ -18,57 +18,25 @@ describe("wrapByChars", () => {
 });
 
 describe("typedLine", () => {
-  // 8 words across 4 lines: The octopus / has three / hearts and / blue blood
   const lines = ["The octopus", "has three", "hearts and", "blue blood"];
 
-  /** True when `shown` is a run of whole words from the start of `line`. */
-  const wholeWords = (line: string, shown: string) =>
-    shown === "" || line === shown || line.startsWith(`${shown} `);
-
   it("shows nothing before the narrator starts", () => expect(typedLine(lines, 0)).toBe(""));
-
   it("ends with the last line complete", () => expect(typedLine(lines, 1)).toBe("blue blood"));
-
-  it("shows the first word as soon as the narrator starts", () => {
-    expect(typedLine(lines, 0.01)).toBe("The");
+  it("types one letter at a time", () => {
+    expect(typedLine(lines, 0.01)).toBe("T");
+    expect(typedLine(["Hello world"], 0.25)).toBe("Hel");
   });
-
-  it("keeps ahead of the voiceover and finishes before the audio ends", () => {
-    expect(typedLine(lines, 1)).toBe("blue blood");
-    expect(typedLine(lines, 0.8)).toBe("blue");
-    expect(typedLine(lines, 0.5)).not.toBe("has");
-  });
-
-  it("gives longer words more time than short ones", () => {
-    // "a" is short, so "supercalifragilistic" appears soon after it starts.
-    expect(typedLine(["a supercalifragilistic b"], 0.1)).toBe("a supercalifragilistic");
-  });
-
-  it("never shows half a word", () => {
-    for (let i = 0; i <= 20; i++) {
-      const shown = typedLine(lines, i / 20);
-      expect(lines.some((l) => wholeWords(l, shown))).toBe(true);
+  it("only ever shows the start of one line", () => {
+    for (let i = 0; i <= 40; i++) {
+      const shown = typedLine(lines, i / 40);
+      expect(lines.some((l) => l.startsWith(shown))).toBe(true);
     }
   });
-
-  it("only ever shows one line", () => {
-    for (let i = 0; i <= 20; i++) {
-      const shown = typedLine(lines, i / 20);
-      expect(lines.some((l) => wholeWords(l, shown))).toBe(true);
-    }
-  });
-
   it("drops the finished line instead of stacking it up", () => {
     const two = ["Hello world", "goodbye moon"];
-    expect(typedLine(two, 0.01)).toBe("Hello");
-    expect(typedLine(two, 0.9)).toBe("goodbye moon");
-    expect(typedLine(two, 0.9).includes("Hello")).toBe(false);
+    expect(typedLine(two, 0.95)).toMatch(/^goodbye/);
   });
-
-  it("handles a single short line", () => expect(typedLine(["Hello world"], 0.2)).toBe("Hello"));
-
   it("handles no lines at all", () => expect(typedLine([], 0.5)).toBe(""));
-
   it("handles blank narration", () => expect(typedLine(["", "  "], 0.5)).toBe(""));
 });
 
