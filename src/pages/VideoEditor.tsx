@@ -337,6 +337,16 @@ export default function VideoEditor() {
         <div className="mt-3 max-w-3xl">
           <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
           <p className="mt-2 text-muted-foreground">{video.description}</p>
+          {Array.isArray(video.sources) && video.sources.length > 0 && (
+            <details className="mt-3 rounded-lg border border-border bg-card p-3 text-sm">
+              <summary className="cursor-pointer font-semibold">Sources ({video.sources.length}) — check facts before publishing</summary>
+              <ul className="mt-2 grid gap-1">
+                {(video.sources as { title?: string; url: string }[]).map((s) => (
+                  <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer" className="text-primary underline break-all">{s.title || s.url}</a></li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">

@@ -114,6 +114,7 @@ export type Database = {
           description: string | null
           id: string
           quality: string
+          sources: Json | null
           style: string
           target_seconds: number | null
           thumbnail_path: string | null
@@ -133,6 +134,7 @@ export type Database = {
           description?: string | null
           id?: string
           quality?: string
+          sources?: Json | null
           style?: string
           target_seconds?: number | null
           thumbnail_path?: string | null
@@ -152,6 +154,7 @@ export type Database = {
           description?: string | null
           id?: string
           quality?: string
+          sources?: Json | null
           style?: string
           target_seconds?: number | null
           thumbnail_path?: string | null

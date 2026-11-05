@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds } = await req.json();
+    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts } = await req.json();
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
@@ -41,6 +41,31 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
 
+    let research = "";
+    let sources: { title: string; url: string }[] | null = null;
+    if (useFacts === true) {
+      const fcKey = Deno.env.get("FIRECRAWL_API_KEY");
+      if (!fcKey) return json({ error: "Fact search is not set up." }, 500);
+      const res = await fetch("https://connector-gateway.lovable.dev/firecrawl/v2/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": fcKey },
+        body: JSON.stringify({ query: topic.trim().slice(0, 300), limit: 5, scrapeOptions: { formats: ["markdown"], onlyMainContent: true } }),
+      });
+      if (!res.ok) {
+        console.error("firecrawl search failed", res.status, await res.text());
+        return json({ error: "Couldn't search the web for facts right now. Try again, or turn off \"Use real facts\"." }, 502);
+      }
+      const body = await res.json();
+      const items = ((body?.data?.web ?? body?.data ?? []) as { url?: string; title?: string; description?: string; markdown?: string }[]).filter((r) => r.url);
+      if (!items.length) return json({ error: "No web sources found for this idea. Try rewording it." }, 422);
+      sources = items.map((r) => ({ title: (r.title ?? r.url!).slice(0, 200), url: r.url! }));
+      research = items.map((r, i) => `[Source ${i + 1}] ${r.title ?? ""} (${r.url})\n${(r.markdown || r.description || "").slice(0, 6000)}`).join("\n\n");
+    }
+
+    const factRules = research
+      ? ` FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
+      : "";
+
     const provider = createOpenAI({
       baseURL: `${GATEWAY_URL}/v1`,
       apiKey,
@@ -50,9 +75,9 @@ Deno.serve(async (req) => {
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        `You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never far off that. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.`,
+        `You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never far off that. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
       messages: [
-        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}` },
+        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${research ? `\n\nResearch sources:\n${research}` : ""}` },
       ],
       output: Output.object({ schema }),
       abortSignal: req.signal,
@@ -84,7 +109,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total })
+      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total, sources })
       .select("id")
       .single();
     if (vErr) throw vErr;

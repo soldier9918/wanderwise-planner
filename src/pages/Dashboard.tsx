@@ -9,6 +9,7 @@ import RatioSelect from "@/components/RatioSelect";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { STYLES, VOICES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [quality, setQuality] = useState<string>(DEFAULT_QUALITY);
   const [length, setLength] = useState("60");
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
+  const [useFacts, setUseFacts] = useState(false);
   const [busy, setBusy] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length) });
+      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);
@@ -120,6 +122,13 @@ export default function Dashboard() {
               </div>
               <Textarea id="topic" rows={4} required minLength={3} placeholder="e.g. Why octopuses might be the smartest animals on Earth"
                 value={topic} onChange={(e) => setTopic(e.target.value)} />
+              <label className="flex items-start gap-3 rounded-lg border border-border p-3">
+                <Switch checked={useFacts} onCheckedChange={setUseFacts} className="mt-0.5" />
+                <span className="text-sm">
+                  <span className="font-semibold">Use real facts</span>
+                  <span className="block text-muted-foreground">For real events: searches the web first and writes only from what it finds. Takes a little longer.</span>
+                </span>
+              </label>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="grid gap-2">
