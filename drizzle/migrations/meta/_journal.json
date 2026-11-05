@@ -36,6 +36,13 @@
       "when": 1793856432733,
       "tag": "0004_add_video_thumbnail_path",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793887518939,
+      "tag": "0005_video_target_seconds",
+      "breakpoints": true
     }
   ]
 }

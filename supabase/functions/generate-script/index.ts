@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p" } = await req.json();
+    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds } = await req.json();
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
     if (typeof topic !== "string" || topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(22, Math.max(3, Number(sceneCount) || 6));
 
+    const total = Math.min(600, Math.max(30, Math.round(Number(targetSeconds)) || 0)) || null;
+    const per = total ? Math.round(total / count) : 12;
+    const words = Math.max(5, Math.round(per * 2.6));
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
 
@@ -47,7 +50,7 @@ Deno.serve(async (req) => {
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        `You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration is 2-4 spoken sentences (about 10-15 seconds). Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.`,
+        `You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never far off that. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.`,
       messages: [
         { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}` },
       ],
@@ -81,7 +84,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio, quality: qual })
+      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total })
       .select("id")
       .single();
     if (vErr) throw vErr;

@@ -80,7 +80,7 @@ async function invoke<T>(name: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string; aspectRatio: string; quality?: string }) =>
+export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string; aspectRatio: string; quality?: string; targetSeconds?: number }) =>
   invoke<{ videoId: string }>("generate-script", input);
 
 export const suggestTopic = (hint?: string) =>

@@ -39,3 +39,25 @@ export function formatSeconds(total: number) {
   if (s < 60) return `${s}s`;
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
+
+/** Video lengths offered on the New video screen, in seconds. */
+export const VIDEO_LENGTHS = [30, 60, 120, 180, 240, 300, 420, 600] as const;
+export const MIN_SCENE_SECONDS = 5;
+export const MAX_SCENE_SECONDS = 90;
+
+/** Average seconds each scene should last to hit the chosen total. */
+export function secondsPerScene(totalSeconds: number, scenes: number) {
+  if (scenes <= 0) return 0;
+  return Math.round(totalSeconds / scenes);
+}
+
+/** Words of narration that fill roughly that many seconds. */
+export function wordsForSeconds(seconds: number) {
+  return Math.max(5, Math.round(seconds * WORDS_PER_SECOND));
+}
+
+/** A length works only if each scene lands between 5 and 90 seconds. */
+export function isLengthAllowed(totalSeconds: number, scenes: number) {
+  const per = totalSeconds / scenes;
+  return per >= MIN_SCENE_SECONDS && per <= MAX_SCENE_SECONDS;
+}

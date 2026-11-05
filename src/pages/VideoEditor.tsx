@@ -355,7 +355,7 @@ export default function VideoEditor() {
                 label="Scenes"
                 value={String(scenes.length)}
                 disabled={sceneBusy || busyAny}
-                options={sceneCountOptions(scenes.length).map((n) => ({ value: String(n), label: `${n} scenes (~${formatSeconds(n * 12)})` }))}
+                options={sceneCountOptions(scenes.length).map((n) => ({ value: String(n), label: `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
               <LookSelect

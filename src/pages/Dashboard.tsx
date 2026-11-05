@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { STYLES, VOICES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
+import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ export default function Dashboard() {
   const [caption, setCaption] = useState<string>("typewriter");
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
   const [quality, setQuality] = useState<string>(DEFAULT_QUALITY);
+  const [length, setLength] = useState("60");
+  const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [busy, setBusy] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
@@ -91,7 +94,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality });
+      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length) });
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);
@@ -141,7 +144,16 @@ export default function Dashboard() {
                 <Label>Scenes</Label>
                 <Select value={scenes} onValueChange={setScenes}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"].map((n) => <SelectItem key={n} value={n}>{n} scenes (~{Number(n) * 12}s)</SelectItem>)}</SelectContent>
+                  <SelectContent>{["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"].map((n) => <SelectItem key={n} value={n}>{n} scenes</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Video length</Label>
+                <Select value={length} onValueChange={setLength}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{VIDEO_LENGTHS.map((s) => (
+                    <SelectItem key={s} value={String(s)} disabled={!isLengthAllowed(s, Number(scenes))}>{s < 60 ? `${s} seconds` : `${s / 60} min`}</SelectItem>
+                  ))}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
@@ -159,7 +171,10 @@ export default function Dashboard() {
                 </Select>
               </div>
             </div>
-            <Button type="submit" size="lg" disabled={busy}>{busy ? "Writing your script…" : "Generate video"}</Button>
+            <p className="-mt-2 text-sm text-muted-foreground">
+              {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : "That length doesn't fit this many scenes — pick another length."}
+            </p>
+            <Button type="submit" size="lg" disabled={busy || !lengthOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
           </form>
         </section>
 

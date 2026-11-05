@@ -48,3 +48,19 @@ describe("formatSeconds", () => {
     expect(formatSeconds(75)).toBe("1:15");
   });
 });
+
+import { isLengthAllowed, secondsPerScene, wordsForSeconds } from "./durations";
+
+describe("video length", () => {
+  it("4 scenes over 2 minutes is 30 seconds a scene", () => {
+    expect(secondsPerScene(120, 4)).toBe(30);
+  });
+  it("30 seconds of narration is about 78 words", () => {
+    expect(wordsForSeconds(30)).toBe(78);
+  });
+  it("greys out scenes shorter than 5s or longer than 90s", () => {
+    expect(isLengthAllowed(30, 22)).toBe(false);
+    expect(isLengthAllowed(600, 4)).toBe(false);
+    expect(isLengthAllowed(120, 4)).toBe(true);
+  });
+});

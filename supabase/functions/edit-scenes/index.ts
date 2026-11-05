@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .select("id, title, topic, style, voice, aspect_ratio")
+      .select("id, title, topic, style, voice, aspect_ratio, target_seconds")
       .eq("id", videoId)
       .maybeSingle();
     if (vErr) throw vErr;
@@ -62,6 +62,8 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
 
+    const per = video.target_seconds && current ? Math.round(video.target_seconds / current) : 12;
+    const words = Math.max(5, Math.round(per * 2.6));
     const framing = ({
       "16:9": "wide 16:9 landscape",
       "9:16": "tall 9:16 vertical, phone-first with the subject centred",
@@ -81,7 +83,7 @@ Deno.serve(async (req) => {
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        `You are a YouTube scriptwriter continuing an existing faceless-channel script. Write engaging, punchy scenes that follow on from what has already been written. Each scene's narration is 2-4 spoken sentences (about 10-15 seconds). Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. Do not repeat anything already said. The final scene must end with a call to subscribe.`,
+        `You are a YouTube scriptwriter continuing an existing faceless-channel script. Write engaging, punchy scenes that follow on from what has already been written. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. Do not repeat anything already said. The final scene must end with a call to subscribe.`,
       messages: [
         {
           role: "user",

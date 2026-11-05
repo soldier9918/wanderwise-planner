@@ -115,6 +115,7 @@ export type Database = {
           id: string
           quality: string
           style: string
+          target_seconds: number | null
           thumbnail_path: string | null
           title: string
           topic: string
@@ -133,6 +134,7 @@ export type Database = {
           id?: string
           quality?: string
           style?: string
+          target_seconds?: number | null
           thumbnail_path?: string | null
           title?: string
           topic: string
@@ -151,6 +153,7 @@ export type Database = {
           id?: string
           quality?: string
           style?: string
+          target_seconds?: number | null
           thumbnail_path?: string | null
           title?: string
           topic?: string
