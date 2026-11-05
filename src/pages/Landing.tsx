@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/hooks/useAuth";
 
 const steps = [
@@ -55,7 +56,7 @@ export default function Landing() {
           </div>
         </section>
       </main>
-      <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">© {new Date().getFullYear()} Vydora</footer>
+      <SiteFooter />
     </div>
   );
 }

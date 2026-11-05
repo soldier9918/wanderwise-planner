@@ -9,7 +9,9 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import VideoEditor from "./pages/VideoEditor";
+import Legal from "./pages/Legal";
 import NotFound from "./pages/NotFound";
+import { LEGAL_DOCS } from "@/lib/legal";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,9 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
+            {LEGAL_DOCS.map((doc) => (
+              <Route key={doc.slug} path={`/${doc.slug}`} element={<Legal slug={doc.slug} />} />
+            ))}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
