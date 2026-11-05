@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
+import { typedText } from "@/lib/typewriter";
 
 export default function VideoEditor() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +18,7 @@ export default function VideoEditor() {
   const qc = useQueryClient();
   const [working, setWorking] = useState<Record<string, boolean>>({});
   const [playing, setPlaying] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const autoStarted = useRef(false);
@@ -77,16 +79,27 @@ export default function VideoEditor() {
     const scene = data.scenes[playing];
     const audio = audioRef.current;
     if (!scene || !audio) { setPlaying(null); return; }
+    setProgress(0);
+    let raf = 0;
+    const started = performance.now();
+    const tick = () => {
+      const a = audioRef.current;
+      if (a && a.duration && isFinite(a.duration) && scene.audio_path) setProgress(a.currentTime / a.duration);
+      else if (!scene.audio_path) setProgress((performance.now() - started) / 4000);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const cleanupRaf = () => cancelAnimationFrame(raf);
     const next = () => setPlaying((p) => (p !== null && p + 1 < data.scenes.length ? p + 1 : null));
     const url = scene.audio_path ? data.urls[scene.audio_path] : null;
     if (url) {
       audio.src = url;
       audio.onended = next;
       audio.play().catch(() => setPlaying(null));
-      return () => { audio.onended = null; };
+      return () => { audio.onended = null; cleanupRaf(); };
     }
     const t = setTimeout(next, 4000);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); cleanupRaf(); };
   }, [playing, data]);
 
   const saveNarration = async (scene: Scene, narration: string) => {
@@ -158,7 +171,10 @@ export default function VideoEditor() {
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
               {playing !== null && current && (
-                <p className="absolute inset-x-6 bottom-6 rounded-md bg-background/70 p-3 text-center font-semibold backdrop-blur">{current.narration}</p>
+                <p className="absolute inset-x-6 bottom-6 min-h-[3rem] rounded-md bg-background/70 p-3 text-center font-mono font-semibold backdrop-blur">
+                  {typedText(current.narration, progress)}
+                  <span className="ml-0.5 inline-block w-2 animate-pulse bg-foreground">&nbsp;</span>
+                </p>
               )}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">

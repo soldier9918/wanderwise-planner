@@ -1,3 +1,5 @@
+import { typedText } from "./typewriter";
+
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
 function loadImage(url: string) {
@@ -76,8 +78,11 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         ctx.fillRect(0, 0, W, H);
         ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
         if (captions) {
-          ctx.font = "600 34px Manrope, sans-serif";
-          const lines = wrap(ctx, caption, W - 200);
+          ctx.font = "600 34px 'Courier New', monospace";
+          // Typewriter: reveal characters in step with the voiceover.
+          const speak = buffer ? buffer.duration : dur;
+          const lines = wrap(ctx, typedText(caption, t / speak), W - 200);
+          if (!lines.length) lines.push("");
           const boxH = lines.length * 46 + 30;
           ctx.fillStyle = "rgba(0,0,0,0.55)";
           ctx.fillRect(80, H - boxH - 40, W - 160, boxH);
