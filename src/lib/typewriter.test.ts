@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { typedLine, wrapByChars } from "./typewriter";
+import { typedLine, typedWords, wrapByChars } from "./typewriter";
 
 describe("wrapByChars", () => {
   it("keeps every line within the character limit", () => {
@@ -70,4 +70,26 @@ describe("typedLine", () => {
   it("handles no lines at all", () => expect(typedLine([], 0.5)).toBe(""));
 
   it("handles blank narration", () => expect(typedLine(["", "  "], 0.5)).toBe(""));
+});
+
+describe("typedWords", () => {
+  const lines = ["The octopus", "has three", "hearts and", "blue blood"];
+
+  it("shows nothing before the narrator starts", () => expect(typedWords(lines, 0)).toEqual([]));
+
+  it("piles words up instead of dropping finished lines", () => {
+    const shown = typedWords(lines, 0.9);
+    expect(shown.length).toBeGreaterThan(1);
+    expect(shown.join(" ")).toContain("The");
+  });
+
+  it("ends with every line complete", () => expect(typedWords(lines, 1)).toEqual(lines));
+
+  it("never shows half a word", () => {
+    for (let i = 0; i <= 20; i++) {
+      const flat = lines.join(" ").split(" ");
+      const shown = typedWords(lines, i / 20).join(" ").split(" ").filter(Boolean);
+      shown.forEach((w) => expect(flat).toContain(w));
+    }
+  });
 });

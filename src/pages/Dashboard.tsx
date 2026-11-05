@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STYLES, VOICES, generateScript } from "@/lib/videoApi";
+import { STYLES, VOICES, CAPTION_STYLES, generateScript } from "@/lib/videoApi";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [style, setStyle] = useState<string>("Cinematic");
   const [voice, setVoice] = useState<string>("Kore");
   const [scenes, setScenes] = useState("6");
+  const [caption, setCaption] = useState<string>("typewriter");
   const [busy, setBusy] = useState(false);
 
   const { data: videos, isLoading } = useQuery({
@@ -31,7 +32,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes) });
+      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption });
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);
@@ -52,7 +53,7 @@ export default function Dashboard() {
               <Textarea id="topic" rows={4} required minLength={3} placeholder="e.g. Why octopuses might be the smartest animals on Earth"
                 value={topic} onChange={(e) => setTopic(e.target.value)} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="grid gap-2">
                 <Label>Visual style</Label>
                 <Select value={style} onValueChange={setStyle}>
@@ -72,6 +73,13 @@ export default function Dashboard() {
                 <Select value={scenes} onValueChange={setScenes}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"].map((n) => <SelectItem key={n} value={n}>{n} scenes (~{Number(n) * 12}s)</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Captions</Label>
+                <Select value={caption} onValueChange={setCaption}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CAPTION_STYLES.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

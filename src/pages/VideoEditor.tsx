@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
-import { typedLine, wrapByChars } from "@/lib/typewriter";
+import { typedLine, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
 
 export default function VideoEditor() {
@@ -171,6 +171,7 @@ export default function VideoEditor() {
       const blob = await exportVideo(
         data.scenes.map((s) => ({ imageUrl: data.urls[s.image_path!], audioUrl: s.audio_path ? data.urls[s.audio_path] : null, caption: s.narration })),
         setExportPct,
+        ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -194,6 +195,7 @@ export default function VideoEditor() {
   if (!data?.video) return <div className="grid min-h-screen place-items-center">Video not found. <Link to="/dashboard" className="text-primary">Back</Link></div>;
 
   const { video, scenes, urls } = data;
+  const captionStyle = (video.caption_style ?? "typewriter") as CaptionStyle;
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
   const current = playing !== null ? scenes[playing] : scenes[0];
@@ -228,9 +230,13 @@ export default function VideoEditor() {
                   {playing !== null ? `${(secOf(current) * progress).toFixed(1)} / ${secOf(current)}s` : `${secOf(current)}s`}
                 </span>
               )}
-              {playing !== null && current && (
-                <p ref={captionRef} className="absolute inset-x-6 bottom-6 min-h-[2.5rem] text-center font-mono text-lg font-bold leading-snug drop-shadow-[0_2px_4px_hsl(var(--background))]">
-                  {typedLine(wrapByChars(current.narration, captionChars), progress)}
+              {playing !== null && current && captionStyle !== "none" && (
+                <p ref={captionRef} className="absolute inset-x-6 bottom-6 min-h-[2.5rem] whitespace-pre-line text-center font-mono text-lg font-bold leading-snug drop-shadow-[0_2px_4px_hsl(var(--background))]">
+                  {captionStyle === "full"
+                    ? current.narration
+                    : captionStyle === "pop"
+                      ? typedWords(wrapByChars(current.narration, captionChars), progress).join("\n")
+                      : typedLine(wrapByChars(current.narration, captionChars), progress)}
                 </p>
               )}
             </div>

@@ -1,5 +1,5 @@
 import fixWebmDuration from "fix-webm-duration";
-import { typedLine } from "./typewriter";
+import { typedLine, typedWords, type CaptionStyle } from "./typewriter";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -26,7 +26,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captions = true): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter"): Promise<Blob> {
   const W = 1280, H = 720;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
@@ -80,20 +80,31 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, W, H);
         ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
-        if (captions) {
+        if (captionStyle !== "none") {
           ctx.font = "bold 60px 'Courier New', monospace";
-          // Typewriter: one line at a time, in step with the voiceover.
           const speak = buffer ? buffer.duration : dur;
-          const line = typedLine(wrap(ctx, caption, W - 200), t / speak);
-          ctx.fillStyle = "#fff";
-          ctx.shadowColor = "rgba(0,0,0,0.9)";
-          ctx.shadowBlur = 8;
-          ctx.shadowOffsetY = 2;
-          ctx.textAlign = "center";
-          ctx.fillText(line, W / 2, H - 70);
-          ctx.shadowColor = "transparent";
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetY = 0;
+          const lines = wrap(ctx, caption, W - 200);
+          let draw: string[] = [];
+          if (captionStyle === "full") draw = lines;
+          else if (captionStyle === "pop") draw = typedWords(lines, t / speak);
+          else {
+            // Typewriter: one line at a time, in step with the voiceover.
+            const line = typedLine(lines, t / speak);
+            if (line) draw = [line];
+          }
+          if (draw.length) {
+            ctx.fillStyle = "#fff";
+            ctx.shadowColor = "rgba(0,0,0,0.9)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 2;
+            ctx.textAlign = "center";
+            const lineHeight = 72;
+            const y0 = H - 70 - (draw.length - 1) * lineHeight;
+            draw.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * lineHeight));
+            ctx.shadowColor = "transparent";
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+          }
         }
         onProgress(Math.min((elapsedBefore + t) / total, 1));
         // Timers keep going even when the browser pauses animations (e.g. screen dims).

@@ -25,6 +25,12 @@ export const VOICES = [
   { id: "Achernar", label: "Achernar — Male, soft" },
   { id: "Schedar", label: "Schedar — Male, even" },
 ] as const;
+export const CAPTION_STYLES = [
+  { id: "typewriter", label: "Typewriter — words appear one by one" },
+  { id: "pop", label: "Word pop — words pile up on screen" },
+  { id: "full", label: "Full text — the whole caption at once" },
+  { id: "none", label: "None — no captions" },
+] as const;
 
 export type Scene = {
   id: string;
@@ -50,7 +56,7 @@ async function invoke<T>(name: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number }) =>
+export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string }) =>
   invoke<{ videoId: string }>("generate-script", input);
 
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>

@@ -1,0 +1,1 @@
+ALTER TABLE public.videos ADD COLUMN caption_style text NOT NULL DEFAULT 'typewriter';
