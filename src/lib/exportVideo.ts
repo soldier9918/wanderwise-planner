@@ -81,7 +81,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         ctx.fillRect(0, 0, W, H);
         ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
         if (captions) {
-          ctx.font = "600 34px 'Courier New', monospace";
+          ctx.font = "bold 60px 'Courier New', monospace";
           // Typewriter: one line at a time, in step with the voiceover.
           const speak = buffer ? buffer.duration : dur;
           const line = typedLine(wrap(ctx, caption, W - 200), t / speak);
@@ -90,7 +90,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
           ctx.shadowBlur = 8;
           ctx.shadowOffsetY = 2;
           ctx.textAlign = "center";
-          ctx.fillText(line, W / 2, H - 60);
+          ctx.fillText(line, W / 2, H - 70);
           ctx.shadowColor = "transparent";
           ctx.shadowBlur = 0;
           ctx.shadowOffsetY = 0;
