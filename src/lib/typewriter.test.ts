@@ -29,14 +29,18 @@ describe("typedLine", () => {
 
   it("ends with the last line complete", () => expect(typedLine(lines, 1)).toBe("blue blood"));
 
-  it("reveals one whole word at a time", () => {
-    expect(typedLine(lines, 0.125)).toBe("The");
-    expect(typedLine(lines, 0.25)).toBe("The octopus");
-    expect(typedLine(lines, 0.375)).toBe("has");
-    expect(typedLine(lines, 0.5)).toBe("has three");
-    expect(typedLine(lines, 0.625)).toBe("hearts");
-    expect(typedLine(lines, 0.75)).toBe("hearts and");
-    expect(typedLine(lines, 0.875)).toBe("blue");
+  it("shows the first word as soon as the narrator starts", () => {
+    expect(typedLine(lines, 0.01)).toBe("The");
+  });
+
+  it("keeps ahead of the voiceover and finishes before the audio ends", () => {
+    expect(typedLine(lines, 0.85)).toBe("blue blood");
+    expect(typedLine(lines, 0.5)).not.toBe("has");
+  });
+
+  it("gives longer words more time than short ones", () => {
+    // "a" is short, so "supercalifragilistic" appears soon after it starts.
+    expect(typedLine(["a supercalifragilistic b"], 0.1)).toBe("a supercalifragilistic");
   });
 
   it("never shows half a word", () => {
@@ -55,14 +59,12 @@ describe("typedLine", () => {
 
   it("drops the finished line instead of stacking it up", () => {
     const two = ["Hello world", "goodbye moon"];
-    expect(typedLine(two, 0.25)).toBe("Hello");
-    expect(typedLine(two, 0.5)).toBe("Hello world");
-    expect(typedLine(two, 0.75)).toBe("goodbye");
-    expect(typedLine(two, 0.9)).toBe("goodbye moon");
-    expect(typedLine(two, 0.9).includes("Hello")).toBe(false);
+    expect(typedLine(two, 0.01)).toBe("Hello");
+    expect(typedLine(two, 0.8)).toBe("goodbye moon");
+    expect(typedLine(two, 0.8).includes("Hello")).toBe(false);
   });
 
-  it("handles a single short line", () => expect(typedLine(["Hello world"], 0.5)).toBe("Hello"));
+  it("handles a single short line", () => expect(typedLine(["Hello world"], 0.2)).toBe("Hello"));
 
   it("handles no lines at all", () => expect(typedLine([], 0.5)).toBe(""));
 
