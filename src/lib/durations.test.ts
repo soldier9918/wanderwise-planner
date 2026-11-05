@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimateSeconds, formatSeconds, sceneSeconds } from "./durations";
+import { elapsedSeconds, estimateSeconds, formatSeconds, sceneSeconds } from "./durations";
 
 describe("sceneSeconds", () => {
   it("is the voiceover length plus a short breath", () => {
@@ -15,6 +15,24 @@ describe("sceneSeconds", () => {
 
   it("is 4 seconds when there is no narration at all", () => {
     expect(sceneSeconds(null, "   ")).toBe(4);
+  });
+});
+
+describe("elapsedSeconds", () => {
+  it("adds up every earlier scene plus the part of the current one", () => {
+    expect(elapsedSeconds([10, 10, 10], 0, 0.5)).toBe(5);
+    expect(elapsedSeconds([10, 10, 10], 2, 0.5)).toBe(25);
+  });
+
+  it("is the full video length at the end of the last scene", () => {
+    expect(elapsedSeconds([8, 12], 1, 1)).toBe(20);
+  });
+
+  it("stays inside the video for odd inputs", () => {
+    expect(elapsedSeconds([], 0, 0.5)).toBe(0);
+    expect(elapsedSeconds([6], -1, 0.5)).toBe(0);
+    expect(elapsedSeconds([6], 9, 0.5)).toBe(3);
+    expect(elapsedSeconds([6], 0, 3)).toBe(6);
   });
 });
 

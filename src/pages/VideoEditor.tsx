@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
-import { formatSeconds, sceneSeconds } from "@/lib/durations";
+import { elapsedSeconds, formatSeconds, sceneSeconds } from "@/lib/durations";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
@@ -253,7 +253,9 @@ export default function VideoEditor() {
   const current = playing !== null ? scenes[playing] : scenes[0];
   const currentImg = current?.image_path ? urls[current.image_path] : null;
   const secOf = (s: Scene) => sceneSeconds(s.audio_path ? audioSecs[s.id] : null, s.narration);
-  const totalSecs = scenes.reduce((a, s) => a + secOf(s), 0);
+  const sceneSecs = scenes.map(secOf);
+  const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
+  const elapsedSecs = playing !== null ? elapsedSeconds(sceneSecs, playing, progress) : 0;
 
   return (
     <div className="min-h-screen">
@@ -279,7 +281,7 @@ export default function VideoEditor() {
               )}
               {current && (
                 <span className="absolute right-3 top-3 rounded-md bg-background/80 px-2 py-1 text-xs font-semibold tabular-nums text-foreground">
-                  {playing !== null ? `${(secOf(current) * progress).toFixed(1)} / ${secOf(current)}s` : `${secOf(current)}s`}
+                  {playing !== null ? `${formatSeconds(elapsedSecs)} / ${formatSeconds(totalSecs)}` : formatSeconds(totalSecs)}
                 </span>
               )}
               {playing !== null && current && captionStyle !== "none" && (
