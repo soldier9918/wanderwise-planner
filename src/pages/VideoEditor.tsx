@@ -57,6 +57,7 @@ export default function VideoEditor() {
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekRef = useRef(0);
+  const [dragSecs, setDragSecs] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   useEffect(() => { if (playing === null) setPaused(false); }, [playing]);
   const togglePause = () => {
@@ -160,8 +161,13 @@ export default function VideoEditor() {
     setProgress(startFrac);
     let raf = 0;
     const started = performance.now() - startFrac * 4000;
+    let pending = startFrac > 0 && !!scene.audio_path;
     const tick = () => {
       const a = audioRef.current;
+      if (pending && a && a.duration && isFinite(a.duration)) {
+        a.currentTime = startFrac * a.duration;
+        pending = false;
+      } else if (pending) { raf = requestAnimationFrame(tick); return; }
       if (a && a.duration && isFinite(a.duration) && scene.audio_path) setProgress(a.currentTime / a.duration);
       else if (!scene.audio_path) setProgress((performance.now() - started) / 4000);
       raf = requestAnimationFrame(tick);
@@ -172,9 +178,6 @@ export default function VideoEditor() {
     const url = scene.audio_path ? data.urls[scene.audio_path] : null;
     if (url) {
       audio.src = url;
-      audio.onloadedmetadata = () => {
-        if (startFrac && isFinite(audio.duration)) audio.currentTime = startFrac * audio.duration;
-      };
       audio.onended = next;
       audio.play().catch(() => setPlaying(null));
       return () => { audio.onended = null; cleanupRaf(); };
@@ -366,8 +369,9 @@ export default function VideoEditor() {
                   min={0}
                   max={Math.max(1, totalSecs)}
                   step={0.5}
-                  value={[elapsedSecs]}
-                  onValueChange={([v]) => seekTo(v)}
+                  value={[dragSecs ?? elapsedSecs]}
+                  onValueChange={([v]) => setDragSecs(v)}
+                  onValueCommit={([v]) => { setDragSecs(null); seekTo(v); }}
                 />
                 <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
               </div>
