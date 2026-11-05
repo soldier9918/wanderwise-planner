@@ -2,6 +2,7 @@ import fixWebmDuration from "fix-webm-duration";
 import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
 import { captionWrapPx, ratioOf } from "./aspectRatio";
+import { qualityOf } from "./quality";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -28,11 +29,13 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9"): Promise<Blob> {
-  const px = sizePx(look.size ?? "medium");
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p"): Promise<Blob> {
+  const q = qualityOf(quality);
+  const px = Math.round(sizePx(look.size ?? "medium") * q.scale);
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
   const color = safeColor(look.color ?? "#ffffff");
-  const { w: W, h: H } = ratioOf(aspect);
+  const { w, h } = ratioOf(aspect);
+  const W = Math.round(w * q.scale), H = Math.round(h * q.scale);
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
@@ -55,7 +58,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
 
   const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
   const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
-  const recorder = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 5_000_000 } : undefined);
+  const recorder = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: q.bitrate } : undefined);
   const chunks: Blob[] = [];
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise<Blob>((r) => (recorder.onstop = () => r(new Blob(chunks, { type: "video/webm" }))));
@@ -88,7 +91,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         if (captionStyle !== "none") {
           ctx.font = fontStr;
           const speak = buffer ? buffer.duration : dur;
-          const lines = wrap(ctx, caption, captionWrapPx(aspect));
+          const lines = wrap(ctx, caption, Math.round(captionWrapPx(aspect) * q.scale));
           let draw: string[] = [];
           if (captionStyle === "full") draw = lines;
           else if (captionStyle === "pop") draw = typedWords(lines, t / speak);

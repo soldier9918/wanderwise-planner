@@ -21,7 +21,8 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9" } = await req.json();
+    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p" } = await req.json();
+    const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
     const framing = ({
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio })
+      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio, quality: qual })
       .select("id")
       .single();
     if (vErr) throw vErr;

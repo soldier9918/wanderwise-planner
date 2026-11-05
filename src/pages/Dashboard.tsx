@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { STYLES, VOICES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
+import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [scenes, setScenes] = useState("6");
   const [caption, setCaption] = useState<string>("typewriter");
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
+  const [quality, setQuality] = useState<string>(DEFAULT_QUALITY);
   const [busy, setBusy] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio });
+      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality });
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);
@@ -140,6 +142,13 @@ export default function Dashboard() {
                 <Select value={scenes} onValueChange={setScenes}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"].map((n) => <SelectItem key={n} value={n}>{n} scenes (~{Number(n) * 12}s)</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Quality</Label>
+                <Select value={quality} onValueChange={setQuality}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{QUALITIES.map((q) => <SelectItem key={q.value} value={q.value}>{q.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">

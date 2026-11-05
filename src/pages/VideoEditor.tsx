@@ -13,6 +13,7 @@ import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
+import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -186,6 +187,7 @@ export default function VideoEditor() {
         ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
         { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
         data.video?.aspect_ratio ?? "16:9",
+        data.video?.quality ?? "720p",
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -241,7 +243,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -317,6 +319,7 @@ export default function VideoEditor() {
                 Format
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
+              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES} onChange={(v) => saveLook({ quality: v })} />
             </div>
             <div className="mt-4 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
