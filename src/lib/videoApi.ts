@@ -2,11 +2,28 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const STYLES = ["Documentary", "Cinematic", "Anime", "3D render", "Watercolor", "Retro comic", "Minimal flat"] as const;
 export const VOICES = [
-  { id: "Kore", label: "Kore — firm, clear" },
-  { id: "Puck", label: "Puck — upbeat" },
-  { id: "Charon", label: "Charon — deep, informative" },
-  { id: "Aoede", label: "Aoede — breezy" },
-  { id: "Fenrir", label: "Fenrir — excitable" },
+  { id: "Kore", label: "Kore — Female, firm and clear" },
+  { id: "Aoede", label: "Aoede — Female, breezy" },
+  { id: "Leda", label: "Leda — Female, youthful" },
+  { id: "Callirrhoe", label: "Callirrhoe — Female, easy-going" },
+  { id: "Autonoe", label: "Autonoe — Female, bright" },
+  { id: "Despina", label: "Despina — Female, smooth" },
+  { id: "Erinome", label: "Erinome — Female, clear" },
+  { id: "Laomedeia", label: "Laomedeia — Female, upbeat" },
+  { id: "Sulafat", label: "Sulafat — Female, warm" },
+  { id: "Vindemiatrix", label: "Vindemiatrix — Female, gentle" },
+  { id: "Puck", label: "Puck — Male, upbeat" },
+  { id: "Charon", label: "Charon — Male, deep and informative" },
+  { id: "Fenrir", label: "Fenrir — Male, excitable" },
+  { id: "Orus", label: "Orus — Male, firm" },
+  { id: "Enceladus", label: "Enceladus — Male, breathy" },
+  { id: "Iapetus", label: "Iapetus — Male, clear" },
+  { id: "Umbriel", label: "Umbriel — Male, easy-going" },
+  { id: "Algieba", label: "Algieba — Male, smooth" },
+  { id: "Algenib", label: "Algenib — Male, gravelly" },
+  { id: "Rasalgethi", label: "Rasalgethi — Male, informative" },
+  { id: "Achernar", label: "Achernar — Male, soft" },
+  { id: "Schedar", label: "Schedar — Male, even" },
 ] as const;
 
 export type Scene = {
