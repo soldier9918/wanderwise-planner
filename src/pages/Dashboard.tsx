@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImagePlus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STYLES, VOICES, CAPTION_STYLES, generateScript, suggestTopic, signedUrls } from "@/lib/videoApi";
+import { STYLES, VOICES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 
 export default function Dashboard() {
@@ -23,6 +23,21 @@ export default function Dashboard() {
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
   const [busy, setBusy] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  const [thumbBusy, setThumbBusy] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const makeThumbnail = async (videoId: string) => {
+    setThumbBusy(videoId);
+    try {
+      await generateThumbnail(videoId);
+      await queryClient.invalidateQueries({ queryKey: ["videos"] });
+      toast.success("Thumbnail ready!");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setThumbBusy(null);
+    }
+  };
 
   const suggest = async () => {
     setSuggesting(true);
@@ -41,7 +56,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("videos")
-        .select("id, title, topic, style, aspect_ratio, created_at")
+        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       type VideoRow = (typeof data)[number] & { thumb: string | null };
@@ -53,11 +68,18 @@ export default function Dashboard() {
         .select("video_id, image_path")
         .in("video_id", data.map((v) => v.id))
         .eq("position", 0);
-      const paths = (scenes ?? []).map((s) => s.image_path).filter((p): p is string => !!p);
+      const paths = [
+        ...(scenes ?? []).map((s) => s.image_path),
+        ...data.map((v) => v.thumbnail_path),
+      ].filter((p): p is string => !!p);
       const urls = await signedUrls(paths);
       const thumbByVideo: Record<string, string> = {};
       (scenes ?? []).forEach((s) => {
         if (s.image_path && urls[s.image_path]) thumbByVideo[s.video_id] = urls[s.image_path];
+      });
+      // A generated thumbnail wins over the scene 1 image.
+      data.forEach((v) => {
+        if (v.thumbnail_path && urls[v.thumbnail_path]) thumbByVideo[v.id] = urls[v.thumbnail_path];
       });
       return data.map((v): VideoRow => ({ ...v, thumb: thumbByVideo[v.id] ?? null }));
     },
@@ -148,6 +170,17 @@ export default function Dashboard() {
                   <p className="font-semibold group-hover:text-primary">{v.title}</p>
                   <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{v.topic}</p>
                   <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    disabled={thumbBusy === v.id}
+                    onClick={(e) => { e.preventDefault(); makeThumbnail(v.id); }}
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    {thumbBusy === v.id ? "Creating…" : v.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
+                  </Button>
                 </div>
               </Link>
             ))}

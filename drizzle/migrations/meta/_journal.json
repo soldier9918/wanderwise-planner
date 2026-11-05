@@ -29,6 +29,13 @@
       "when": 1793855301937,
       "tag": "0003_add_aspect_ratio_to_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793856432733,
+      "tag": "0004_add_video_thumbnail_path",
+      "breakpoints": true
     }
   ]
 }

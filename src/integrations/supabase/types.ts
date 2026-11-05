@@ -114,6 +114,7 @@ export type Database = {
           description: string | null
           id: string
           style: string
+          thumbnail_path: string | null
           title: string
           topic: string
           updated_at: string
@@ -130,6 +131,7 @@ export type Database = {
           description?: string | null
           id?: string
           style?: string
+          thumbnail_path?: string | null
           title?: string
           topic: string
           updated_at?: string
@@ -146,6 +148,7 @@ export type Database = {
           description?: string | null
           id?: string
           style?: string
+          thumbnail_path?: string | null
           title?: string
           topic?: string
           updated_at?: string
