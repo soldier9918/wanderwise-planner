@@ -57,6 +57,14 @@ export default function VideoEditor() {
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekRef = useRef(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => { if (playing === null) setPaused(false); }, [playing]);
+  const togglePause = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (paused) { a.play().catch(() => {}); setPaused(false); }
+    else { a.pause(); setPaused(true); }
+  };
   const autoStarted = useRef(false);
 
   const { data, isLoading } = useQuery({
@@ -294,6 +302,7 @@ export default function VideoEditor() {
   const elapsedSecs = playing !== null ? elapsedSeconds(sceneSecs, playing, progress) : 0;
   const seekTo = (secs: number) => {
     if (!scenes.length) return;
+    if (paused) { audioRef.current?.play().catch(() => {}); setPaused(false); }
     const { index, progress: frac } = locateTime(sceneSecs, secs);
     const a = audioRef.current;
     if (index === playing && a && scenes[index].audio_path && isFinite(a.duration)) {
@@ -324,7 +333,7 @@ export default function VideoEditor() {
               style={{ aspectRatio: ratio.css, maxWidth: previewMaxPx(ratio.value) }}
             >
               {currentImg ? (
-                <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className={`h-full w-full object-cover ${playing !== null ? "animate-kenburns" : ""}`} />
+                <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className={`h-full w-full object-cover ${playing !== null ? "animate-kenburns" : ""}`} style={{ animationPlayState: paused ? "paused" : "running" }} />
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
@@ -367,7 +376,10 @@ export default function VideoEditor() {
               {playing === null ? (
                 <Button onClick={() => setPlaying(0)} disabled={!scenes.length}>▶ Preview</Button>
               ) : (
-                <Button variant="outline" onClick={() => { audioRef.current?.pause(); setPlaying(null); }}>■ Stop</Button>
+                <>
+                  <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
+                  <Button variant="outline" onClick={() => { audioRef.current?.pause(); setPlaying(null); }}>■ Stop</Button>
+                </>
               )}
               <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
