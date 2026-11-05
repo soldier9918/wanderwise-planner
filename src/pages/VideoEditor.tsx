@@ -171,7 +171,7 @@ export default function VideoEditor() {
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
               {playing !== null && current && (
-                <p className="absolute inset-x-6 bottom-6 min-h-[3rem] rounded-md bg-background/70 p-3 text-center font-mono font-semibold backdrop-blur">
+                <p className="absolute inset-x-6 bottom-6 min-h-[3rem] p-3 text-center font-mono text-lg font-bold drop-shadow-[0_2px_4px_hsl(var(--background))]">
                   {typedText(current.narration, progress)}
                   <span className="ml-0.5 inline-block w-2 animate-pulse bg-foreground">&nbsp;</span>
                 </p>

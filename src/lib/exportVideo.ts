@@ -84,11 +84,15 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
           const lines = wrap(ctx, typedText(caption, t / speak), W - 200);
           if (!lines.length) lines.push("");
           const boxH = lines.length * 46 + 30;
-          ctx.fillStyle = "rgba(0,0,0,0.55)";
-          ctx.fillRect(80, H - boxH - 40, W - 160, boxH);
           ctx.fillStyle = "#fff";
+          ctx.shadowColor = "rgba(0,0,0,0.9)";
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetY = 2;
           ctx.textAlign = "center";
           lines.forEach((l, j) => ctx.fillText(l, W / 2, H - boxH - 40 + 50 + j * 46));
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
         }
         onProgress(Math.min((elapsedBefore + t) / total, 1));
         if (t < dur) requestAnimationFrame(frame); else resolve();
