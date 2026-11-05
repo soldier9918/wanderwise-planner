@@ -7,7 +7,7 @@ import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
@@ -48,6 +48,7 @@ export default function VideoEditor() {
   const [playing, setPlaying] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
+  const [thumbBusy, setThumbBusy] = useState(false);
   // Measured length of each voiceover clip, keyed by scene id.
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -61,7 +62,10 @@ export default function VideoEditor() {
         supabase.from("video_scenes").select("*").eq("video_id", id!).order("position"),
       ]);
       if (e1 || e2) throw e1 ?? e2;
-      const paths = (scenes ?? []).flatMap((s) => [s.image_path, s.audio_path]).filter(Boolean) as string[];
+      const paths = [
+        ...(scenes ?? []).flatMap((s) => [s.image_path, s.audio_path]),
+        video?.thumbnail_path,
+      ].filter(Boolean) as string[];
       const urls = await signedUrls(paths);
       return { video, scenes: (scenes ?? []) as Scene[], urls };
     },
@@ -195,6 +199,33 @@ export default function VideoEditor() {
     }
   };
 
+  const makeThumbnail = async () => {
+    setThumbBusy(true);
+    try {
+      await generateThumbnail(id!);
+      await qc.invalidateQueries({ queryKey: ["video", id] });
+      toast.success("Thumbnail ready!");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setThumbBusy(false);
+    }
+  };
+
+  const downloadThumbnail = async () => {
+    const url = data?.video?.thumbnail_path ? data.urls[data.video.thumbnail_path] : null;
+    if (!url) return;
+    try {
+      const blob = await (await fetch(url)).blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(data?.video?.title ?? "thumbnail").replace(/[^\w\s-]/g, "").trim() || "thumbnail"}-thumbnail.png`;
+      a.click();
+    } catch {
+      toast.error("Couldn't download the thumbnail.");
+    }
+  };
+
   const remove = async () => {
     if (!confirm("Delete this video?")) return;
     await supabase.from("videos").delete().eq("id", id!);
@@ -289,6 +320,22 @@ export default function VideoEditor() {
                 Format
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
+            </div>
+            <div className="mt-4 rounded-xl border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
+              {video.thumbnail_path && urls[video.thumbnail_path] ? (
+                <img src={urls[video.thumbnail_path]} alt="Video thumbnail" className="mt-2 w-full rounded-lg border border-border" />
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">No thumbnail yet — AI can make one from your title.</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={makeThumbnail} disabled={thumbBusy}>
+                  {thumbBusy ? "Creating…" : video.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
+                </Button>
+                {video.thumbnail_path && urls[video.thumbnail_path] && (
+                  <Button size="sm" variant="secondary" onClick={downloadThumbnail}>Download thumbnail</Button>
+                )}
+              </div>
             </div>
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>
