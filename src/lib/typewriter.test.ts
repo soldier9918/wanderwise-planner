@@ -34,7 +34,8 @@ describe("typedLine", () => {
   });
 
   it("keeps ahead of the voiceover and finishes before the audio ends", () => {
-    expect(typedLine(lines, 0.85)).toBe("blue blood");
+    expect(typedLine(lines, 1)).toBe("blue blood");
+    expect(typedLine(lines, 0.8)).toBe("blue");
     expect(typedLine(lines, 0.5)).not.toBe("has");
   });
 
@@ -60,8 +61,8 @@ describe("typedLine", () => {
   it("drops the finished line instead of stacking it up", () => {
     const two = ["Hello world", "goodbye moon"];
     expect(typedLine(two, 0.01)).toBe("Hello");
-    expect(typedLine(two, 0.8)).toBe("goodbye moon");
-    expect(typedLine(two, 0.8).includes("Hello")).toBe(false);
+    expect(typedLine(two, 0.9)).toBe("goodbye moon");
+    expect(typedLine(two, 0.9).includes("Hello")).toBe(false);
   });
 
   it("handles a single short line", () => expect(typedLine(["Hello world"], 0.2)).toBe("Hello"));

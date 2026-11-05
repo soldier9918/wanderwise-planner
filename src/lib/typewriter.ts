@@ -20,7 +20,7 @@ export function wrapByChars(text: string, maxChars: number): string[] {
 }
 
 /** Captions finish by this share of the clip, since voiceovers end with a little silence. */
-export const CAPTION_LEAD = 0.85;
+export const CAPTION_LEAD = 1;
 
 /**
  * The single line being typed when narration is `fraction` (0–1) of the way through.
