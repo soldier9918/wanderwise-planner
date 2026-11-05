@@ -28,6 +28,7 @@ export const VOICES = [
 export const CAPTION_STYLES = [
   { id: "typewriter", label: "Typewriter — words appear one by one" },
   { id: "pop", label: "Word pop — words pile up on screen" },
+  { id: "sentence", label: "Sentence — two lines at a time" },
   { id: "full", label: "Full text — the whole caption at once" },
   { id: "none", label: "None — no captions" },
 ] as const;

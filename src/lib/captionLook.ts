@@ -3,6 +3,7 @@ import type { CaptionStyle } from "./typewriter";
 export const CAPTION_STYLES: { value: CaptionStyle; label: string }[] = [
   { value: "typewriter", label: "Typewriter" },
   { value: "pop", label: "Word pop" },
+  { value: "sentence", label: "Sentence" },
   { value: "full", label: "Full text" },
   { value: "none", label: "None" },
 ];

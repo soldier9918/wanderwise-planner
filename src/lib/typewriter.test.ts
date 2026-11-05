@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { typedLine, typedWords, wrapByChars } from "./typewriter";
+import { typedLine, typedPair, typedWords, wrapByChars } from "./typewriter";
 
 describe("wrapByChars", () => {
   it("keeps every line within the character limit", () => {
@@ -60,4 +60,29 @@ describe("typedWords", () => {
       shown.forEach((w) => expect(flat).toContain(w));
     }
   });
+});
+
+describe("typedPair", () => {
+  const lines = ["The octopus", "has three", "hearts and", "blue blood"];
+
+  it("shows nothing before the narrator starts", () => expect(typedPair(lines, 0)).toEqual([]));
+
+  it("never shows more than two lines", () => {
+    for (let i = 0; i <= 40; i++) expect(typedPair(lines, i / 40).length).toBeLessThanOrEqual(2);
+  });
+
+  it("keeps the finished line above the one being spoken", () => {
+    const shown = typedPair(lines, 0.5);
+    expect(shown.length).toBe(2);
+    expect(lines).toContain(shown[0]);
+    expect(lines.some((l) => l.startsWith(shown[1]))).toBe(true);
+  });
+
+  it("ends with the last two lines complete", () =>
+    expect(typedPair(lines, 1)).toEqual(["hearts and", "blue blood"]));
+
+  it("shows just the first line at the very start", () =>
+    expect(typedPair(lines, 0.01)).toEqual(["The"]));
+
+  it("handles a single line", () => expect(typedPair(["Only line"], 1)).toEqual(["Only line"]));
 });

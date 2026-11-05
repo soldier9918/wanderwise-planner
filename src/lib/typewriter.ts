@@ -23,7 +23,7 @@ export function wrapByChars(text: string, maxChars: number): string[] {
 export const CAPTION_LEAD = 1;
 
 /** The caption looks a video can use. */
-export type CaptionStyle = "typewriter" | "pop" | "full" | "none";
+export type CaptionStyle = "typewriter" | "pop" | "sentence" | "full" | "none";
 
 /** How many words are showing when narration is `fraction` (0–1) of the way through. */
 function wordCountAt(flat: string[], fraction: number): number {
@@ -79,6 +79,25 @@ export function typedWords(lines: string[], fraction: number): string[] {
     if (n <= words[i].length || i === words.length - 1) {
       const take = Math.max(0, Math.min(n, words[i].length));
       return take ? [words[i].slice(0, take).join(" ")] : [];
+    }
+    n -= words[i].length;
+  }
+  return [];
+}
+
+/**
+ * Like `typedWords`, but two lines show at a time: the finished line above and
+ * the line being spoken below, so the caption reads like a sentence. When the
+ * third line starts, the first one drops off.
+ */
+export function typedPair(lines: string[], fraction: number): string[] {
+  const words = lines.map((l) => l.split(/\s+/).filter(Boolean));
+  let n = wordCountAt(words.flat(), fraction);
+  for (let i = 0; i < words.length; i++) {
+    if (n <= words[i].length || i === words.length - 1) {
+      const take = Math.max(0, Math.min(n, words[i].length));
+      const current = take ? [words[i].slice(0, take).join(" ")] : [];
+      return i > 0 ? [words[i - 1].join(" "), ...current] : current;
     }
     n -= words[i].length;
   }

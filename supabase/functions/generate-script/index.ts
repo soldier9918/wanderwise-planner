@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
     const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter" } = await req.json();
-    const caption = ["typewriter", "pop", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
+    const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     if (typeof topic !== "string" || topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(22, Math.max(3, Number(sceneCount) || 6));
 

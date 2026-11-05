@@ -1,5 +1,5 @@
 import fixWebmDuration from "fix-webm-duration";
-import { typedLine, typedWords, type CaptionStyle } from "./typewriter";
+import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
@@ -91,6 +91,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
           let draw: string[] = [];
           if (captionStyle === "full") draw = lines;
           else if (captionStyle === "pop") draw = typedWords(lines, t / speak);
+          else if (captionStyle === "sentence") draw = typedPair(lines, t / speak);
           else {
             // Typewriter: one line at a time, in step with the voiceover.
             const line = typedLine(lines, t / speak);

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
-import { typedLine, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
+import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -274,7 +274,9 @@ export default function VideoEditor() {
                     ? wrapByChars(current.narration, capChars).join("\n")
                     : captionStyle === "pop"
                       ? typedWords(wrapByChars(current.narration, capChars), progress).join("\n")
-                      : typedLine(wrapByChars(current.narration, capChars), progress)}
+                      : captionStyle === "sentence"
+                        ? typedPair(wrapByChars(current.narration, capChars), progress).join("\n")
+                        : typedLine(wrapByChars(current.narration, capChars), progress)}
                 </p>
               )}
             </div>
