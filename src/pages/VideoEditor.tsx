@@ -7,10 +7,11 @@ import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, editScenes, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
-import { elapsedSeconds, formatSeconds, sceneSeconds } from "@/lib/durations";
+import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds } from "@/lib/durations";
 import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
@@ -55,6 +56,7 @@ export default function VideoEditor() {
   // Measured length of each voiceover clip, keyed by scene id.
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
+  const seekRef = useRef(0);
   const autoStarted = useRef(false);
 
   const { data, isLoading } = useQuery({
@@ -145,9 +147,11 @@ export default function VideoEditor() {
     const scene = data.scenes[playing];
     const audio = audioRef.current;
     if (!scene || !audio) { setPlaying(null); return; }
-    setProgress(0);
+    const startFrac = seekRef.current;
+    seekRef.current = 0;
+    setProgress(startFrac);
     let raf = 0;
-    const started = performance.now();
+    const started = performance.now() - startFrac * 4000;
     const tick = () => {
       const a = audioRef.current;
       if (a && a.duration && isFinite(a.duration) && scene.audio_path) setProgress(a.currentTime / a.duration);
@@ -160,11 +164,14 @@ export default function VideoEditor() {
     const url = scene.audio_path ? data.urls[scene.audio_path] : null;
     if (url) {
       audio.src = url;
+      audio.onloadedmetadata = () => {
+        if (startFrac && isFinite(audio.duration)) audio.currentTime = startFrac * audio.duration;
+      };
       audio.onended = next;
       audio.play().catch(() => setPlaying(null));
       return () => { audio.onended = null; cleanupRaf(); };
     }
-    const t = setTimeout(next, 4000);
+    const t = setTimeout(next, 4000 * (1 - startFrac));
     return () => { clearTimeout(t); cleanupRaf(); };
   }, [playing, data]);
 
@@ -285,6 +292,19 @@ export default function VideoEditor() {
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
   const elapsedSecs = playing !== null ? elapsedSeconds(sceneSecs, playing, progress) : 0;
+  const seekTo = (secs: number) => {
+    if (!scenes.length) return;
+    const { index, progress: frac } = locateTime(sceneSecs, secs);
+    const a = audioRef.current;
+    if (index === playing && a && scenes[index].audio_path && isFinite(a.duration)) {
+      a.currentTime = frac * a.duration;
+      setProgress(frac);
+      return;
+    }
+    seekRef.current = frac;
+    if (index === playing) { setPlaying(null); setTimeout(() => setPlaying(index), 0); }
+    else setPlaying(index);
+  };
 
   return (
     <div className="min-h-screen">
@@ -328,6 +348,21 @@ export default function VideoEditor() {
                 </p>
               )}
             </div>
+            {scenes.length > 0 && (
+              <div className="mt-3 flex items-center gap-3">
+                <span className="w-10 text-xs tabular-nums text-muted-foreground">{formatSeconds(elapsedSecs)}</span>
+                <Slider
+                  aria-label="Video position"
+                  className="flex-1"
+                  min={0}
+                  max={Math.max(1, totalSecs)}
+                  step={0.5}
+                  value={[elapsedSecs]}
+                  onValueChange={([v]) => seekTo(v)}
+                />
+                <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {playing === null ? (
                 <Button onClick={() => setPlaying(0)} disabled={!scenes.length}>▶ Preview</Button>

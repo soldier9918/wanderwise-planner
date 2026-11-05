@@ -64,3 +64,15 @@ describe("video length", () => {
     expect(isLengthAllowed(120, 4)).toBe(true);
   });
 });
+
+import { locateTime } from "./durations";
+
+describe("locateTime", () => {
+  it("finds the scene and spot for a slider position", () => {
+    expect(locateTime([10, 20], 5)).toEqual({ index: 0, progress: 0.5 });
+    expect(locateTime([10, 20], 15)).toEqual({ index: 1, progress: 0.25 });
+  });
+  it("clamps past the end to the last scene", () => {
+    expect(locateTime([10, 20], 99).index).toBe(1);
+  });
+});

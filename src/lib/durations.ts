@@ -61,3 +61,14 @@ export function isLengthAllowed(totalSeconds: number, scenes: number) {
   const per = totalSeconds / scenes;
   return per >= MIN_SCENE_SECONDS && per <= MAX_SCENE_SECONDS;
 }
+
+/** Turns a point on the whole-video timeline into the scene it falls in and how far through it (0..1). */
+export function locateTime(sceneSecs: number[], seconds: number) {
+  if (!sceneSecs.length) return { index: 0, progress: 0 };
+  let t = Math.max(0, seconds);
+  for (let i = 0; i < sceneSecs.length; i++) {
+    if (t < sceneSecs[i]) return { index: i, progress: sceneSecs[i] ? t / sceneSecs[i] : 0 };
+    t -= sceneSecs[i];
+  }
+  return { index: sceneSecs.length - 1, progress: 0.99 };
+}
