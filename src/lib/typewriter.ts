@@ -73,12 +73,14 @@ export function typedLine(lines: string[], fraction: number): string {
  */
 export function typedWords(lines: string[], fraction: number): string[] {
   const words = lines.map((l) => l.split(/\s+/).filter(Boolean));
+  // One screen-wide line at a time: words pop in, then the next line replaces it.
   let n = wordCountAt(words.flat(), fraction);
-  const out: string[] = [];
-  for (const line of words) {
-    const take = Math.max(0, Math.min(n, line.length));
-    if (take) out.push(line.slice(0, take).join(" "));
-    n -= line.length;
+  for (let i = 0; i < words.length; i++) {
+    if (n <= words[i].length || i === words.length - 1) {
+      const take = Math.max(0, Math.min(n, words[i].length));
+      return take ? [words[i].slice(0, take).join(" ")] : [];
+    }
+    n -= words[i].length;
   }
-  return out;
+  return [];
 }

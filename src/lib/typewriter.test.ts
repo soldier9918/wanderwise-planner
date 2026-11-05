@@ -45,13 +45,13 @@ describe("typedWords", () => {
 
   it("shows nothing before the narrator starts", () => expect(typedWords(lines, 0)).toEqual([]));
 
-  it("piles words up instead of dropping finished lines", () => {
-    const shown = typedWords(lines, 0.9);
-    expect(shown.length).toBeGreaterThan(1);
-    expect(shown.join(" ")).toContain("The");
+  it("shows one line at a time, replacing it when full", () => {
+    expect(typedWords(lines, 0.01)).toEqual(["The"]);
+    for (let i = 0; i <= 20; i++) expect(typedWords(lines, i / 20).length).toBeLessThanOrEqual(1);
+    expect(typedWords(lines, 0.95).join(" ")).not.toContain("The");
   });
 
-  it("ends with every line complete", () => expect(typedWords(lines, 1)).toEqual(lines));
+  it("ends with the last line complete", () => expect(typedWords(lines, 1)).toEqual(["blue blood"]));
 
   it("never shows half a word", () => {
     for (let i = 0; i <= 20; i++) {
