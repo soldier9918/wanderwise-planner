@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     // RLS ensures the scene belongs to the caller.
     const { data: scene, error } = await auth.client
       .from("video_scenes")
-      .select("id, video_id, narration, visual_prompt, videos(voice)")
+      .select("id, video_id, narration, visual_prompt, videos(voice, aspect_ratio)")
       .eq("id", sceneId)
       .maybeSingle();
     if (error) throw error;
@@ -35,10 +35,14 @@ Deno.serve(async (req) => {
     let ext: string;
 
     if (kind === "image") {
+      // Match the picture to the video's shape (the generator only offers three sizes).
+      // deno-lint-ignore no-explicit-any
+      const ratio = (scene as any).videos?.aspect_ratio ?? "16:9";
+      const size = ({ "16:9": "1536x1024", "21:9": "1536x1024", "9:16": "1024x1536", "4:5": "1024x1536", "1:1": "1024x1024" } as Record<string, string>)[ratio] ?? "1536x1024";
       const res = await fetch(`${GATEWAY_URL}/v1/images/generations`, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: IMAGE_MODEL, prompt: scene.visual_prompt, size: "1536x1024", quality: "low" }),
+        body: JSON.stringify({ model: IMAGE_MODEL, prompt: scene.visual_prompt, size, quality: "low" }),
       });
       if (!res.ok) return gatewayError(res);
       const body = await res.json();

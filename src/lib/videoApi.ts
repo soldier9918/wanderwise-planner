@@ -57,7 +57,7 @@ async function invoke<T>(name: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string }) =>
+export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string; aspectRatio: string }) =>
   invoke<{ videoId: string }>("generate-script", input);
 
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>

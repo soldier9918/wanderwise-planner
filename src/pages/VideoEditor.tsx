@@ -12,6 +12,8 @@ import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
+import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
+import RatioSelect from "@/components/RatioSelect";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch }: {
@@ -49,26 +51,7 @@ export default function VideoEditor() {
   // Measured length of each voiceover clip, keyed by scene id.
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
-  const captionRef = useRef<HTMLParagraphElement>(null);
   const autoStarted = useRef(false);
-  // How many monospace characters fit on one caption line in this box.
-  const [captionChars, setCaptionChars] = useState(32);
-
-  useEffect(() => {
-    const el = captionRef.current;
-    if (!el) return;
-    const measure = () => {
-      const style = getComputedStyle(el);
-      const size = parseFloat(style.fontSize) || 18;
-      const pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-      const avail = el.clientWidth - pad;
-      if (avail > 0) setCaptionChars(Math.max(12, Math.floor(avail / (size * 0.62))));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [playing]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["video", id],
@@ -198,6 +181,7 @@ export default function VideoEditor() {
         setExportPct,
         ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
         { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
+        data.video?.aspect_ratio ?? "16:9",
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -222,10 +206,11 @@ export default function VideoEditor() {
 
   const { video, scenes, urls } = data;
   const captionStyle = (video.caption_style ?? "typewriter") as CaptionStyle;
+  const ratio = ratioOf(video.aspect_ratio);
   const capPx = sizePx(video.caption_size);
-  // Same proportions as the 1280px-wide export, so lines break alike.
-  const capChars = Math.max(10, Math.floor(1080 / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size">>) => {
+  // Same canvas px as the export, so lines break alike.
+  const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -253,7 +238,10 @@ export default function VideoEditor() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div>
-            <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-muted [container-type:inline-size]">
+            <div
+              className="relative mx-auto w-full overflow-hidden rounded-xl border border-border bg-muted [container-type:inline-size]"
+              style={{ aspectRatio: ratio.css, maxWidth: previewMaxPx(ratio.value) }}
+            >
               {currentImg ? (
                 <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className={`h-full w-full object-cover ${playing !== null ? "animate-kenburns" : ""}`} />
               ) : (
@@ -266,9 +254,8 @@ export default function VideoEditor() {
               )}
               {playing !== null && current && captionStyle !== "none" && (
                 <p
-                  ref={captionRef}
-                  className="absolute inset-x-[7.8%] bottom-[4%] whitespace-pre-line text-center font-bold leading-[1.2] drop-shadow-[0_2px_4px_hsl(var(--background))]"
-                  style={{ fontFamily: fontCss(video.caption_font), color: safeColor(video.caption_color), fontSize: `${capPx / 12.8}cqw` }}
+                  className="absolute inset-x-[7.5%] bottom-[5%] max-h-[70%] overflow-hidden whitespace-pre-line text-center font-bold leading-[1.2] drop-shadow-[0_2px_4px_hsl(var(--background))]"
+                  style={{ fontFamily: fontCss(video.caption_font), color: safeColor(video.caption_color), fontSize: `${(capPx / ratio.w) * 100}cqw` }}
                 >
                   {captionStyle === "full"
                     ? wrapByChars(current.narration, capChars).join("\n")
@@ -293,11 +280,15 @@ export default function VideoEditor() {
                 Generate missing assets
               </Button>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border p-3 sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border p-3 sm:grid-cols-3">
               <LookSelect label="Caption" value={captionStyle} options={CAPTION_STYLES} onChange={(v) => saveLook({ caption_style: v })} />
               <LookSelect label="Font" value={video.caption_font} options={CAPTION_FONTS} onChange={(v) => saveLook({ caption_font: v })} />
               <LookSelect label="Colour" value={safeColor(video.caption_color)} options={CAPTION_COLORS} onChange={(v) => saveLook({ caption_color: v })} swatch />
               <LookSelect label="Size" value={video.caption_size} options={CAPTION_SIZES} onChange={(v) => saveLook({ caption_size: v })} />
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+                Format
+                <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
+              </label>
             </div>
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>

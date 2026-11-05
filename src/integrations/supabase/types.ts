@@ -105,6 +105,7 @@ export type Database = {
       }
       videos: {
         Row: {
+          aspect_ratio: string
           caption_color: string
           caption_font: string
           caption_size: string
@@ -120,6 +121,7 @@ export type Database = {
           voice: string
         }
         Insert: {
+          aspect_ratio?: string
           caption_color?: string
           caption_font?: string
           caption_size?: string
@@ -135,6 +137,7 @@ export type Database = {
           voice?: string
         }
         Update: {
+          aspect_ratio?: string
           caption_color?: string
           caption_font?: string
           caption_size?: string

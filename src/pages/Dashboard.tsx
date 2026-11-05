@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
+import RatioSelect from "@/components/RatioSelect";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { STYLES, VOICES, CAPTION_STYLES, generateScript } from "@/lib/videoApi";
+import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -17,12 +19,16 @@ export default function Dashboard() {
   const [voice, setVoice] = useState<string>("Kore");
   const [scenes, setScenes] = useState("6");
   const [caption, setCaption] = useState<string>("typewriter");
+  const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
   const [busy, setBusy] = useState(false);
 
   const { data: videos, isLoading } = useQuery({
     queryKey: ["videos"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("videos").select("id, title, topic, style, created_at").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("videos")
+        .select("id, title, topic, style, aspect_ratio, created_at")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -32,7 +38,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption });
+      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio });
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);
@@ -53,7 +59,11 @@ export default function Dashboard() {
               <Textarea id="topic" rows={4} required minLength={3} placeholder="e.g. Why octopuses might be the smartest animals on Earth"
                 value={topic} onChange={(e) => setTopic(e.target.value)} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2">
+                <Label>Format</Label>
+                <RatioSelect value={ratio} onChange={setRatio} />
+              </div>
               <div className="grid gap-2">
                 <Label>Visual style</Label>
                 <Select value={style} onValueChange={setStyle}>
@@ -96,7 +106,7 @@ export default function Dashboard() {
               <Link key={v.id} to={`/video/${v.id}`} className="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary">
                 <p className="font-semibold group-hover:text-primary">{v.title}</p>
                 <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{v.topic}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{v.style} · {new Date(v.created_at).toLocaleDateString()}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()}</p>
               </Link>
             ))}
           </div>

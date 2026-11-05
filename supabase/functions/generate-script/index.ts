@@ -21,8 +21,16 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter" } = await req.json();
+    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9" } = await req.json();
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
+    const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
+    const framing = ({
+      "16:9": "wide 16:9 landscape",
+      "9:16": "tall 9:16 vertical, phone-first with the subject centred",
+      "1:1": "square 1:1",
+      "4:5": "tall 4:5 vertical",
+      "21:9": "ultra-wide 21:9 cinematic",
+    } as Record<string, string>)[ratio];
     if (typeof topic !== "string" || topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(22, Math.max(3, Number(sceneCount) || 6));
 
@@ -38,7 +46,7 @@ Deno.serve(async (req) => {
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        "You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration is 2-4 spoken sentences (about 10-15 seconds). Each visual_prompt describes one striking cinematic 16:9 still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.",
+        `You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration is 2-4 spoken sentences (about 10-15 seconds). Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.`,
       messages: [
         { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}` },
       ],
@@ -72,7 +80,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption })
+      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio })
       .select("id")
       .single();
     if (vErr) throw vErr;

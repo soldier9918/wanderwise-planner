@@ -1,6 +1,7 @@
 import fixWebmDuration from "fix-webm-duration";
 import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
+import { captionWrapPx, ratioOf } from "./aspectRatio";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -27,11 +28,11 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9"): Promise<Blob> {
   const px = sizePx(look.size ?? "medium");
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
   const color = safeColor(look.color ?? "#ffffff");
-  const W = 1280, H = 720;
+  const { w: W, h: H } = ratioOf(aspect);
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
@@ -87,7 +88,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         if (captionStyle !== "none") {
           ctx.font = fontStr;
           const speak = buffer ? buffer.duration : dur;
-          const lines = wrap(ctx, caption, W - 200);
+          const lines = wrap(ctx, caption, captionWrapPx(aspect));
           let draw: string[] = [];
           if (captionStyle === "full") draw = lines;
           else if (captionStyle === "pop") draw = typedWords(lines, t / speak);
@@ -97,14 +98,17 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
             const line = typedLine(lines, t / speak);
             if (line) draw = [line];
           }
+          const lineHeight = Math.round(px * 1.2);
+          // Never draw more lines than the frame can hold.
+          const maxLines = Math.max(1, Math.floor((H * 0.7) / lineHeight));
+          if (draw.length > maxLines) draw = draw.slice(-maxLines);
           if (draw.length) {
             ctx.fillStyle = color;
             ctx.shadowColor = "rgba(0,0,0,0.9)";
             ctx.shadowBlur = 8;
             ctx.shadowOffsetY = 2;
             ctx.textAlign = "center";
-            const lineHeight = Math.round(px * 1.2);
-            const y0 = H - 70 - (draw.length - 1) * lineHeight;
+            const y0 = H - Math.round(Math.min(W, H) * 0.09) - (draw.length - 1) * lineHeight;
             draw.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * lineHeight));
             ctx.shadowColor = "transparent";
             ctx.shadowBlur = 0;
