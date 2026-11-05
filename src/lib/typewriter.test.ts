@@ -71,18 +71,17 @@ describe("typedPair", () => {
     for (let i = 0; i <= 40; i++) expect(typedPair(lines, i / 40).length).toBeLessThanOrEqual(2);
   });
 
-  it("keeps the finished line above the one being spoken", () => {
-    const shown = typedPair(lines, 0.5);
-    expect(shown.length).toBe(2);
-    expect(lines).toContain(shown[0]);
-    expect(lines.some((l) => l.startsWith(shown[1]))).toBe(true);
-  });
+  it("shows the first two lines whole as soon as narration starts", () =>
+    expect(typedPair(lines, 0.3)).toEqual(["The octopus", "has three"]));
+
+  it("swaps to the next two lines once the narrator reaches them", () =>
+    expect(typedPair(lines, 0.7)).toEqual(["hearts and", "blue blood"]));
 
   it("ends with the last two lines complete", () =>
     expect(typedPair(lines, 1)).toEqual(["hearts and", "blue blood"]));
 
-  it("shows just the first line at the very start", () =>
-    expect(typedPair(lines, 0.01)).toEqual(["The"]));
+  it("shows the whole first page at the very start", () =>
+    expect(typedPair(lines, 0.01)).toEqual(["The octopus", "has three"]));
 
   it("handles a single line", () => expect(typedPair(["Only line"], 1)).toEqual(["Only line"]));
 });

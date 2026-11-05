@@ -86,20 +86,18 @@ export function typedWords(lines: string[], fraction: number): string[] {
 }
 
 /**
- * Like `typedWords`, but two lines show at a time: the finished line above and
- * the line being spoken below, so the caption reads like a sentence. When the
- * third line starts, the first one drops off.
+ * Two full lines appear at once (a "page"). The page stays until the narrator
+ * starts a word on the next page, then the next two lines replace it whole.
  */
 export function typedPair(lines: string[], fraction: number): string[] {
-  const words = lines.map((l) => l.split(/\s+/).filter(Boolean));
-  let n = wordCountAt(words.flat(), fraction);
-  for (let i = 0; i < words.length; i++) {
-    if (n <= words[i].length || i === words.length - 1) {
-      const take = Math.max(0, Math.min(n, words[i].length));
-      const current = take ? [words[i].slice(0, take).join(" ")] : [];
-      return i > 0 ? [words[i - 1].join(" "), ...current] : current;
-    }
-    n -= words[i].length;
+  const words = lines.map((l) => l.split(/\s+/).filter(Boolean)).filter((w) => w.length);
+  const n = wordCountAt(words.flat(), fraction);
+  if (!n) return [];
+  let seen = 0;
+  for (let p = 0; p < words.length; p += 2) {
+    const page = words.slice(p, p + 2);
+    seen += page.reduce((a, w) => a + w.length, 0);
+    if (n <= seen || p + 2 >= words.length) return page.map((w) => w.join(" "));
   }
   return [];
 }
