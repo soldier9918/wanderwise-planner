@@ -1,3 +1,4 @@
+import fixWebmDuration from "fix-webm-duration";
 import { typedLine } from "./typewriter";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
@@ -32,6 +33,8 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   const ctx = canvas.getContext("2d")!;
   const audioCtx = new AudioContext();
   const dest = audioCtx.createMediaStreamDestination();
+  // Phones start audio paused; without this the recording can stall after scene 1.
+  if (audioCtx.state === "suspended") await audioCtx.resume().catch(() => {});
 
   const loaded = await Promise.all(
     scenes.map(async (s) => {
@@ -93,14 +96,16 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
           ctx.shadowOffsetY = 0;
         }
         onProgress(Math.min((elapsedBefore + t) / total, 1));
-        if (t < dur) requestAnimationFrame(frame); else resolve();
+        // Timers keep going even when the browser pauses animations (e.g. screen dims).
+        if (t < dur) setTimeout(frame, 1000 / 30); else resolve();
       };
       frame();
     });
     elapsedBefore += dur;
   }
   recorder.stop();
-  const blob = await done;
+  const raw = await done;
   await audioCtx.close();
-  return blob;
+  // Browser recordings have no length stored, so many players stop after the first part.
+  return await fixWebmDuration(raw, total * 1000, { logger: false });
 }
