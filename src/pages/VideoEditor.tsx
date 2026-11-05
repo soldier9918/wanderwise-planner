@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
-import { typedText } from "@/lib/typewriter";
+import { typedLine, wrapByChars } from "@/lib/typewriter";
 
 export default function VideoEditor() {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +21,26 @@ export default function VideoEditor() {
   const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const captionRef = useRef<HTMLParagraphElement>(null);
   const autoStarted = useRef(false);
+  // How many monospace characters fit on one caption line in this box.
+  const [captionChars, setCaptionChars] = useState(32);
+
+  useEffect(() => {
+    const el = captionRef.current;
+    if (!el) return;
+    const measure = () => {
+      const style = getComputedStyle(el);
+      const size = parseFloat(style.fontSize) || 18;
+      const pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      const avail = el.clientWidth - pad;
+      if (avail > 0) setCaptionChars(Math.max(12, Math.floor(avail / (size * 0.62))));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [playing]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["video", id],
@@ -171,9 +190,8 @@ export default function VideoEditor() {
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
               {playing !== null && current && (
-                <p className="absolute inset-x-6 bottom-6 min-h-[3rem] p-3 text-center font-mono text-lg font-bold drop-shadow-[0_2px_4px_hsl(var(--background))]">
-                  {typedText(current.narration, progress)}
-                  <span className="ml-0.5 inline-block w-2 animate-pulse bg-foreground">&nbsp;</span>
+                <p ref={captionRef} className="absolute inset-x-6 bottom-6 min-h-[2.5rem] text-center font-mono text-lg font-bold leading-snug drop-shadow-[0_2px_4px_hsl(var(--background))]">
+                  {typedLine(wrapByChars(current.narration, captionChars), progress)}
                 </p>
               )}
             </div>

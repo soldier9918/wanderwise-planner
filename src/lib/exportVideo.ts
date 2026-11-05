@@ -1,4 +1,4 @@
-import { typedText } from "./typewriter";
+import { typedLine } from "./typewriter";
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -21,7 +21,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
     if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; } else line = test;
   }
   if (line) lines.push(line);
-  return lines.slice(-3);
+  return lines;
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
@@ -79,17 +79,15 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
         if (captions) {
           ctx.font = "600 34px 'Courier New', monospace";
-          // Typewriter: reveal characters in step with the voiceover.
+          // Typewriter: one line at a time, in step with the voiceover.
           const speak = buffer ? buffer.duration : dur;
-          const lines = wrap(ctx, typedText(caption, t / speak), W - 200);
-          if (!lines.length) lines.push("");
-          const boxH = lines.length * 46 + 30;
+          const line = typedLine(wrap(ctx, caption, W - 200), t / speak);
           ctx.fillStyle = "#fff";
           ctx.shadowColor = "rgba(0,0,0,0.9)";
           ctx.shadowBlur = 8;
           ctx.shadowOffsetY = 2;
           ctx.textAlign = "center";
-          lines.forEach((l, j) => ctx.fillText(l, W / 2, H - boxH - 40 + 50 + j * 46));
+          ctx.fillText(line, W / 2, H - 60);
           ctx.shadowColor = "transparent";
           ctx.shadowBlur = 0;
           ctx.shadowOffsetY = 0;
