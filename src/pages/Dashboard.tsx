@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STYLES, VOICES, CAPTION_STYLES, generateScript, suggestTopic } from "@/lib/videoApi";
+import { STYLES, VOICES, CAPTION_STYLES, generateScript, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 
 export default function Dashboard() {
@@ -44,7 +44,22 @@ export default function Dashboard() {
         .select("id, title, topic, style, aspect_ratio, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      type VideoRow = (typeof data)[number] & { thumb: string | null };
+      if (!data.length) return [] as VideoRow[];
+
+      // Fetch each video's scene 1 image and sign URLs for thumbnails.
+      const { data: scenes } = await supabase
+        .from("video_scenes")
+        .select("video_id, image_path")
+        .in("video_id", data.map((v) => v.id))
+        .eq("position", 0);
+      const paths = (scenes ?? []).map((s) => s.image_path).filter((p): p is string => !!p);
+      const urls = await signedUrls(paths);
+      const thumbByVideo: Record<string, string> = {};
+      (scenes ?? []).forEach((s) => {
+        if (s.image_path && urls[s.image_path]) thumbByVideo[s.video_id] = urls[s.image_path];
+      });
+      return data.map((v): VideoRow => ({ ...v, thumb: thumbByVideo[v.id] ?? null }));
     },
   });
 
@@ -123,10 +138,17 @@ export default function Dashboard() {
             {isLoading && <p className="text-muted-foreground">Loading…</p>}
             {videos?.length === 0 && <p className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">No videos yet — create your first one.</p>}
             {videos?.map((v) => (
-              <Link key={v.id} to={`/video/${v.id}`} className="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary">
-                <p className="font-semibold group-hover:text-primary">{v.title}</p>
-                <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{v.topic}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()}</p>
+              <Link key={v.id} to={`/video/${v.id}`} className="group flex gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary">
+                {v.thumb ? (
+                  <img src={v.thumb} alt="" className="h-20 w-32 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-20 w-32 shrink-0 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">No image</div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold group-hover:text-primary">{v.title}</p>
+                  <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{v.topic}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()}</p>
+                </div>
               </Link>
             ))}
           </div>
