@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { generateSceneAsset, signedUrls, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, wrapByChars } from "@/lib/typewriter";
+import { formatSeconds, sceneSeconds } from "@/lib/durations";
 
 export default function VideoEditor() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,8 @@ export default function VideoEditor() {
   const [playing, setPlaying] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
+  // Measured length of each voiceover clip, keyed by scene id.
+  const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const captionRef = useRef<HTMLParagraphElement>(null);
   const autoStarted = useRef(false);
@@ -57,6 +60,35 @@ export default function VideoEditor() {
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["video", id] });
+
+  // Measure every voiceover clip so the seconds shown match the exported video.
+  useEffect(() => {
+    if (!data) return;
+    const pending = data.scenes.filter((s) => s.audio_path && data.urls[s.audio_path] && audioSecs[s.id] === undefined);
+    if (!pending.length) return;
+    let cancelled = false;
+    const cleanups = pending.map((s) => {
+      const a = new Audio();
+      a.preload = "metadata";
+      const read = () => {
+        // Some clips report Infinity until the browser is forced to look.
+        if (a.duration === Infinity) { a.currentTime = 1e10; return; }
+        if (!cancelled && isFinite(a.duration) && a.duration > 0) {
+          const d = a.duration;
+          setAudioSecs((m) => ({ ...m, [s.id]: d }));
+        }
+      };
+      a.addEventListener("loadedmetadata", read);
+      a.addEventListener("durationchange", read);
+      a.src = data.urls[s.audio_path!];
+      return () => {
+        a.removeEventListener("loadedmetadata", read);
+        a.removeEventListener("durationchange", read);
+        a.src = "";
+      };
+    });
+    return () => { cancelled = true; cleanups.forEach((c) => c()); };
+  }, [data, audioSecs]);
 
   const runAsset = useCallback(async (scene: Scene, kind: "image" | "audio") => {
     const key = `${scene.id}-${kind}`;
@@ -166,6 +198,8 @@ export default function VideoEditor() {
   const busyAny = Object.values(working).some(Boolean);
   const current = playing !== null ? scenes[playing] : scenes[0];
   const currentImg = current?.image_path ? urls[current.image_path] : null;
+  const secOf = (s: Scene) => sceneSeconds(s.audio_path ? audioSecs[s.id] : null, s.narration);
+  const totalSecs = scenes.reduce((a, s) => a + secOf(s), 0);
 
   return (
     <div className="min-h-screen">
@@ -189,6 +223,11 @@ export default function VideoEditor() {
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
+              {current && (
+                <span className="absolute right-3 top-3 rounded-md bg-background/80 px-2 py-1 text-xs font-semibold tabular-nums text-foreground">
+                  {playing !== null ? `${(secOf(current) * progress).toFixed(1)} / ${secOf(current)}s` : `${secOf(current)}s`}
+                </span>
+              )}
               {playing !== null && current && (
                 <p ref={captionRef} className="absolute inset-x-6 bottom-6 min-h-[2.5rem] text-center font-mono text-lg font-bold leading-snug drop-shadow-[0_2px_4px_hsl(var(--background))]">
                   {typedLine(wrapByChars(current.narration, captionChars), progress)}
@@ -211,16 +250,17 @@ export default function VideoEditor() {
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>
             )}
-            <p className="mt-3 text-sm text-muted-foreground">{done}/{scenes.length} scenes ready{busyAny ? " · generating…" : ""}</p>
+            <p className="mt-3 text-sm text-muted-foreground">{done}/{scenes.length} scenes ready{busyAny ? " · generating…" : ""}{scenes.length ? ` · ${formatSeconds(totalSecs)} total` : ""}</p>
           </div>
 
           <ol className="grid gap-4">
             {scenes.map((s, i) => (
               <li key={s.id} className={`rounded-xl border bg-card p-4 ${playing === i ? "border-primary" : "border-border"}`}>
                 <div className="flex gap-3">
-                  <div className="h-16 w-28 shrink-0 overflow-hidden rounded-md bg-muted">
+                  <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-md bg-muted">
                     {s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
                       : <div className={`h-full w-full ${working[`${s.id}-image`] ? "animate-pulse bg-secondary" : ""}`} />}
+                    <span className="absolute bottom-1 right-1 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">{formatSeconds(secOf(s))}</span>
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs uppercase tracking-widest text-accent">Scene {i + 1}</p>
