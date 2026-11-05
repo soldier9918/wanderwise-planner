@@ -71,7 +71,7 @@ export default function Dashboard() {
                 <Label>Scenes</Label>
                 <Select value={scenes} onValueChange={setScenes}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{["4", "6", "8"].map((n) => <SelectItem key={n} value={n}>{n} scenes (~{Number(n) * 12}s)</SelectItem>)}</SelectContent>
+                  <SelectContent>{["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"].map((n) => <SelectItem key={n} value={n}>{n} scenes (~{Number(n) * 12}s)</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

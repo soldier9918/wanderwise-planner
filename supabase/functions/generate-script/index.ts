@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
 
     const { topic, style = "Documentary", voice = "Kore", sceneCount = 6 } = await req.json();
     if (typeof topic !== "string" || topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
-    const count = Math.min(10, Math.max(3, Number(sceneCount) || 6));
+    const count = Math.min(22, Math.max(3, Number(sceneCount) || 6));
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
