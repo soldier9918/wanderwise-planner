@@ -7,7 +7,7 @@ import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { generateSceneAsset, generateThumbnail, signedUrls, type Scene } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { formatSeconds, sceneSeconds } from "@/lib/durations";
@@ -243,7 +243,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -320,6 +320,15 @@ export default function VideoEditor() {
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
               <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES} onChange={(v) => saveLook({ quality: v })} />
+              <LookSelect
+                label="Narrator"
+                value={video.voice ?? "Kore"}
+                options={VOICES.map((v) => ({ value: v.id, label: v.label }))}
+                onChange={(v) => {
+                  saveLook({ voice: v });
+                  toast.info("Narrator changed — use “Redo voiceover” on each scene to hear the new voice.");
+                }}
+              />
             </div>
             <div className="mt-4 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
