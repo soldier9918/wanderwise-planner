@@ -1,27 +1,14 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ScrollToTop from "@/components/ScrollToTop";
-import { CurrencyProvider } from "@/contexts/CurrencyContext";
-import Index from "./pages/Index";
-import Flights from "./pages/Flights";
-import Hotels from "./pages/Hotels";
-import SearchResults from "./pages/SearchResults";
-import HotelDetail from "./pages/HotelDetail";
-import Help from "./pages/Help";
-import TrustSafety from "./pages/TrustSafety";
-import CookiePolicy from "./pages/CookiePolicy";
-import PrivacySettings from "./pages/PrivacySettings";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import WhoWeAre from "./pages/WhoWeAre";
-import ContactUs from "./pages/ContactUs";
-import Login from "./pages/Login";
-import FlightResults from "./pages/FlightResults";
-import PriceAlerts from "./pages/PriceAlerts";
-import AISuggestions from "./pages/AISuggestions";
+import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Landing from "./pages/Landing";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
+import Dashboard from "./pages/Dashboard";
+import VideoEditor from "./pages/VideoEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,33 +16,19 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CurrencyProvider>
-        <Toaster />
+      <AuthProvider>
         <Sonner />
         <BrowserRouter>
-          <ScrollToTop />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/flights" element={<Flights />} />
-            <Route path="/hotels" element={<Hotels />} />
-            <Route path="/results" element={<SearchResults />} />
-            <Route path="/flight-results" element={<FlightResults />} />
-            <Route path="/hotel/:id" element={<HotelDetail />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/trust-safety" element={<TrustSafety />} />
-            <Route path="/cookies" element={<CookiePolicy />} />
-            <Route path="/privacy-settings" element={<PrivacySettings />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/who-we-are" element={<WhoWeAre />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/price-alerts" element={<PriceAlerts />} />
-            <Route path="/ai-suggestions" element={<AISuggestions />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </CurrencyProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
