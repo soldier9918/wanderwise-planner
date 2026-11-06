@@ -1,0 +1,1 @@
+ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS sfx_enabled boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS sfx_type text NOT NULL DEFAULT 'whoosh', ADD COLUMN IF NOT EXISTS sfx_volume integer NOT NULL DEFAULT 50;

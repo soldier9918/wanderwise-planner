@@ -118,6 +118,9 @@ export type Database = {
           music_path: string | null
           music_volume: number
           quality: string
+          sfx_enabled: boolean
+          sfx_type: string
+          sfx_volume: number
           sources: Json | null
           style: string
           target_seconds: number | null
@@ -142,6 +145,9 @@ export type Database = {
           music_path?: string | null
           music_volume?: number
           quality?: string
+          sfx_enabled?: boolean
+          sfx_type?: string
+          sfx_volume?: number
           sources?: Json | null
           style?: string
           target_seconds?: number | null
@@ -166,6 +172,9 @@ export type Database = {
           music_path?: string | null
           music_volume?: number
           quality?: string
+          sfx_enabled?: boolean
+          sfx_type?: string
+          sfx_volume?: number
           sources?: Json | null
           style?: string
           target_seconds?: number | null

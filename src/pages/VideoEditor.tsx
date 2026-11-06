@@ -18,6 +18,7 @@ import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
 import { Switch } from "@/components/ui/switch";
+import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -149,6 +150,21 @@ export default function VideoEditor() {
     a.addEventListener("play", apply); a.addEventListener("pause", apply); a.addEventListener("ended", apply);
     return () => { a.removeEventListener("play", apply); a.removeEventListener("pause", apply); a.removeEventListener("ended", apply); };
   }, [data?.video, playing]);
+  // Transition sound effects when the preview moves to the next scene.
+  const prevScene = useRef<number | null>(null);
+  const sfxCtx = useRef<AudioContext | null>(null);
+  const previewSfx = async (type: string, volume: number, index = 0) => {
+    const ctx = sfxCtx.current ?? (sfxCtx.current = new AudioContext());
+    if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+    playSfx(ctx, ctx.destination, sfxFor(type, index), ctx.currentTime, volume);
+  };
+  useEffect(() => {
+    const v = data?.video, prev = prevScene.current;
+    prevScene.current = playing;
+    if (v?.sfx_enabled && playing !== null && prev !== null && playing === prev + 1) previewSfx(v.sfx_type, v.sfx_volume, playing - 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing]);
+  useEffect(() => () => { sfxCtx.current?.close().catch(() => {}); }, []);
   useEffect(() => () => { stopMusic(); musicCtx.current?.close().catch(() => {}); }, []);
 
   // Measure every voiceover clip so the seconds shown match the exported video.
@@ -278,6 +294,7 @@ export default function VideoEditor() {
           ducking: data.video?.music_ducking ?? true,
           customUrl: data.video?.music_path ? data.urls[data.video.music_path] : null,
         },
+        { enabled: data.video?.sfx_enabled ?? false, type: data.video?.sfx_type ?? "whoosh", volume: data.video?.sfx_volume ?? 50 },
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -360,7 +377,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_volume" | "music_ducking" | "music_path">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -576,6 +593,35 @@ export default function VideoEditor() {
                 </span>
                 <Switch checked={video.music_ducking} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
               </label>
+            </div>
+            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  <span className="font-semibold">Transition sound effects</span>
+                  <span className="block text-xs text-muted-foreground">A short sound as each new scene begins.</span>
+                </span>
+                <Switch checked={video.sfx_enabled} onCheckedChange={(v) => saveLook({ sfx_enabled: v })} />
+              </label>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-[180px] flex-1">
+                  <LookSelect
+                    label="Sound"
+                    value={video.sfx_type}
+                    options={SFX_TYPES}
+                    disabled={!video.sfx_enabled}
+                    onChange={(v) => { saveLook({ sfx_type: v }); previewSfx(v, video.sfx_volume); }}
+                  />
+                </div>
+                <Button size="sm" variant="outline" disabled={!video.sfx_enabled} onClick={() => previewSfx(video.sfx_type, video.sfx_volume, Math.floor(Math.random() * 30))}>▶ Listen</Button>
+              </div>
+              <div className="grid gap-1 text-xs font-semibold text-muted-foreground">
+                Effects volume: {video.sfx_volume}%
+                <Slider
+                  value={[video.sfx_volume]} min={0} max={100} step={5} disabled={!video.sfx_enabled}
+                  onValueChange={([v]) => qc.setQueryData(["video", id], { ...data, video: { ...video, sfx_volume: v } })}
+                  onValueCommit={([v]) => saveLook({ sfx_volume: v })}
+                />
+              </div>
             </div>
             <div className="mt-4 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>

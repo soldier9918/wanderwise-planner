@@ -3,9 +3,12 @@ import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewrite
 import { fontCss, safeColor, sizePx } from "./captionLook";
 import { captionWrapPx, ratioOf } from "./aspectRatio";
 import { qualityOf } from "./quality";
+import { playSfx, sfxFor } from "./sfx";
 import { duckSchedule, startMusic, type MusicPlayer } from "./music";
 
 export type ExportMusic = { mood: string; volume: number; ducking: boolean; customUrl?: string | null };
+
+export type ExportSfx = { enabled: boolean; type: string; volume: number };
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -32,7 +35,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx): Promise<Blob> {
   const q = qualityOf(quality);
   const px = Math.round(sizePx(look.size ?? "medium") * q.scale);
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
@@ -87,6 +90,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   for (let i = 0; i < loaded.length; i++) {
     const { img, buffer, caption } = loaded[i];
     const dur = durations[i];
+    if (i > 0 && sfx?.enabled) playSfx(audioCtx, dest, sfxFor(sfx.type, i - 1), audioCtx.currentTime, sfx.volume);
     if (buffer) {
       const src = audioCtx.createBufferSource();
       src.buffer = buffer;
