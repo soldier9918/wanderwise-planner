@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, editScenes, type Scene } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, editScenes, rewriteScene, type Scene } from "@/lib/videoApi";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds } from "@/lib/durations";
@@ -233,6 +233,22 @@ export default function VideoEditor() {
       setWorking((w) => ({ ...w, [key]: false }));
     }
   }, [id, qc]);
+
+  const redoScript = useCallback(async (scene: Scene) => {
+    const key = `${scene.id}-script`;
+    setWorking((w) => ({ ...w, [key]: true }));
+    try {
+      await rewriteScene(scene.id);
+      await qc.invalidateQueries({ queryKey: ["video", id] });
+      toast.success(`Scene ${scene.position + 1} rewritten — recording the new voiceover…`);
+    } catch (e) {
+      toast.error(`Scene ${scene.position + 1}: ${(e as Error).message}`);
+      return;
+    } finally {
+      setWorking((w) => ({ ...w, [key]: false }));
+    }
+    runAsset(scene, "audio").catch(() => {});
+  }, [id, qc, runAsset]);
 
   const generateMissing = useCallback(async (scenes: Scene[]) => {
     // Small batches to stay within rate limits.
@@ -744,7 +760,7 @@ export default function VideoEditor() {
                     <p className="font-semibold">{s.heading}</p>
                   </div>
                 </div>
-                <Textarea className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
+                <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-image`]} onClick={() => runAsset(s, "image").catch(() => {})}>
                     {working[`${s.id}-image`] ? "Painting…" : s.image_path ? "New image" : "Make image"}
@@ -754,6 +770,9 @@ export default function VideoEditor() {
                       Upload image
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) uploadImage(s, f); }} />
                     </label>
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={working[`${s.id}-script`] || working[`${s.id}-audio`]} onClick={() => redoScript(s)}>
+                    {working[`${s.id}-script`] ? "Rewriting…" : "Redo script"}
                   </Button>
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-audio`]} onClick={() => runAsset(s, "audio").catch(() => {})}>
                     {working[`${s.id}-audio`] ? "Recording…" : s.audio_path ? "Redo voiceover" : "Make voiceover"}

@@ -92,6 +92,9 @@ export const generateThumbnail = (videoId: string) =>
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>
   invoke<{ path: string }>("scene-asset", { sceneId, kind });
 
+export const rewriteScene = (sceneId: string) =>
+  invoke<{ narration: string }>("rewrite-scene", { sceneId });
+
 export const editScenes = (videoId: string, sceneCount: number) =>
   invoke<{ count: number; added: number; removed: number }>("edit-scenes", { videoId, sceneCount });
 
