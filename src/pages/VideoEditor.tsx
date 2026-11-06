@@ -581,7 +581,7 @@ export default function VideoEditor() {
                 Generate missing assets
               </Button>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border p-3 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
               <LookSelect label="Caption" value={captionStyle} options={CAPTION_STYLES} onChange={(v) => saveLook({ caption_style: v })} />
               <LookSelect label="Font" value={video.caption_font} options={CAPTION_FONTS} onChange={(v) => saveLook({ caption_font: v })} />
               <LookSelect label="Colour" value={safeColor(video.caption_color)} options={CAPTION_COLORS} onChange={(v) => saveLook({ caption_color: v })} swatch />
@@ -627,7 +627,7 @@ export default function VideoEditor() {
                 }}
               />
             </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   <span className="font-semibold">Background music</span>
@@ -697,7 +697,7 @@ export default function VideoEditor() {
                 <Switch checked={video.music_ducking} disabled={video.music_enabled === false} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
               </label>
             </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   <span className="font-semibold">Camera motion (pan & zoom)</span>
@@ -713,7 +713,7 @@ export default function VideoEditor() {
                 onChange={(v) => saveLook({ motion_type: v })}
               />
             </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   <span className="font-semibold">Scene transitions</span>
@@ -729,7 +729,7 @@ export default function VideoEditor() {
                 onChange={(v) => saveLook({ transition_type: v })}
               />
             </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   <span className="font-semibold">Transition sound effects</span>
@@ -758,7 +758,7 @@ export default function VideoEditor() {
                 />
               </div>
             </div>
-            <div className="mt-4 rounded-xl border border-border p-3">
+            <div className="mt-4 rounded-xl border border-border bg-card p-3">
               <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
               {video.thumbnail_path && urls[video.thumbnail_path] ? (
                 <img src={urls[video.thumbnail_path]} alt="Video thumbnail" className="mt-2 w-full rounded-lg border border-border" />
@@ -790,7 +790,7 @@ export default function VideoEditor() {
                 </form>
               )}
             </div>
-            <div className="mt-4 rounded-xl border border-border p-3">
+            <div className="mt-4 rounded-xl border border-border bg-card p-3">
               <p className="text-xs font-semibold text-muted-foreground">SEO — titles, description & tags</p>
               {(() => {
                 const seo = (video.seo as unknown as Seo | null);
