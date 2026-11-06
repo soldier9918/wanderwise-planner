@@ -1,0 +1,1 @@
+ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS transition_enabled boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS transition_type text NOT NULL DEFAULT 'crossfade';

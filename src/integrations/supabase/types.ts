@@ -130,6 +130,8 @@ export type Database = {
           thumbnail_path: string | null
           title: string
           topic: string
+          transition_enabled: boolean
+          transition_type: string
           updated_at: string
           user_id: string
           voice: string
@@ -160,6 +162,8 @@ export type Database = {
           thumbnail_path?: string | null
           title?: string
           topic: string
+          transition_enabled?: boolean
+          transition_type?: string
           updated_at?: string
           user_id: string
           voice?: string
@@ -190,6 +194,8 @@ export type Database = {
           thumbnail_path?: string | null
           title?: string
           topic?: string
+          transition_enabled?: boolean
+          transition_type?: string
           updated_at?: string
           user_id?: string
           voice?: string

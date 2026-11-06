@@ -1,3 +1,4 @@
+import { TRANSITION_SECS, TRANSITION_TYPES, layerCss, transitionAt } from "@/lib/transition";
 import { MOTION_TYPES, motionAt, motionCss, type Fx } from "@/lib/motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
@@ -298,6 +299,7 @@ export default function VideoEditor() {
         },
         { enabled: data.video?.sfx_enabled ?? false, type: data.video?.sfx_type ?? "whoosh", volume: data.video?.sfx_volume ?? 50 },
         { enabled: data.video?.motion_enabled ?? true, type: data.video?.motion_type ?? "zoom-in" },
+        { enabled: data.video?.transition_enabled ?? false, type: data.video?.transition_type ?? "crossfade" },
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -380,7 +382,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume" | "motion_enabled" | "motion_type">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume" | "motion_enabled" | "motion_type" | "transition_enabled" | "transition_type">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -393,6 +395,10 @@ export default function VideoEditor() {
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
   const curMotion = motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null);
+  const motionOn = video?.motion_enabled ?? true;
+  const trans = playing !== null && playing > 0 ? transitionAt(video?.transition_type ?? "crossfade", playing, (progress * sceneSecs[playing]) / TRANSITION_SECS, video?.transition_enabled ?? false) : null;
+  const fromScene = playing ? scenes[playing - 1] : null;
+  const prevImg = fromScene?.image_path ? urls[fromScene.image_path] : null;
   const elapsedSecs = playing !== null ? elapsedSeconds(sceneSecs, playing, progress) : 0;
   const seekTo = (secs: number) => {
     if (!scenes.length) return;
@@ -439,7 +445,15 @@ export default function VideoEditor() {
             >
               {currentImg ? (
                 <>
+                {trans?.prev && prevImg && (
+                  <div className="absolute inset-0" style={layerCss(trans.prev)}>
+                    <img src={prevImg} alt="" className="h-full w-full object-cover" style={{ transform: motionCss(motionAt(video?.motion_type ?? "zoom-in", playing! - 1, 1, motionOn)) }} />
+                  </div>
+                )}
+                <div className="absolute inset-0" style={trans ? layerCss(trans.next) : undefined}>
                 <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className="h-full w-full object-cover will-change-transform" style={{ transform: motionCss(curMotion) }} />
+                </div>
+                {trans?.overlay && <div className="pointer-events-none absolute inset-0" style={{ background: trans.overlay.color, opacity: trans.overlay.a }} />}
                 <FxLayer fx={curMotion.fx} />
                 </>
               ) : (
@@ -625,6 +639,22 @@ export default function VideoEditor() {
                 options={MOTION_TYPES}
                 disabled={!video.motion_enabled}
                 onChange={(v) => saveLook({ motion_type: v })}
+              />
+            </div>
+            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  <span className="font-semibold">Scene transitions</span>
+                  <span className="block text-xs text-muted-foreground">Blends one scene into the next instead of a hard cut.</span>
+                </span>
+                <Switch checked={video.transition_enabled} onCheckedChange={(v) => saveLook({ transition_enabled: v })} />
+              </label>
+              <LookSelect
+                label="Style"
+                value={video.transition_type}
+                options={TRANSITION_TYPES}
+                disabled={!video.transition_enabled}
+                onChange={(v) => saveLook({ transition_type: v })}
               />
             </div>
             <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">

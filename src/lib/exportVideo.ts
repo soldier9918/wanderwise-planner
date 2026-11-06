@@ -1,4 +1,5 @@
-import { drawFx, motionAt } from "./motion";
+import { drawFx, motionAt, type Motion } from "./motion";
+import { TRANSITION_SECS, transitionAt, type Layer } from "./transition";
 import fixWebmDuration from "fix-webm-duration";
 import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
@@ -35,8 +36,26 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
   return lines;
 }
 
+function drawPic(ctx: CanvasRenderingContext2D, img: HTMLImageElement, m: Motion, l: Layer | null, W: number, H: number) {
+  ctx.save();
+  if (l) {
+    ctx.globalAlpha = l.a;
+    if (l.blur) ctx.filter = `blur(${l.blur}px)`;
+    if (l.clip) { const [t, r, b, lf] = l.clip; ctx.beginPath(); ctx.rect(lf * W, t * H, W * (1 - lf - r), H * (1 - t - b)); ctx.clip(); }
+    ctx.translate(W / 2 + l.x * W, H / 2 + l.y * H);
+    if (l.rot) ctx.rotate((l.rot * Math.PI) / 180);
+    ctx.scale(l.scale, l.scale);
+  } else ctx.translate(W / 2, H / 2);
+  ctx.translate(m.x * W, m.y * H);
+  if (m.rot) ctx.rotate((m.rot * Math.PI) / 180);
+  const ratio = Math.max(W / img.width, H / img.height) * m.scale;
+  const iw = img.width * ratio, ih = img.height * ratio;
+  ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+  ctx.restore();
+}
+
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }): Promise<Blob> {
   const q = qualityOf(quality);
   const px = Math.round(sizePx(look.size ?? "medium") * q.scale);
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
@@ -104,15 +123,12 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         const t = (performance.now() - start) / 1000;
         const k = Math.min(t / dur, 1);
         const m = motionAt(motion.type, i, k, motion.enabled);
-        const ratio = Math.max(W / img.width, H / img.height) * m.scale;
-        const iw = img.width * ratio, ih = img.height * ratio;
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, W, H);
-        ctx.save();
-        ctx.translate(W / 2 + m.x * W, H / 2 + m.y * H);
-        if (m.rot) ctx.rotate((m.rot * Math.PI) / 180);
-        ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
-        ctx.restore();
+        const tr = transitionAt(transition.type, i, t / TRANSITION_SECS, transition.enabled);
+        if (tr?.prev) drawPic(ctx, loaded[i - 1].img, motionAt(motion.type, i - 1, 1, motion.enabled), tr.prev, W, H);
+        drawPic(ctx, img, m, tr?.next ?? null, W, H);
+        if (tr?.overlay) { ctx.globalAlpha = tr.overlay.a; ctx.fillStyle = tr.overlay.color; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
         drawFx(ctx, m.fx, W, H);
         if (captionStyle !== "none") {
           ctx.font = fontStr;

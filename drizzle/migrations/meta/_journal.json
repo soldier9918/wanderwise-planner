@@ -78,6 +78,13 @@
       "when": 1793932100089,
       "tag": "0010_video_motion",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793932890475,
+      "tag": "0011_video_transition",
+      "breakpoints": true
     }
   ]
 }
