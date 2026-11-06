@@ -1,0 +1,2 @@
+ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS music_enabled boolean NOT NULL DEFAULT true;
+COMMENT ON COLUMN public.videos.music_enabled IS 'Whether background music plays in preview and export; false mutes it without clearing the mood.';

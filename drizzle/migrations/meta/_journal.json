@@ -64,6 +64,13 @@
       "when": 1793931616883,
       "tag": "0008_video_sfx",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793931787186,
+      "tag": "0009_add_music_enabled",
+      "breakpoints": true
     }
   ]
 }

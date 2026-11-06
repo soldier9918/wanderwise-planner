@@ -124,3 +124,8 @@ export function rampTo(ctx: AudioContext, p: MusicPlayer, level: number, at = ct
   p.gain.gain.cancelScheduledValues(at);
   p.gain.gain.setTargetAtTime(level, at, 0.08);
 }
+
+/** Whether background music should play: the on/off switch must be on and a mood chosen. */
+export function shouldPlayMusic(mood: string | null | undefined, enabled: boolean | null | undefined): boolean {
+  return (enabled ?? true) && !!mood && mood !== "none";
+}

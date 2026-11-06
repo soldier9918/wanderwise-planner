@@ -19,7 +19,7 @@ import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
 import { Switch } from "@/components/ui/switch";
 import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
-import { MUSIC_MOODS, DUCK_RATIO, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
+import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -124,12 +124,12 @@ export default function VideoEditor() {
   };
   const isPlaying = playing !== null;
   useEffect(() => {
-    if (!isPlaying || !data?.video) { if (!listening) stopMusic(); return; }
+    if (!isPlaying || !data?.video || !shouldPlayMusic(data.video.music_mood, data.video.music_enabled)) { if (!listening) stopMusic(); return; }
     setListening(false);
     startPreviewMusic(data.video.music_mood, data.video.music_volume);
     return () => stopMusic();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, data?.video?.music_mood, data?.video?.music_path]);
+  }, [isPlaying, data?.video?.music_mood, data?.video?.music_enabled, data?.video?.music_path]);
   useEffect(() => {
     const ctx = musicCtx.current;
     if (!ctx) return;
@@ -290,6 +290,7 @@ export default function VideoEditor() {
         data.video?.quality ?? "720p",
         {
           mood: data.video?.music_mood ?? "none",
+          enabled: data.video?.music_enabled ?? true,
           volume: data.video?.music_volume ?? 30,
           ducking: data.video?.music_ducking ?? true,
           customUrl: data.video?.music_path ? data.urls[data.video.music_path] : null,
@@ -377,7 +378,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -535,24 +536,34 @@ export default function VideoEditor() {
               />
             </div>
             <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
-              <p className="text-xs font-semibold text-muted-foreground">Music</p>
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  <span className="font-semibold">Background music</span>
+                  <span className="block text-xs text-muted-foreground">Plays under the narration in preview and download.</span>
+                </span>
+                <Switch
+                  checked={video.music_enabled ?? true}
+                  onCheckedChange={(v) => { saveLook({ music_enabled: v }); if (!v) { stopMusic(); setListening(false); } }}
+                />
+              </label>
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[180px] flex-1">
                   <LookSelect
                     label="Mood"
                     value={video.music_mood}
                     options={MUSIC_MOODS.filter((m) => m.value !== "custom" || video.music_path)}
+                    disabled={video.music_enabled === false}
                     onChange={(v) => { saveLook({ music_mood: v }); if (listening) startPreviewMusic(v, video.music_volume); }}
                   />
                 </div>
                 <Button
-                  size="sm" variant="outline" disabled={video.music_mood === "none" || playing !== null}
+                  size="sm" variant="outline" disabled={video.music_enabled === false || video.music_mood === "none" || playing !== null}
                   onClick={() => { if (listening) { stopMusic(); setListening(false); } else { setListening(true); startPreviewMusic(video.music_mood, video.music_volume); } }}
                 >{listening ? "■ Stop" : "▶ Listen"}</Button>
                 <label className="inline-flex cursor-pointer items-center rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent/20">
                   {musicBusy ? "Uploading…" : "Upload your own"}
                   <input
-                    type="file" accept="audio/mpeg,audio/wav,audio/mp3,audio/x-wav,.mp3,.wav" className="hidden" disabled={musicBusy}
+                    type="file" accept="audio/mpeg,audio/wav,audio/mp3,audio/x-wav,.mp3,.wav" className="hidden" disabled={musicBusy || video.music_enabled === false}
                     onChange={async (e) => {
                       const f = e.target.files?.[0];
                       e.target.value = "";
@@ -577,7 +588,7 @@ export default function VideoEditor() {
               <div className="grid gap-1 text-xs font-semibold text-muted-foreground">
                 Music volume: {video.music_volume}%
                 <Slider
-                  value={[video.music_volume]} min={0} max={100} step={5}
+                  value={[video.music_volume]} min={0} max={100} step={5} disabled={video.music_enabled === false}
                   onValueChange={([v]) => {
                     qc.setQueryData(["video", id], { ...data, video: { ...video, music_volume: v } });
                     const ctx = musicCtx.current, p = musicPlayer.current;
@@ -591,7 +602,7 @@ export default function VideoEditor() {
                   <span className="font-semibold">Auto-ducking</span>
                   <span className="block text-xs text-muted-foreground">Lowers the music while the narrator speaks.</span>
                 </span>
-                <Switch checked={video.music_ducking} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
+                <Switch checked={video.music_ducking} disabled={video.music_enabled === false} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
               </label>
             </div>
             <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">

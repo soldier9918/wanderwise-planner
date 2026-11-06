@@ -114,6 +114,7 @@ export type Database = {
           description: string | null
           id: string
           music_ducking: boolean
+          music_enabled: boolean
           music_mood: string
           music_path: string | null
           music_volume: number
@@ -141,6 +142,7 @@ export type Database = {
           description?: string | null
           id?: string
           music_ducking?: boolean
+          music_enabled?: boolean
           music_mood?: string
           music_path?: string | null
           music_volume?: number
@@ -168,6 +170,7 @@ export type Database = {
           description?: string | null
           id?: string
           music_ducking?: boolean
+          music_enabled?: boolean
           music_mood?: string
           music_path?: string | null
           music_volume?: number

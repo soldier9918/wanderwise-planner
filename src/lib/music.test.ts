@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { duckSchedule, DUCK_RATIO } from "./music";
+import { duckSchedule, DUCK_RATIO, shouldPlayMusic } from "./music";
 
 describe("duckSchedule", () => {
   it("dips music while the narrator speaks and restores it in the gap", () => {
@@ -13,5 +13,22 @@ describe("duckSchedule", () => {
   });
   it("does not dip scenes that have no voiceover", () => {
     expect(duckSchedule([4], [null], 50, true)).toEqual([{ t: 0, level: 0.5 }]);
+  });
+});
+
+describe("shouldPlayMusic", () => {
+  it("stays silent when the music switch is off", () => {
+    expect(shouldPlayMusic("cinematic", false)).toBe(false);
+  });
+  it("stays silent when no mood is chosen", () => {
+    expect(shouldPlayMusic("none", true)).toBe(false);
+  });
+  it("plays when the switch is on and a mood is chosen", () => {
+    expect(shouldPlayMusic("cinematic", true)).toBe(true);
+    expect(shouldPlayMusic("custom", true)).toBe(true);
+  });
+  it("treats videos made before the switch existed as on", () => {
+    expect(shouldPlayMusic("cinematic", undefined)).toBe(true);
+    expect(shouldPlayMusic("cinematic", null)).toBe(true);
   });
 });

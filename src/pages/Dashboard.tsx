@@ -99,7 +99,7 @@ export default function Dashboard() {
     setBusy(true);
     try {
       const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
-      if (mood !== "none") await supabase.from("videos").update({ music_mood: mood }).eq("id", videoId);
+      await supabase.from("videos").update({ music_mood: mood, music_enabled: mood !== "none" }).eq("id", videoId);
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);

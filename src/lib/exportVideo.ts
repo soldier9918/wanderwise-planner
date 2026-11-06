@@ -4,9 +4,9 @@ import { fontCss, safeColor, sizePx } from "./captionLook";
 import { captionWrapPx, ratioOf } from "./aspectRatio";
 import { qualityOf } from "./quality";
 import { playSfx, sfxFor } from "./sfx";
-import { duckSchedule, startMusic, type MusicPlayer } from "./music";
+import { duckSchedule, shouldPlayMusic, startMusic, type MusicPlayer } from "./music";
 
-export type ExportMusic = { mood: string; volume: number; ducking: boolean; customUrl?: string | null };
+export type ExportMusic = { mood: string; volume: number; ducking: boolean; enabled?: boolean; customUrl?: string | null };
 
 export type ExportSfx = { enabled: boolean; type: string; volume: number };
 
@@ -74,7 +74,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   let elapsedBefore = 0;
 
   let player: MusicPlayer | null = null;
-  if (music && music.mood !== "none") {
+  if (music && shouldPlayMusic(music.mood, music.enabled)) {
     let custom: AudioBuffer | null = null;
     if (music.mood === "custom" && music.customUrl) custom = await audioCtx.decodeAudioData(await (await fetch(music.customUrl)).arrayBuffer());
     player = startMusic(audioCtx, dest, music.mood, custom);
