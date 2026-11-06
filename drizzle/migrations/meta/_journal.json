@@ -92,6 +92,13 @@
       "when": 1793963887071,
       "tag": "0012_video_tone",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793995804127,
+      "tag": "0013_add_video_seo",
+      "breakpoints": true
     }
   ]
 }

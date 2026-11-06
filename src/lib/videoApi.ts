@@ -134,3 +134,6 @@ export async function signedUrls(paths: string[]) {
   data.forEach((d) => { if (d.path && d.signedUrl) map[d.path] = d.signedUrl; });
   return map;
 }
+
+export type Seo = { titles: string[]; description: string; hashtags: string[]; tags: string[] };
+export const generateSeo = (videoId: string) => invoke<{ seo: Seo }>("generate-seo", { videoId });

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, type Scene } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, generateSeo, type Scene, type Seo } from "@/lib/videoApi";
 import { Input } from "@/components/ui/input";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
@@ -350,6 +350,23 @@ export default function VideoEditor() {
     } finally {
       setExportPct(null);
     }
+  };
+
+  const [seoBusy, setSeoBusy] = useState(false);
+  const makeSeo = async () => {
+    setSeoBusy(true);
+    try {
+      await generateSeo(id!);
+      await qc.invalidateQueries({ queryKey: ["video", id] });
+      toast.success("SEO pack ready!");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSeoBusy(false);
+    }
+  };
+  const copy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); toast.success("Copied"); } catch { toast.error("Couldn't copy."); }
   };
 
   const [thumbText, setThumbText] = useState("");
@@ -772,6 +789,40 @@ export default function VideoEditor() {
                   <Button size="sm" type="submit" disabled={thumbBusy || !thumbText.trim()}>Add text</Button>
                 </form>
               )}
+            </div>
+            <div className="mt-4 rounded-xl border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">SEO — titles, description & tags</p>
+              {(() => {
+                const seo = (video as { seo?: Seo | null }).seo;
+                if (!seo) return <p className="mt-2 text-sm text-muted-foreground">One click drafts 3 click-worthy titles, a search-friendly description, hashtags and tags.</p>;
+                return (
+                  <div className="mt-2 grid gap-3 text-sm">
+                    <div>
+                      <p className="text-xs font-semibold">Title ideas</p>
+                      <ul className="mt-1 grid gap-1">
+                        {seo.titles.map((t) => (
+                          <li key={t} className="flex items-start justify-between gap-2 rounded-md bg-secondary/50 p-2">
+                            <span>{t} <span className="text-[11px] text-muted-foreground">({t.length})</span></span>
+                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => copy(t)}>Copy</Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {([["Description", seo.description], ["Hashtags", seo.hashtags.join(" ")], ["Tags", seo.tags.join(", ")]] as const).map(([label, text]) => (
+                      <div key={label}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold">{label}</p>
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => copy(text)}>Copy</Button>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap rounded-md bg-secondary/50 p-2 text-muted-foreground">{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              <Button size="sm" variant="outline" className="mt-3" onClick={makeSeo} disabled={seoBusy || !scenes.length}>
+                {seoBusy ? "Writing…" : (video as { seo?: Seo | null }).seo ? "Regenerate SEO" : "Generate SEO"}
+              </Button>
             </div>
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>
