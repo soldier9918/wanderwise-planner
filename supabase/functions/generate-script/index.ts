@@ -2,6 +2,7 @@ import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
 import { corsHeaders, GATEWAY_URL, json, getUserClient } from "../_shared/common.ts";
+import { TONES, toneOf } from "../_shared/tones.ts";
 
 const schema = z.object({
   title: z.string(),
@@ -21,7 +22,8 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts } = await req.json();
+    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn } = await req.json();
+    const tone = typeof toneIn === "string" && TONES[toneIn] ? toneIn : "engaging";
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        `You are a YouTube scriptwriter. Write engaging, punchy faceless-channel scripts. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never far off that. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
+        `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never far off that. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
       messages: [
         { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${research ? `\n\nResearch sources:\n${research}` : ""}` },
       ],
@@ -109,7 +111,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total, sources })
+      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, tone, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total, sources })
       .select("id")
       .single();
     if (vErr) throw vErr;

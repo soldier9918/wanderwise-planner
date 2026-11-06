@@ -129,6 +129,7 @@ export type Database = {
           target_seconds: number | null
           thumbnail_path: string | null
           title: string
+          tone: string
           topic: string
           transition_enabled: boolean
           transition_type: string
@@ -161,6 +162,7 @@ export type Database = {
           target_seconds?: number | null
           thumbnail_path?: string | null
           title?: string
+          tone?: string
           topic: string
           transition_enabled?: boolean
           transition_type?: string
@@ -193,6 +195,7 @@ export type Database = {
           target_seconds?: number | null
           thumbnail_path?: string | null
           title?: string
+          tone?: string
           topic?: string
           transition_enabled?: boolean
           transition_type?: string

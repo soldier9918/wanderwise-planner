@@ -1,4 +1,5 @@
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient, gatewayError } from "../_shared/common.ts";
+import { toneOf } from "../_shared/tones.ts";
 
 const IMAGE_MODEL = "openai/gpt-image-2.5-sunburst";
 const SPEECH_MODEL = "google/gemini-3.1-flash-tts-preview";
@@ -21,7 +22,7 @@ Deno.serve(async (req) => {
     // RLS ensures the scene belongs to the caller.
     const { data: scene, error } = await auth.client
       .from("video_scenes")
-      .select("id, video_id, narration, visual_prompt, videos(voice, aspect_ratio)")
+      .select("id, video_id, narration, visual_prompt, videos(voice, aspect_ratio, tone)")
       .eq("id", sceneId)
       .maybeSingle();
     if (error) throw error;
@@ -59,7 +60,8 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: SPEECH_MODEL,
-          contents: [{ role: "user", parts: [{ text: `Narrate in an engaging YouTube voiceover tone: ${scene.narration}` }] }],
+          contents: [{ role: "user", parts: [{ // deno-lint-ignore no-explicit-any
+          text: `${toneOf((scene as any).videos?.tone).voice}: ${scene.narration}` }] }],
           generationConfig: {
             responseModalities: ["AUDIO"],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },

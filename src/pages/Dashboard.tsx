@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STYLES, VOICES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
+import { STYLES, VOICES, TONES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [topic, setTopic] = useState("");
   const [style, setStyle] = useState<string>("Cinematic");
   const [voice, setVoice] = useState<string>("Kore");
+  const [tone, setTone] = useState<string>("engaging");
   const [scenes, setScenes] = useState("6");
   const [caption, setCaption] = useState<string>("typewriter");
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
@@ -98,7 +99,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
+      const { videoId } = await generateScript({ topic, style, voice, tone, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
       await supabase.from("videos").update({ music_mood: mood, music_enabled: mood !== "none" }).eq("id", videoId);
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
@@ -150,6 +151,13 @@ export default function Dashboard() {
                 <Select value={voice} onValueChange={setVoice}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Tone & emotion</Label>
+                <Select value={tone} onValueChange={setTone}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{TONES.map((v) => <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">

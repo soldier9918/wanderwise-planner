@@ -48,6 +48,34 @@ export const VOICES = [
   { id: "Achernar", label: "Achernar — Male, soft" },
   { id: "Schedar", label: "Schedar — Male, even" },
 ] as const;
+export const TONES = [
+  { id: "engaging", label: "Engaging YouTube (default)" },
+  { id: "true-crime", label: "Investigative / True Crime" },
+  { id: "hype", label: "Energetic Shorts / Hype" },
+  { id: "calm-doc", label: "Calm Documentary" },
+  { id: "tech", label: "Fast Tech Review" },
+  { id: "mystery", label: "Mysterious / Spooky" },
+  { id: "horror", label: "Horror Storyteller" },
+  { id: "dramatic", label: "Dramatic / Epic" },
+  { id: "inspiring", label: "Inspiring / Motivational" },
+  { id: "emotional", label: "Sad / Emotional" },
+  { id: "funny", label: "Funny / Comedic" },
+  { id: "sarcastic", label: "Sarcastic / Deadpan" },
+  { id: "storyteller", label: "Bedtime Storyteller" },
+  { id: "news", label: "News Anchor" },
+  { id: "educational", label: "Friendly Teacher" },
+  { id: "history", label: "History Channel" },
+  { id: "sports", label: "Sports Commentator" },
+  { id: "asmr", label: "Soft ASMR Whisper" },
+  { id: "meditation", label: "Calm Meditation" },
+  { id: "luxury", label: "Luxury / Elegant" },
+  { id: "sales", label: "Persuasive / Sales" },
+  { id: "conspiracy", label: "Conspiracy / Secrets" },
+  { id: "gaming", label: "Gaming Hype" },
+  { id: "kids", label: "Kids / Playful" },
+  { id: "podcast", label: "Casual Podcast" },
+  { id: "serious", label: "Serious / Somber" },
+] as const;
 export const CAPTION_STYLES = [
   { id: "typewriter", label: "Typewriter — words appear one by one" },
   { id: "pop", label: "Word pop — words pile up on screen" },
@@ -80,7 +108,7 @@ async function invoke<T>(name: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export const generateScript = (input: { topic: string; style: string; voice: string; sceneCount: number; captionStyle: string; aspectRatio: string; quality?: string; targetSeconds?: number; useFacts?: boolean }) =>
+export const generateScript = (input: { topic: string; style: string; voice: string; tone?: string; sceneCount: number; captionStyle: string; aspectRatio: string; quality?: string; targetSeconds?: number; useFacts?: boolean }) =>
   invoke<{ videoId: string }>("generate-script", input);
 
 export const suggestTopic = (hint?: string) =>

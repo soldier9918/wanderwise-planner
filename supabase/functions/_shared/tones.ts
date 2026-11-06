@@ -1,0 +1,31 @@
+// Narrator tone & emotion. `voice` steers the speech model; `script` steers the writer.
+export const TONES: Record<string, { label: string; voice: string; script: string }> = {
+  engaging: { label: "Engaging YouTube (default)", voice: "Narrate in an engaging YouTube voiceover tone", script: "an engaging YouTube voiceover style" },
+  "true-crime": { label: "Investigative / True Crime", voice: "Narrate like a gripping true-crime investigator: low, measured, suspenseful, with deliberate pauses before reveals", script: "a suspenseful investigative true-crime style with cliffhangers and reveals" },
+  hype: { label: "Energetic Shorts / Hype", voice: "Narrate with high energy and hype, fast and punchy like a viral YouTube Short", script: "a fast, hype, high-energy Shorts style with short punchy sentences" },
+  "calm-doc": { label: "Calm Documentary", voice: "Narrate calmly and warmly like a nature documentary presenter, unhurried and thoughtful", script: "a calm, thoughtful documentary style" },
+  tech: { label: "Fast Tech Review", voice: "Narrate like a fast, confident tech reviewer: crisp, quick and knowledgeable", script: "a fast, crisp tech-review style with clear verdicts" },
+  mystery: { label: "Mysterious / Spooky", voice: "Narrate in a hushed, eerie, mysterious tone that builds unease", script: "an eerie, mysterious style that builds unease" },
+  horror: { label: "Horror Storyteller", voice: "Narrate like a chilling horror storyteller, slow and menacing, almost whispering at scary moments", script: "a chilling horror-story style" },
+  dramatic: { label: "Dramatic / Epic", voice: "Narrate dramatically like an epic movie trailer, powerful and intense", script: "a dramatic, epic movie-trailer style" },
+  inspiring: { label: "Inspiring / Motivational", voice: "Narrate in an uplifting, motivational tone full of conviction", script: "an inspiring motivational style" },
+  emotional: { label: "Sad / Emotional", voice: "Narrate softly with deep emotion and sincerity, gently and slowly", script: "a heartfelt, emotional style" },
+  funny: { label: "Funny / Comedic", voice: "Narrate playfully with comic timing and a cheeky, amused tone", script: "a funny, witty style with light jokes" },
+  sarcastic: { label: "Sarcastic / Deadpan", voice: "Narrate in a dry, deadpan, sarcastic tone", script: "a dry, deadpan, sarcastic style" },
+  storyteller: { label: "Bedtime Storyteller", voice: "Narrate like a warm, gentle bedtime storyteller", script: "a warm storybook style" },
+  news: { label: "News Anchor", voice: "Narrate like a professional TV news anchor: authoritative, neutral and clear", script: "a neutral, factual news-report style" },
+  educational: { label: "Friendly Teacher", voice: "Narrate like a friendly, patient teacher explaining clearly", script: "a clear, friendly educational explainer style" },
+  history: { label: "History Channel", voice: "Narrate like a classic history documentary narrator, rich and authoritative", script: "a rich, authoritative history-documentary style" },
+  sports: { label: "Sports Commentator", voice: "Narrate like an excited sports commentator, building to big moments", script: "an exciting sports-commentary style" },
+  asmr: { label: "Soft ASMR Whisper", voice: "Narrate in a very soft, close, soothing whisper", script: "a soothing, gentle, relaxing style" },
+  meditation: { label: "Calm Meditation", voice: "Narrate slowly and peacefully like a meditation guide", script: "a peaceful, slow, calming style" },
+  luxury: { label: "Luxury / Elegant", voice: "Narrate in a smooth, elegant, refined tone like a luxury brand film", script: "an elegant, refined luxury style" },
+  sales: { label: "Persuasive / Sales", voice: "Narrate persuasively and confidently like a top product presenter", script: "a persuasive, benefit-focused sales style" },
+  conspiracy: { label: "Conspiracy / Secrets", voice: "Narrate in a hushed, intriguing tone as if revealing hidden secrets", script: "an intriguing 'hidden secrets' style, clearly separating facts from rumours" },
+  gaming: { label: "Gaming Hype", voice: "Narrate like an energetic gaming YouTuber, excited and fun", script: "an energetic gaming-channel style" },
+  kids: { label: "Kids / Playful", voice: "Narrate cheerfully and playfully for young children, bright and simple", script: "a cheerful, simple style for kids" },
+  podcast: { label: "Casual Podcast", voice: "Narrate casually and conversationally, like chatting to a friend on a podcast", script: "a relaxed, conversational podcast style" },
+  serious: { label: "Serious / Somber", voice: "Narrate in a serious, respectful, somber tone", script: "a serious, respectful, somber style" },
+};
+
+export const toneOf = (id: unknown) => TONES[typeof id === "string" ? id : ""] ?? TONES.engaging;
