@@ -212,6 +212,28 @@ export default function VideoEditor() {
     }
   }, [id, qc]);
 
+  const uploadImage = useCallback(async (scene: Scene, f: File) => {
+    if (!f.type.startsWith("image/")) return toast.error("Please pick a photo or screenshot.");
+    if (f.size > 15 * 1024 * 1024) return toast.error("Please pick an image under 15 MB.");
+    const key = `${scene.id}-image`;
+    setWorking((w) => ({ ...w, [key]: true }));
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const ext = (f.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+      const path = `${u.user!.id}/${scene.video_id}/${scene.id}-upload-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("video-assets").upload(path, f, { contentType: f.type });
+      if (error) throw error;
+      const { error: e2 } = await supabase.from("video_scenes").update({ image_path: path }).eq("id", scene.id);
+      if (e2) throw e2;
+      await qc.invalidateQueries({ queryKey: ["video", id] });
+      toast.success(`Scene ${scene.position + 1} now uses your image.`);
+    } catch (e) {
+      toast.error(`Upload failed: ${(e as Error).message}`);
+    } finally {
+      setWorking((w) => ({ ...w, [key]: false }));
+    }
+  }, [id, qc]);
+
   const generateMissing = useCallback(async (scenes: Scene[]) => {
     // Small batches to stay within rate limits.
     const jobs = scenes.flatMap((s) => [
@@ -726,6 +748,12 @@ export default function VideoEditor() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-image`]} onClick={() => runAsset(s, "image").catch(() => {})}>
                     {working[`${s.id}-image`] ? "Painting…" : s.image_path ? "New image" : "Make image"}
+                  </Button>
+                  <Button size="sm" variant="outline" asChild disabled={working[`${s.id}-image`]}>
+                    <label className={`cursor-pointer ${working[`${s.id}-image`] ? "pointer-events-none opacity-50" : ""}`}>
+                      Upload image
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) uploadImage(s, f); }} />
+                    </label>
                   </Button>
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-audio`]} onClick={() => runAsset(s, "audio").catch(() => {})}>
                     {working[`${s.id}-audio`] ? "Recording…" : s.audio_path ? "Redo voiceover" : "Make voiceover"}
