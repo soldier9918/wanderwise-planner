@@ -33,11 +33,11 @@ Deno.serve(async (req) => {
 
     const size = ({ "16:9": "1536x1024", "21:9": "1536x1024", "9:16": "1024x1536", "4:5": "1024x1536", "1:1": "1024x1024" } as Record<string, string>)[video.aspect_ratio ?? "16:9"] ?? "1536x1024";
     const prompt =
-      `A click-worthy YouTube thumbnail for a video titled "${video.title}". ` +
-      `Topic: ${video.topic}. Visual style: ${video.style}. ` +
-      `Bold, high-contrast, eye-catching composition with one striking focal subject. ` +
-      `Include the title text "${video.title}" in large, bold, easy-to-read lettering with strong contrast against the background. ` +
-      `Vibrant colours, dramatic lighting, no watermarks, no logos, no extra words beyond the title.`;
+      `A professional, viral-quality YouTube thumbnail for a video titled "${video.title}" (topic: ${video.topic}). ` +
+      `Art direction: ${video.style}, rendered as a cinematic, ultra-detailed, polished key-art image like a top creator's thumbnail. ` +
+      `One large, striking focal subject filling much of the frame, shallow depth of field, dramatic rim lighting, rich saturated colours, strong colour contrast between subject and background, subtle glow and atmosphere. ` +
+      `Add a short punchy hook of 2 to 4 words taken from the title (not the whole title), in huge bold condensed all-caps lettering with a thick outline and drop shadow, placed in clear space so it never covers the subject. Spell it exactly. ` +
+      `Clean composition readable at small size. No watermarks, no logos, no channel names, no extra words.`;
 
     const words = custom || video.title;
     let res: Response;
@@ -58,14 +58,14 @@ Deno.serve(async (req) => {
       form.append("model", IMAGE_MODEL);
       form.append("prompt", editPrompt);
       form.append("size", size);
-      form.append("quality", "medium");
+      form.append("quality", "high");
       form.append("image", new File([await file.arrayBuffer()], "thumb.png", { type: "image/png" }));
       res = await fetch(`${GATEWAY_URL}/v1/images/edits`, { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: form });
     } else {
       res = await fetch(`${GATEWAY_URL}/v1/images/generations`, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: IMAGE_MODEL, prompt, size, quality: "medium" }),
+        body: JSON.stringify({ model: IMAGE_MODEL, prompt, size, quality: "high" }),
       });
     }
     if (!res.ok) return gatewayError(res);
