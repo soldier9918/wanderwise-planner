@@ -1,153 +1,56 @@
 import { useEffect, useRef } from "react";
 
-/** Night-sky hero: black background with small stars that flicker and drift. */
-type Star = {
-  x: number;
-  y: number;
-  r: number;
-  base: number;
-  speed: number;
-  phase: number;
-  depth: number;
-  tint: number;
-};
-
-type Shooting = { x: number; y: number; vx: number; vy: number; life: number; max: number };
-
+/** Animated AI-style dot grid: dots ripple, glow and shift colour across the hero. */
 export default function HeroBackground() {
   const ref = useRef<HTMLCanvasElement>(null);
-
   useEffect(() => {
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
+    const css = getComputedStyle(document.documentElement);
+    const tok = (n: string) => css.getPropertyValue(n).trim().split(/\s+/);
+    const [ph, ps, pl] = tok("--primary");
+    const [ah, as, al] = tok("--accent");
+    const [fh, fs, fl] = tok("--foreground");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    let raf = 0;
-    let W = 0;
-    let H = 0;
-    let stars: Star[] = [];
-    let shooting: Shooting[] = [];
-    let nextShoot = 3;
-
-    const rand = (a: number, b: number) => a + Math.random() * (b - a);
-
-    const build = () => {
-      const count = Math.round((W * H) / 2400);
-      stars = Array.from({ length: count }, () => {
-        const depth = rand(0.25, 1);
-        return {
-          x: Math.random() * W,
-          y: Math.random() * H,
-          r: rand(0.35, 1.1) * (0.6 + depth * 0.7),
-          base: rand(0.25, 0.95) * (0.45 + depth * 0.55),
-          speed: rand(0.5, 2.6),
-          phase: rand(0, Math.PI * 2),
-          depth,
-          tint: Math.random(),
-        };
-      });
-    };
-
+    let raf = 0, W = 0, H = 0;
+    const gap = 22;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = canvas.offsetWidth;
-      H = canvas.offsetHeight;
-      canvas.width = Math.max(1, Math.floor(W * dpr));
-      canvas.height = Math.max(1, Math.floor(H * dpr));
+      const dpr = window.devicePixelRatio || 1;
+      W = canvas.offsetWidth; H = canvas.offsetHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      build();
     };
-
     resize();
     window.addEventListener("resize", resize);
-
     const draw = (now: number) => {
       const t = now / 1000;
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, W, H);
-
-      for (const s of stars) {
-        // slow drift, deeper stars move less
-        if (!reduce) {
-          s.x -= s.depth * 3.2 * (1 / 60);
-          if (s.x < -2) s.x = W + 2;
-        }
-
-        // flicker: mostly smooth twinkle, with occasional sharp flares
-        let b = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
-        b = s.base * (0.28 + 0.72 * b);
-        const flare = Math.sin(t * (s.speed * 3.1) + s.phase * 2.7);
-        if (flare > 0.994) b = Math.min(1, b + 0.55);
-
-        const col =
-          s.tint > 0.94
-            ? "255,214,170"
-            : s.tint > 0.88
-              ? "180,205,255"
-              : "255,255,255";
-
-        ctx.fillStyle = `rgba(${col},${b.toFixed(3)})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fill();
-
-        // soft halo on the brightest ones
-        if (s.r > 0.95 && b > 0.55) {
-          const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 6);
-          g.addColorStop(0, `rgba(${col},${(b * 0.3).toFixed(3)})`);
-          g.addColorStop(1, `rgba(${col},0)`);
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r * 6, 0, Math.PI * 2);
-          ctx.fill();
-        }
+      ctx.clearRect(0, 0, W, H);
+      const cx = W * (0.5 + 0.3 * Math.sin(t * 0.25)), cy = H * (0.4 + 0.2 * Math.cos(t * 0.3));
+      for (let x = gap / 2; x < W; x += gap) for (let y = gap / 2; y < H; y += gap) {
+        const d = Math.hypot(x - cx, y - cy);
+        const wave = (Math.sin(d / 40 - t * 2.2) + 1) / 2;
+        const fall = Math.max(0, 1 - d / (Math.max(W, H) * 0.7));
+        const v = wave * fall;
+        const seed = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+        const spark = (seed - Math.floor(seed));
+        const twinkle = Math.sin(t * 3 + spark * 50) > 0.985;
+        let col: string, a: number, r: number;
+        if (twinkle) { col = `${ah} ${as} ${al}`; a = 0.9; r = 1.8; }
+        else if (v > 0.55) { col = `${ph} ${ps} ${pl}`; a = 0.2 + v * 0.6; r = 1 + v * 1.2; }
+        else { col = `${fh} ${fs} ${fl}`; a = 0.05 + v * 0.12; r = 0.9; }
+        ctx.fillStyle = `hsl(${col.split(" ").join(" ")} / ${a})`;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       }
-
-      // shooting stars
-      if (!reduce) {
-        if (t > nextShoot) {
-          nextShoot = t + rand(5, 12);
-          const fromLeft = Math.random() > 0.5;
-          shooting.push({
-            x: fromLeft ? rand(-80, W * 0.4) : rand(W * 0.6, W + 80),
-            y: rand(-40, H * 0.5),
-            vx: (fromLeft ? 1 : -1) * rand(320, 520),
-            vy: rand(120, 240),
-            life: 0,
-            max: rand(0.7, 1.2),
-          });
-        }
-        shooting = shooting.filter((sh) => sh.life < sh.max && sh.y < H + 120);
-        for (const sh of shooting) {
-          sh.life += 1 / 60;
-          sh.x += sh.vx / 60;
-          sh.y += sh.vy / 60;
-          const fade = Math.max(0, 1 - sh.life / sh.max);
-          const len = 90;
-          const nx = sh.vx / Math.hypot(sh.vx, sh.vy);
-          const ny = sh.vy / Math.hypot(sh.vx, sh.vy);
-          const g = ctx.createLinearGradient(sh.x, sh.y, sh.x - nx * len, sh.y - ny * len);
-          g.addColorStop(0, `rgba(255,255,255,${(0.8 * fade).toFixed(3)})`);
-          g.addColorStop(1, "rgba(255,255,255,0)");
-          ctx.strokeStyle = g;
-          ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          ctx.moveTo(sh.x, sh.y);
-          ctx.lineTo(sh.x - nx * len, sh.y - ny * len);
-          ctx.stroke();
-        }
-      }
-
+      // scanning line
+      const sy = ((t * 80) % (H + 200)) - 100;
+      const g = ctx.createLinearGradient(0, sy - 60, 0, sy);
+      g.addColorStop(0, `hsl(${ph} ${ps} ${pl} / 0)`);
+      g.addColorStop(1, `hsl(${ph} ${ps} ${pl} / 0.08)`);
+      ctx.fillStyle = g; ctx.fillRect(0, sy - 60, W, 60);
       if (!reduce) raf = requestAnimationFrame(draw);
     };
-
     raf = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
   }, []);
-
-  return <canvas ref={ref} className="absolute inset-0 h-full w-full bg-black" aria-hidden />;
+  return <canvas ref={ref} className="absolute inset-0 h-full w-full" aria-hidden />;
 }
