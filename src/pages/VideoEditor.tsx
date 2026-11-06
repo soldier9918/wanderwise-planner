@@ -793,7 +793,7 @@ export default function VideoEditor() {
             <div className="mt-4 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold text-muted-foreground">SEO — titles, description & tags</p>
               {(() => {
-                const seo = (video as { seo?: Seo | null }).seo;
+                const seo = (video.seo as unknown as Seo | null);
                 if (!seo) return <p className="mt-2 text-sm text-muted-foreground">One click drafts 3 click-worthy titles, a search-friendly description, hashtags and tags.</p>;
                 return (
                   <div className="mt-2 grid gap-3 text-sm">
@@ -821,7 +821,7 @@ export default function VideoEditor() {
                 );
               })()}
               <Button size="sm" variant="outline" className="mt-3" onClick={makeSeo} disabled={seoBusy || !scenes.length}>
-                {seoBusy ? "Writing…" : (video as { seo?: Seo | null }).seo ? "Regenerate SEO" : "Generate SEO"}
+                {seoBusy ? "Writing…" : (video.seo as unknown as Seo | null) ? "Regenerate SEO" : "Generate SEO"}
               </Button>
             </div>
             {exportPct !== null && (
