@@ -353,7 +353,8 @@ export default function VideoEditor() {
   };
 
   const [thumbText, setThumbText] = useState("");
-  const makeThumbnail = async (opts?: { mode?: "text"; text?: string }) => {
+  const [thumbSize, setThumbSize] = useState(3);
+  const makeThumbnail = async (opts?: { mode?: "text"; text?: string; textSize?: number }) => {
     setThumbBusy(true);
     try {
       await generateThumbnail(id!, opts);
@@ -738,14 +739,21 @@ export default function VideoEditor() {
                   {thumbBusy ? "Creating…" : video.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
                 </Button>
                 {video.thumbnail_path && (
-                  <Button size="sm" variant="outline" onClick={() => makeThumbnail({ mode: "text" })} disabled={thumbBusy}>Redo text</Button>
+                  <Button size="sm" variant="outline" onClick={() => makeThumbnail({ mode: "text", textSize: thumbSize })} disabled={thumbBusy}>Redo text</Button>
                 )}
                 {video.thumbnail_path && urls[video.thumbnail_path] && (
                   <Button size="sm" variant="secondary" onClick={downloadThumbnail}>Download thumbnail</Button>
                 )}
               </div>
               {video.thumbnail_path && (
-                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const t = thumbText.trim(); if (t) makeThumbnail({ mode: "text", text: t }); }}>
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground">Text size: <span className="font-semibold text-foreground">{["Small", "Medium", "Large", "Extra large", "Huge"][thumbSize - 1]}</span></p>
+                  <Slider className="mt-2" min={1} max={5} step={1} value={[thumbSize]} onValueChange={(v) => setThumbSize(v[0])} aria-label="Thumbnail text size" />
+                  <p className="mt-1 text-[11px] text-muted-foreground">Applies when you tap Redo text or Add text.</p>
+                </div>
+              )}
+              {video.thumbnail_path && (
+                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const t = thumbText.trim(); if (t) makeThumbnail({ mode: "text", text: t, textSize: thumbSize }); }}>
                   <Input value={thumbText} onChange={(e) => setThumbText(e.target.value)} maxLength={80} placeholder="Your own thumbnail text" className="h-9" />
                   <Button size="sm" type="submit" disabled={thumbBusy || !thumbText.trim()}>Add text</Button>
                 </form>

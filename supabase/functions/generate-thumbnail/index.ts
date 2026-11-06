@@ -14,7 +14,8 @@ Deno.serve(async (req) => {
   try {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
-    const { videoId, mode, text } = await req.json();
+    const { videoId, mode, text, textSize } = await req.json();
+    const sizeWords = ["small and tucked into a corner, taking up about 10% of the image", "modest, taking up about 20% of the image", "large, taking up about 35% of the image", "very large, taking up about half of the image", "huge, filling most of the image"][Math.min(4, Math.max(0, Math.round(Number(textSize) || 3) - 1))];
     const custom = typeof text === "string" ? text.trim().slice(0, 80) : "";
     if (!videoId) return json({ error: "Invalid request." }, 400);
 
@@ -51,8 +52,8 @@ Deno.serve(async (req) => {
       const colour = colours[Math.floor(Math.random() * colours.length)];
       const editPrompt =
         `Remove all existing text and lettering from this YouTube thumbnail and keep the picture otherwise the same. ` +
-        `Then add the text "${words}" in a completely new typography style: ${look}, in ${colour}, with a different size and placement from before. ` +
-        `Large, bold, easy to read, strong contrast. Spell the text exactly. No other words, no watermarks, no logos.`;
+        `Then add the text "${words}" in a completely new typography style: ${look}, in ${colour}, with a different placement from before. The text must be ${sizeWords}. ` +
+        `Bold, easy to read, strong contrast. Spell the text exactly. No other words, no watermarks, no logos.`;
       const form = new FormData();
       form.append("model", IMAGE_MODEL);
       form.append("prompt", editPrompt);
