@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/hooks/useAuth";
+import HeroBackground from "@/components/HeroBackground";
+import TypedHeadline from "@/components/TypedHeadline";
 
 const steps = [
   { n: "01", t: "Drop an idea", d: "“The rise and fall of Blockbuster” or “5 habits of ancient Stoics.” One line is enough." },
@@ -19,14 +21,12 @@ export default function Landing() {
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-glow" />
-          <div className="absolute inset-0 grain opacity-60" />
+          <HeroBackground />
           <div className="container relative py-20 md:py-32">
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-accent" /> Faceless YouTube, made easy
+              <span className="h-2 w-2 rounded-full bg-accent animate-pulse-dot" /> Faceless YouTube, made easy
             </p>
-            <h1 className="max-w-4xl text-5xl font-extrabold leading-[0.95] md:text-8xl">
-              From idea to <span className="text-primary">upload</span> in minutes.
-            </h1>
+            <TypedHeadline />
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
               Vydora turns a single sentence into a full YouTube video — script, scenes and voiceover — powered by AI.
             </p>
