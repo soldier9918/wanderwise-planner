@@ -1,4 +1,4 @@
-import { MOTION_TYPES, motionAt, motionCss } from "@/lib/motion";
+import { MOTION_TYPES, motionAt, motionCss, type Fx } from "@/lib/motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -392,6 +392,7 @@ export default function VideoEditor() {
   const secOf = (s: Scene) => sceneSeconds(s.audio_path ? audioSecs[s.id] : null, s.narration);
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
+  const curMotion = motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null);
   const elapsedSecs = playing !== null ? elapsedSeconds(sceneSecs, playing, progress) : 0;
   const seekTo = (secs: number) => {
     if (!scenes.length) return;
@@ -437,7 +438,10 @@ export default function VideoEditor() {
               style={{ aspectRatio: ratio.css, maxWidth: full ? `min(100%, calc((100dvh - 7rem) * ${ratio.w / ratio.h}))` : previewMaxPx(ratio.value) }}
             >
               {currentImg ? (
-                <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className="h-full w-full object-cover will-change-transform" style={{ transform: motionCss(motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null)) }} />
+                <>
+                <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className="h-full w-full object-cover will-change-transform" style={{ transform: motionCss(curMotion) }} />
+                <FxLayer fx={curMotion.fx} />
+                </>
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
@@ -707,5 +711,20 @@ export default function VideoEditor() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Horror overlays for the preview (inline colours mirror the export's canvas drawing).
+function FxLayer({ fx }: { fx?: Fx }) {
+  if (!fx) return null;
+  const layer = (c: string, a = 0) => a > 0 && <div className="pointer-events-none absolute inset-0" style={{ background: c, opacity: a }} />;
+  return (
+    <>
+      {layer("#8b0000", fx.red)}
+      {layer("#000", fx.dark)}
+      {layer("#fff", fx.flash)}
+      {fx.streaks?.map((l, i) => <div key={`s${i}`} className="pointer-events-none absolute inset-y-0" style={{ left: `${l.pos * 100}%`, width: `max(1px, ${l.size * 100}%)`, background: "#eee", opacity: l.a }} />)}
+      {fx.bands?.map((l, i) => <div key={`b${i}`} className="pointer-events-none absolute inset-x-0" style={{ top: `${l.pos * 100}%`, height: `max(1px, ${l.size * 100}%)`, background: "#ddd", opacity: l.a }} />)}
+    </>
   );
 }

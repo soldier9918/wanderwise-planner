@@ -1,4 +1,4 @@
-import { motionAt } from "./motion";
+import { drawFx, motionAt } from "./motion";
 import fixWebmDuration from "fix-webm-duration";
 import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
@@ -113,6 +113,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         if (m.rot) ctx.rotate((m.rot * Math.PI) / 180);
         ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
         ctx.restore();
+        drawFx(ctx, m.fx, W, H);
         if (captionStyle !== "none") {
           ctx.font = fontStr;
           const speak = buffer ? buffer.duration : dur;
