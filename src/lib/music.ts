@@ -7,6 +7,18 @@ export const MUSIC_MOODS = [
   { value: "ambient", label: "Ambient" },
   { value: "epic", label: "Epic" },
   { value: "piano", label: "Calm piano" },
+  { value: "dark", label: "Dark & tense" },
+  { value: "horror", label: "Horror" },
+  { value: "sad", label: "Sad & emotional" },
+  { value: "hopeful", label: "Hopeful" },
+  { value: "documentary", label: "Documentary" },
+  { value: "synthwave", label: "Synthwave" },
+  { value: "chill", label: "Chill" },
+  { value: "corporate", label: "Corporate" },
+  { value: "adventure", label: "Adventure" },
+  { value: "dreamy", label: "Dreamy" },
+  { value: "funky", label: "Funky" },
+  { value: "space", label: "Space" },
   { value: "custom", label: "My uploaded track" },
 ] as const;
 export type MusicMood = (typeof MUSIC_MOODS)[number]["value"];
@@ -40,6 +52,18 @@ const MOODS: Record<string, MoodDef> = {
   ambient: { bpm: 50, wave: "sine", chords: [[52, 59, 64], [48, 55, 64], [50, 57, 62], [47, 54, 62]], cutoff: 1100, beat: false, bass: false, arp: false },
   epic: { bpm: 90, wave: "sawtooth", chords: [[50, 57, 62], [46, 53, 58], [48, 55, 60], [45, 52, 57]], cutoff: 1600, beat: true, bass: true, arp: false },
   piano: { bpm: 72, wave: "triangle", chords: [[60, 64, 67, 72], [57, 60, 64, 69], [53, 57, 60, 65], [55, 59, 62, 67]], cutoff: 2500, beat: false, bass: false, arp: true },
+  dark: { bpm: 64, wave: "sawtooth", chords: [[40, 43, 47], [41, 44, 48], [38, 41, 45], [40, 43, 46]], cutoff: 600, beat: true, bass: true, arp: false },
+  horror: { bpm: 48, wave: "sine", chords: [[45, 46, 52], [44, 45, 51], [46, 47, 53], [43, 44, 50]], cutoff: 500, beat: false, bass: true, arp: true },
+  sad: { bpm: 60, wave: "triangle", chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [52, 55, 59]], cutoff: 1300, beat: false, bass: true, arp: true },
+  hopeful: { bpm: 84, wave: "triangle", chords: [[60, 64, 67], [55, 59, 62], [57, 60, 64], [53, 57, 60, 65]], cutoff: 1800, beat: false, bass: true, arp: true },
+  documentary: { bpm: 76, wave: "sine", chords: [[50, 57, 62, 65], [46, 53, 58, 62], [43, 50, 55, 58], [45, 52, 57, 61]], cutoff: 1200, beat: false, bass: true, arp: false },
+  synthwave: { bpm: 100, wave: "sawtooth", chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]], cutoff: 1700, beat: true, bass: true, arp: true },
+  chill: { bpm: 72, wave: "sine", chords: [[53, 57, 60, 64], [50, 53, 57, 60], [55, 58, 62, 65], [48, 52, 55, 58]], cutoff: 1500, beat: true, bass: true, arp: false },
+  corporate: { bpm: 110, wave: "triangle", chords: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 65]], cutoff: 2200, beat: true, bass: true, arp: true },
+  adventure: { bpm: 104, wave: "sawtooth", chords: [[50, 54, 57], [55, 59, 62], [57, 61, 64], [52, 55, 59]], cutoff: 1800, beat: true, bass: true, arp: false },
+  dreamy: { bpm: 56, wave: "sine", chords: [[60, 67, 71, 74], [57, 64, 67, 72], [53, 60, 64, 69], [55, 62, 65, 71]], cutoff: 1600, beat: false, bass: false, arp: true },
+  funky: { bpm: 112, wave: "square", chords: [[50, 53, 57, 60], [55, 58, 62, 65], [50, 53, 57, 60], [57, 61, 64, 67]], cutoff: 1500, beat: true, bass: true, arp: false },
+  space: { bpm: 44, wave: "sine", chords: [[48, 55, 62], [50, 57, 64], [46, 53, 60], [43, 50, 57]], cutoff: 900, beat: false, bass: true, arp: true },
 };
 const hz = (m: number) => 440 * 2 ** ((m - 69) / 12);
 
