@@ -19,8 +19,7 @@ export default function Landing() {
     <div className="min-h-screen">
       <SiteHeader />
       <main>
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-glow" />
+        <section className="relative overflow-hidden bg-black">
           <HeroBackground />
           <div className="container relative py-20 md:py-32">
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
