@@ -1,3 +1,4 @@
+import { motionAt } from "./motion";
 import fixWebmDuration from "fix-webm-duration";
 import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
@@ -35,7 +36,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }): Promise<Blob> {
   const q = qualityOf(quality);
   const px = Math.round(sizePx(look.size ?? "medium") * q.scale);
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
@@ -102,12 +103,16 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
       const frame = () => {
         const t = (performance.now() - start) / 1000;
         const k = Math.min(t / dur, 1);
-        const scale = 1 + 0.1 * k;
-        const ratio = Math.max(W / img.width, H / img.height) * scale;
+        const m = motionAt(motion.type, i, k, motion.enabled);
+        const ratio = Math.max(W / img.width, H / img.height) * m.scale;
         const iw = img.width * ratio, ih = img.height * ratio;
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, W, H);
-        ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
+        ctx.save();
+        ctx.translate(W / 2 + m.x * W, H / 2 + m.y * H);
+        if (m.rot) ctx.rotate((m.rot * Math.PI) / 180);
+        ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+        ctx.restore();
         if (captionStyle !== "none") {
           ctx.font = fontStr;
           const speak = buffer ? buffer.duration : dur;

@@ -1,0 +1,1 @@
+ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS motion_enabled boolean NOT NULL DEFAULT true, ADD COLUMN IF NOT EXISTS motion_type text NOT NULL DEFAULT 'zoom-in';

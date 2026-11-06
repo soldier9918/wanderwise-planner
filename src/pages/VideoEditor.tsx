@@ -1,3 +1,4 @@
+import { MOTION_TYPES, motionAt, motionCss } from "@/lib/motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -296,6 +297,7 @@ export default function VideoEditor() {
           customUrl: data.video?.music_path ? data.urls[data.video.music_path] : null,
         },
         { enabled: data.video?.sfx_enabled ?? false, type: data.video?.sfx_type ?? "whoosh", volume: data.video?.sfx_volume ?? 50 },
+        { enabled: data.video?.motion_enabled ?? true, type: data.video?.motion_type ?? "zoom-in" },
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -378,7 +380,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume" | "motion_enabled" | "motion_type">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -435,7 +437,7 @@ export default function VideoEditor() {
               style={{ aspectRatio: ratio.css, maxWidth: full ? `min(100%, calc((100dvh - 7rem) * ${ratio.w / ratio.h}))` : previewMaxPx(ratio.value) }}
             >
               {currentImg ? (
-                <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className={`h-full w-full object-cover ${playing !== null ? "animate-kenburns" : ""}`} style={{ animationPlayState: paused ? "paused" : "running" }} />
+                <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className="h-full w-full object-cover will-change-transform" style={{ transform: motionCss(motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null)) }} />
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
@@ -604,6 +606,22 @@ export default function VideoEditor() {
                 </span>
                 <Switch checked={video.music_ducking} disabled={video.music_enabled === false} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
               </label>
+            </div>
+            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  <span className="font-semibold">Camera motion (pan & zoom)</span>
+                  <span className="block text-xs text-muted-foreground">Gently moves each picture so scenes feel alive.</span>
+                </span>
+                <Switch checked={video.motion_enabled} onCheckedChange={(v) => saveLook({ motion_enabled: v })} />
+              </label>
+              <LookSelect
+                label="Movement"
+                value={video.motion_type}
+                options={MOTION_TYPES}
+                disabled={!video.motion_enabled}
+                onChange={(v) => saveLook({ motion_type: v })}
+              />
             </div>
             <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
               <label className="flex items-center justify-between gap-3 text-sm">

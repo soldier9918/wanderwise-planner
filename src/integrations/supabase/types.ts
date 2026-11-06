@@ -113,6 +113,8 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          motion_enabled: boolean
+          motion_type: string
           music_ducking: boolean
           music_enabled: boolean
           music_mood: string
@@ -141,6 +143,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          motion_enabled?: boolean
+          motion_type?: string
           music_ducking?: boolean
           music_enabled?: boolean
           music_mood?: string
@@ -169,6 +173,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          motion_enabled?: boolean
+          motion_type?: string
           music_ducking?: boolean
           music_enabled?: boolean
           music_mood?: string
