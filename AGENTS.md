@@ -5,3 +5,4 @@
 - Generated media is stored in the private `video-assets` bucket under `<user_id>/<video_id>/` and shown via signed URLs. Why: users only see their own files.
 - Video export runs in the browser (canvas + MediaRecorder → WebM). Why: no server-side renderer is available.
 - "Use real facts" scripts search the web via the Firecrawl connector inside `generate-script` and store cited URLs in `videos.sources`. Why: grounds real-event scripts in sources users can check.
+- Background music is composed in the browser (Web Audio) per mood, with uploads stored in `video-assets`; ducking is a per-video toggle. Why: no licensing risk and no AI credits.

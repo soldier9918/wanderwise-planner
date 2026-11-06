@@ -113,6 +113,10 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          music_ducking: boolean
+          music_mood: string
+          music_path: string | null
+          music_volume: number
           quality: string
           sources: Json | null
           style: string
@@ -133,6 +137,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          music_ducking?: boolean
+          music_mood?: string
+          music_path?: string | null
+          music_volume?: number
           quality?: string
           sources?: Json | null
           style?: string
@@ -153,6 +161,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          music_ducking?: boolean
+          music_mood?: string
+          music_path?: string | null
+          music_volume?: number
           quality?: string
           sources?: Json | null
           style?: string

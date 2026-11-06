@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { STYLES, VOICES, CAPTION_STYLES, generateScript, generateThumbnail, suggestTopic, signedUrls } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
+import { MUSIC_MOODS } from "@/lib/music";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
 export default function Dashboard() {
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [caption, setCaption] = useState<string>("typewriter");
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
   const [quality, setQuality] = useState<string>(DEFAULT_QUALITY);
+  const [mood, setMood] = useState<string>("none");
   const [length, setLength] = useState("60");
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [useFacts, setUseFacts] = useState(false);
@@ -97,6 +99,7 @@ export default function Dashboard() {
     setBusy(true);
     try {
       const { videoId } = await generateScript({ topic, style, voice, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
+      if (mood !== "none") await supabase.from("videos").update({ music_mood: mood }).eq("id", videoId);
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
       toast.error((err as Error).message);
@@ -170,6 +173,13 @@ export default function Dashboard() {
                 <Select value={quality} onValueChange={setQuality}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{QUALITIES.map((q) => <SelectItem key={q.value} value={q.value}>{q.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Music</Label>
+                <Select value={mood} onValueChange={setMood}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{MUSIC_MOODS.filter((m) => m.value !== "custom").map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">

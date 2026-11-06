@@ -3,6 +3,9 @@ import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewrite
 import { fontCss, safeColor, sizePx } from "./captionLook";
 import { captionWrapPx, ratioOf } from "./aspectRatio";
 import { qualityOf } from "./quality";
+import { duckSchedule, startMusic, type MusicPlayer } from "./music";
+
+export type ExportMusic = { mood: string; volume: number; ducking: boolean; customUrl?: string | null };
 
 export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
 
@@ -29,7 +32,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p"): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic): Promise<Blob> {
   const q = qualityOf(quality);
   const px = Math.round(sizePx(look.size ?? "medium") * q.scale);
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
@@ -67,7 +70,20 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   const total = durations.reduce((a, b) => a + b, 0);
   let elapsedBefore = 0;
 
+  let player: MusicPlayer | null = null;
+  if (music && music.mood !== "none") {
+    let custom: AudioBuffer | null = null;
+    if (music.mood === "custom" && music.customUrl) custom = await audioCtx.decodeAudioData(await (await fetch(music.customUrl)).arrayBuffer());
+    player = startMusic(audioCtx, dest, music.mood, custom);
+  }
+
   recorder.start(250);
+  if (player) {
+    const t0 = audioCtx.currentTime;
+    const g = player.gain.gain;
+    duckSchedule(durations, loaded.map((l) => l.buffer?.duration ?? null), music!.volume, music!.ducking)
+      .forEach((p) => g.setTargetAtTime(p.level, t0 + p.t, 0.08));
+  }
   for (let i = 0; i < loaded.length; i++) {
     const { img, buffer, caption } = loaded[i];
     const dur = durations[i];
@@ -126,6 +142,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
     });
     elapsedBefore += dur;
   }
+  player?.stop();
   recorder.stop();
   const raw = await done;
   await audioCtx.close();

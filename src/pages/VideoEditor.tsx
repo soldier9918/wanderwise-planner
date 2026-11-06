@@ -17,6 +17,8 @@ import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, 
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
+import { Switch } from "@/components/ui/switch";
+import { MUSIC_MOODS, DUCK_RATIO, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -78,6 +80,7 @@ export default function VideoEditor() {
   };
   const autoStarted = useRef(false);
 
+
   const { data, isLoading } = useQuery({
     queryKey: ["video", id],
     queryFn: async () => {
@@ -89,6 +92,7 @@ export default function VideoEditor() {
       const paths = [
         ...(scenes ?? []).flatMap((s) => [s.image_path, s.audio_path]),
         video?.thumbnail_path,
+        video?.music_path,
       ].filter(Boolean) as string[];
       const urls = await signedUrls(paths);
       return { video, scenes: (scenes ?? []) as Scene[], urls };
@@ -96,6 +100,56 @@ export default function VideoEditor() {
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["video", id] });
+
+  // Background music for the preview.
+  const musicCtx = useRef<AudioContext | null>(null);
+  const musicPlayer = useRef<MusicPlayer | null>(null);
+  const [listening, setListening] = useState(false);
+  const [musicBusy, setMusicBusy] = useState(false);
+  const stopMusic = () => { musicPlayer.current?.stop(); musicPlayer.current = null; };
+  const startPreviewMusic = async (mood: string, volume: number) => {
+    stopMusic();
+    if (mood === "none") return;
+    const ctx = musicCtx.current ?? (musicCtx.current = new AudioContext());
+    if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+    let buf: AudioBuffer | null = null;
+    const mp = data?.video?.music_path;
+    if (mood === "custom") {
+      if (!mp || !data?.urls[mp]) return;
+      buf = await ctx.decodeAudioData(await (await fetch(data.urls[mp])).arrayBuffer()).catch(() => null);
+    }
+    const p = startMusic(ctx, ctx.destination, mood, buf);
+    if (p) { musicPlayer.current = p; rampTo(ctx, p, volume / 100); }
+  };
+  const isPlaying = playing !== null;
+  useEffect(() => {
+    if (!isPlaying || !data?.video) { if (!listening) stopMusic(); return; }
+    setListening(false);
+    startPreviewMusic(data.video.music_mood, data.video.music_volume);
+    return () => stopMusic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, data?.video?.music_mood, data?.video?.music_path]);
+  useEffect(() => {
+    const ctx = musicCtx.current;
+    if (!ctx) return;
+    if (paused) ctx.suspend().catch(() => {}); else ctx.resume().catch(() => {});
+  }, [paused]);
+  // Auto-ducking: quieter while the narrator's voice is playing.
+  useEffect(() => {
+    const a = audioRef.current;
+    const v = data?.video;
+    if (!a || !v) return;
+    const apply = () => {
+      const ctx = musicCtx.current, p = musicPlayer.current;
+      if (!ctx || !p) return;
+      const base = v.music_volume / 100;
+      rampTo(ctx, p, v.music_ducking && !a.paused && !a.ended ? base * DUCK_RATIO : base);
+    };
+    apply();
+    a.addEventListener("play", apply); a.addEventListener("pause", apply); a.addEventListener("ended", apply);
+    return () => { a.removeEventListener("play", apply); a.removeEventListener("pause", apply); a.removeEventListener("ended", apply); };
+  }, [data?.video, playing]);
+  useEffect(() => () => { stopMusic(); musicCtx.current?.close().catch(() => {}); }, []);
 
   // Measure every voiceover clip so the seconds shown match the exported video.
   useEffect(() => {
@@ -218,6 +272,12 @@ export default function VideoEditor() {
         { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
         data.video?.aspect_ratio ?? "16:9",
         data.video?.quality ?? "720p",
+        {
+          mood: data.video?.music_mood ?? "none",
+          volume: data.video?.music_volume ?? 30,
+          ducking: data.video?.music_ducking ?? true,
+          customUrl: data.video?.music_path ? data.urls[data.video.music_path] : null,
+        },
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -300,7 +360,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "music_mood" | "music_volume" | "music_ducking" | "music_path">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -456,6 +516,66 @@ export default function VideoEditor() {
                   toast.success("All voiceovers now use the new narrator.");
                 }}
               />
+            </div>
+            <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Music</p>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-[180px] flex-1">
+                  <LookSelect
+                    label="Mood"
+                    value={video.music_mood}
+                    options={MUSIC_MOODS.filter((m) => m.value !== "custom" || video.music_path)}
+                    onChange={(v) => { saveLook({ music_mood: v }); if (listening) startPreviewMusic(v, video.music_volume); }}
+                  />
+                </div>
+                <Button
+                  size="sm" variant="outline" disabled={video.music_mood === "none" || playing !== null}
+                  onClick={() => { if (listening) { stopMusic(); setListening(false); } else { setListening(true); startPreviewMusic(video.music_mood, video.music_volume); } }}
+                >{listening ? "■ Stop" : "▶ Listen"}</Button>
+                <label className="inline-flex cursor-pointer items-center rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent/20">
+                  {musicBusy ? "Uploading…" : "Upload your own"}
+                  <input
+                    type="file" accept="audio/mpeg,audio/wav,audio/mp3,audio/x-wav,.mp3,.wav" className="hidden" disabled={musicBusy}
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!f) return;
+                      if (f.size > 20 * 1024 * 1024) return toast.error("Please pick a track under 20 MB.");
+                      setMusicBusy(true);
+                      try {
+                        const { data: u } = await supabase.auth.getUser();
+                        const ext = f.name.toLowerCase().endsWith(".wav") ? "wav" : "mp3";
+                        const path = `${u.user!.id}/${id}/music-${Date.now()}.${ext}`;
+                        const { error } = await supabase.storage.from("video-assets").upload(path, f, { contentType: f.type || "audio/mpeg" });
+                        if (error) throw error;
+                        await supabase.from("videos").update({ music_path: path, music_mood: "custom" }).eq("id", id!);
+                        toast.success("Track uploaded — only use music you own or have a licence for.");
+                        refresh();
+                      } catch (err) { toast.error(`Upload failed: ${(err as Error).message}`); }
+                      finally { setMusicBusy(false); }
+                    }}
+                  />
+                </label>
+              </div>
+              <div className="grid gap-1 text-xs font-semibold text-muted-foreground">
+                Music volume: {video.music_volume}%
+                <Slider
+                  value={[video.music_volume]} min={0} max={100} step={5}
+                  onValueChange={([v]) => {
+                    qc.setQueryData(["video", id], { ...data, video: { ...video, music_volume: v } });
+                    const ctx = musicCtx.current, p = musicPlayer.current;
+                    if (ctx && p) rampTo(ctx, p, (v / 100) * (video.music_ducking && playing !== null && !audioRef.current?.paused ? DUCK_RATIO : 1));
+                  }}
+                  onValueCommit={([v]) => saveLook({ music_volume: v })}
+                />
+              </div>
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  <span className="font-semibold">Auto-ducking</span>
+                  <span className="block text-xs text-muted-foreground">Lowers the music while the narrator speaks.</span>
+                </span>
+                <Switch checked={video.music_ducking} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
+              </label>
             </div>
             <div className="mt-4 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
