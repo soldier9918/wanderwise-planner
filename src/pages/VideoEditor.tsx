@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, editScenes, rewriteScene, type Scene } from "@/lib/videoApi";
+import { Input } from "@/components/ui/input";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds } from "@/lib/durations";
@@ -351,12 +352,13 @@ export default function VideoEditor() {
     }
   };
 
-  const makeThumbnail = async () => {
+  const [thumbText, setThumbText] = useState("");
+  const makeThumbnail = async (opts?: { mode?: "text"; text?: string }) => {
     setThumbBusy(true);
     try {
-      await generateThumbnail(id!);
+      await generateThumbnail(id!, opts);
       await qc.invalidateQueries({ queryKey: ["video", id] });
-      toast.success("Thumbnail ready!");
+      toast.success(opts?.text ? "Your text is on the thumbnail!" : opts?.mode ? "New text style ready!" : "Thumbnail ready!");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -732,13 +734,22 @@ export default function VideoEditor() {
                 <p className="mt-2 text-sm text-muted-foreground">No thumbnail yet — AI can make one from your title.</p>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={makeThumbnail} disabled={thumbBusy}>
+                <Button size="sm" variant="outline" onClick={() => makeThumbnail()} disabled={thumbBusy}>
                   {thumbBusy ? "Creating…" : video.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
                 </Button>
+                {video.thumbnail_path && (
+                  <Button size="sm" variant="outline" onClick={() => makeThumbnail({ mode: "text" })} disabled={thumbBusy}>Redo text</Button>
+                )}
                 {video.thumbnail_path && urls[video.thumbnail_path] && (
                   <Button size="sm" variant="secondary" onClick={downloadThumbnail}>Download thumbnail</Button>
                 )}
               </div>
+              {video.thumbnail_path && (
+                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const t = thumbText.trim(); if (t) makeThumbnail({ mode: "text", text: t }); }}>
+                  <Input value={thumbText} onChange={(e) => setThumbText(e.target.value)} maxLength={80} placeholder="Your own thumbnail text" className="h-9" />
+                  <Button size="sm" type="submit" disabled={thumbBusy || !thumbText.trim()}>Add text</Button>
+                </form>
+              )}
             </div>
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>

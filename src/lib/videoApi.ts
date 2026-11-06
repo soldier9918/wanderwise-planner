@@ -86,8 +86,8 @@ export const generateScript = (input: { topic: string; style: string; voice: str
 export const suggestTopic = (hint?: string) =>
   invoke<{ idea: string }>("suggest-topic", { hint });
 
-export const generateThumbnail = (videoId: string) =>
-  invoke<{ path: string }>("generate-thumbnail", { videoId });
+export const generateThumbnail = (videoId: string, opts?: { mode?: "text"; text?: string }) =>
+  invoke<{ path: string }>("generate-thumbnail", { videoId, ...opts });
 
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>
   invoke<{ path: string }>("scene-asset", { sceneId, kind });

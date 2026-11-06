@@ -14,13 +14,14 @@ Deno.serve(async (req) => {
   try {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
-    const { videoId } = await req.json();
+    const { videoId, mode, text } = await req.json();
+    const custom = typeof text === "string" ? text.trim().slice(0, 80) : "";
     if (!videoId) return json({ error: "Invalid request." }, 400);
 
     // RLS ensures the video belongs to the caller.
     const { data: video, error } = await auth.client
       .from("videos")
-      .select("id, title, topic, style, aspect_ratio")
+      .select("id, title, topic, style, aspect_ratio, thumbnail_path")
       .eq("id", videoId)
       .maybeSingle();
     if (error) throw error;
@@ -37,11 +38,35 @@ Deno.serve(async (req) => {
       `Include the title text "${video.title}" in large, bold, easy-to-read lettering with strong contrast against the background. ` +
       `Vibrant colours, dramatic lighting, no watermarks, no logos, no extra words beyond the title.`;
 
-    const res = await fetch(`${GATEWAY_URL}/v1/images/generations`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: IMAGE_MODEL, prompt, size, quality: "medium" }),
-    });
+    const words = custom || video.title;
+    let res: Response;
+    if (mode === "text" || custom) {
+      // Keep the picture, redo only the lettering.
+      if (!video.thumbnail_path) return json({ error: "Make a thumbnail first." }, 400);
+      const { data: file, error: dlErr } = await adminClient().storage.from("video-assets").download(video.thumbnail_path);
+      if (dlErr || !file) throw dlErr ?? new Error("thumbnail missing");
+      const looks = ["chunky 3D extruded letters", "brush-stroke hand-painted letters", "neon glowing tube letters", "condensed all-caps with thick outline", "grunge distressed stencil letters", "sleek metallic chrome letters", "comic-book pop letters with halftone", "elegant serif with drop shadow", "glitchy digital letters", "bold sticker-style letters with white border"];
+      const colours = ["yellow and black", "red and white", "electric blue and white", "lime green and black", "hot pink and cyan", "orange and deep purple", "gold and dark brown", "white with a red glow"];
+      const look = looks[Math.floor(Math.random() * looks.length)];
+      const colour = colours[Math.floor(Math.random() * colours.length)];
+      const editPrompt =
+        `Remove all existing text and lettering from this YouTube thumbnail and keep the picture otherwise the same. ` +
+        `Then add the text "${words}" in a completely new typography style: ${look}, in ${colour}, with a different size and placement from before. ` +
+        `Large, bold, easy to read, strong contrast. Spell the text exactly. No other words, no watermarks, no logos.`;
+      const form = new FormData();
+      form.append("model", IMAGE_MODEL);
+      form.append("prompt", editPrompt);
+      form.append("size", size);
+      form.append("quality", "medium");
+      form.append("image", new File([await file.arrayBuffer()], "thumb.png", { type: "image/png" }));
+      res = await fetch(`${GATEWAY_URL}/v1/images/edits`, { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: form });
+    } else {
+      res = await fetch(`${GATEWAY_URL}/v1/images/generations`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: IMAGE_MODEL, prompt, size, quality: "medium" }),
+      });
+    }
     if (!res.ok) return gatewayError(res);
     const body = await res.json();
     const b64 = body?.data?.[0]?.b64_json;
