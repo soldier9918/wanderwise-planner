@@ -15,6 +15,7 @@ import { STYLES, VOICES, TONES, CAPTION_STYLES, generateScript, generateThumbnai
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
+import { estimateCredits } from "@/lib/credits";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
 export default function Dashboard() {
@@ -66,18 +67,28 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("videos")
-        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at")
+        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at, sources, seo")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      type VideoRow = (typeof data)[number] & { thumb: string | null };
+      type VideoRow = (typeof data)[number] & { thumb: string | null; credits: number };
       if (!data.length) return [] as VideoRow[];
 
       // Fetch each video's scene 1 image and sign URLs for thumbnails.
-      const { data: scenes } = await supabase
+      const { data: allScenes } = await supabase
         .from("video_scenes")
-        .select("video_id, image_path")
-        .in("video_id", data.map((v) => v.id))
-        .eq("position", 0);
+        .select("video_id, image_path, clip_path, position")
+        .in("video_id", data.map((v) => v.id));
+      const scenes = (allScenes ?? []).filter((s) => s.position === 0);
+      const creditsFor = (v: (typeof data)[number]) => {
+        const mine = (allScenes ?? []).filter((s) => s.video_id === v.id);
+        return estimateCredits({
+          scenes: mine.length,
+          useFacts: Array.isArray(v.sources) && v.sources.length > 0,
+          animated: mine.filter((s) => s.clip_path).length,
+          thumbnail: !!v.thumbnail_path,
+          seo: !!v.seo,
+        });
+      };
       const paths = [
         ...(scenes ?? []).map((s) => s.image_path),
         ...data.map((v) => v.thumbnail_path),
@@ -91,7 +102,7 @@ export default function Dashboard() {
       data.forEach((v) => {
         if (v.thumbnail_path && urls[v.thumbnail_path]) thumbByVideo[v.id] = urls[v.thumbnail_path];
       });
-      return data.map((v): VideoRow => ({ ...v, thumb: thumbByVideo[v.id] ?? null }));
+      return data.map((v): VideoRow => ({ ...v, thumb: thumbByVideo[v.id] ?? null, credits: creditsFor(v) }));
     },
   });
 
@@ -201,6 +212,10 @@ export default function Dashboard() {
             <p className="-mt-2 text-sm text-muted-foreground">
               {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : "That length doesn't fit this many scenes — pick another length."}
             </p>
+            <p className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Estimated cost (script, images, voiceovers)</span>
+              <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts })} credits</Link>
+            </p>
             <Button type="submit" size="lg" disabled={busy || !lengthOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
           </form>
         </section>
@@ -220,7 +235,7 @@ export default function Dashboard() {
                 <div className="min-w-0">
                   <p className="font-semibold group-hover:text-primary">{v.title}</p>
                   <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{v.topic}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()} · <span className="font-semibold text-primary">⚡ ~{v.credits} credits</span></p>
                   <Button
                     type="button"
                     variant="outline"

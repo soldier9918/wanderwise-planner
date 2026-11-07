@@ -18,6 +18,7 @@ export default function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link className="transition-colors hover:text-primary" to="/dashboard">New video</Link></li>
             <li><Link className="transition-colors hover:text-primary" to="/dashboard">My videos</Link></li>
+            <li><Link className="transition-colors hover:text-primary" to="/pricing">Pricing &amp; costs</Link></li>
             <li><Link className="transition-colors hover:text-primary" to="/#how">How it works</Link></li>
             <li><Link className="transition-colors hover:text-primary" to="/auth?mode=signup">Start free</Link></li>
           </ul>

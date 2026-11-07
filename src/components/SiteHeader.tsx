@@ -21,6 +21,7 @@ export default function SiteHeader() {
       <div className="container flex h-16 items-center justify-between">
         <Logo />
         <nav className="flex items-center gap-2">
+          <Button variant="ghost" asChild><Link to="/pricing">Pricing</Link></Button>
           {user ? (
             <>
               <Button variant="ghost" asChild><Link to="/dashboard">My videos</Link></Button>

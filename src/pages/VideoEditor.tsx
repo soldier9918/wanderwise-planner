@@ -23,6 +23,7 @@ import RatioSelect from "@/components/RatioSelect";
 import { Switch } from "@/components/ui/switch";
 import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
+import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -536,6 +537,18 @@ export default function VideoEditor() {
         <div className="mt-3 max-w-3xl">
           <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
           <p className="mt-2 text-muted-foreground">{video.description}</p>
+          {(() => {
+            const est = { scenes: scenes.length, useFacts: Array.isArray(video.sources) && video.sources.length > 0, animated: scenes.filter((s) => s.clip_path).length, thumbnail: !!video.thumbnail_path, seo: !!video.seo };
+            return (
+              <details className="mt-3 rounded-lg border border-border bg-card p-3 text-sm">
+                <summary className="cursor-pointer font-semibold">⚡ This video: about <span className="text-primary">{estimateCredits(est)} credits</span> with its current settings</summary>
+                <ul className="mt-2 grid gap-1 text-muted-foreground">
+                  {costBreakdown(est).map((l) => <li key={l.label} className="flex justify-between"><span>{l.label}</span><span>{l.credits}</span></li>)}
+                </ul>
+                <p className="mt-2 text-xs text-muted-foreground">Redos add more. <Link to="/pricing" className="text-primary underline">See all costs</Link></p>
+              </details>
+            );
+          })()}
           {Array.isArray(video.sources) && video.sources.length > 0 && (
             <details className="mt-3 rounded-lg border border-border bg-card p-3 text-sm">
               <summary className="cursor-pointer font-semibold">Sources ({video.sources.length}) — check facts before publishing</summary>
@@ -843,7 +856,7 @@ export default function VideoEditor() {
               )}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => makeThumbnail()} disabled={thumbBusy}>
-                  {thumbBusy ? "Creating…" : video.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
+                  {thumbBusy ? "Creating…" : video.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"} · {CREDIT_COSTS.thumbnail} cr
                 </Button>
                 {video.thumbnail_path && (
                   <Button size="sm" variant="outline" onClick={() => makeThumbnail({ mode: "text", textSize: thumbSize })} disabled={thumbBusy}>Redo text</Button>
@@ -897,7 +910,7 @@ export default function VideoEditor() {
                 );
               })()}
               <Button size="sm" variant="outline" className="mt-3" onClick={makeSeo} disabled={seoBusy || !scenes.length}>
-                {seoBusy ? "Writing…" : (video.seo as unknown as Seo | null) ? "Regenerate SEO" : "Generate SEO"}
+                {seoBusy ? "Writing…" : (video.seo as unknown as Seo | null) ? "Regenerate SEO" : "Generate SEO"} · {CREDIT_COSTS.seo} cr
               </Button>
             </div>
             {exportPct !== null && (
@@ -933,7 +946,7 @@ export default function VideoEditor() {
                     </label>
                   </Button>
                   <Button size="sm" variant="outline" disabled={!s.image_path || working[`${s.id}-clip`] || working[`${s.id}-image`]} onClick={() => animate(s)}>
-                    {working[`${s.id}-clip`] ? "Animating… (1–3 min)" : s.clip_path ? "Re-animate" : "✨ Animate scene"}
+                    {working[`${s.id}-clip`] ? "Animating… (1–3 min)" : s.clip_path ? "Re-animate" : "✨ Animate scene"} · {CREDIT_COSTS.animate} cr
                   </Button>
 {working[`${s.id}-clip`] && (
                     <div className="basis-full">
