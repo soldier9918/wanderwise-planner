@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     if (upErr) throw upErr;
 
     const column = kind === "image" ? "image_path" : "audio_path";
-    const { error: updErr } = await auth.client.from("video_scenes").update({ [column]: path }).eq("id", scene.id);
+    const { error: updErr } = await auth.client.from("video_scenes").update(kind === "image" ? { image_path: path, clip_path: null } : { audio_path: path }).eq("id", scene.id);
     if (updErr) throw updErr;
 
     return json({ path });

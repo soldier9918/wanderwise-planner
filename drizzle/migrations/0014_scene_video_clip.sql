@@ -1,0 +1,1 @@
+ALTER TABLE public.video_scenes ADD COLUMN IF NOT EXISTS clip_path text, ADD COLUMN IF NOT EXISTS clip_job_id text;

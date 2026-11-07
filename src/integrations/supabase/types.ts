@@ -59,6 +59,8 @@ export type Database = {
       video_scenes: {
         Row: {
           audio_path: string | null
+          clip_job_id: string | null
+          clip_path: string | null
           created_at: string
           heading: string
           id: string
@@ -71,6 +73,8 @@ export type Database = {
         }
         Insert: {
           audio_path?: string | null
+          clip_job_id?: string | null
+          clip_path?: string | null
           created_at?: string
           heading?: string
           id?: string
@@ -83,6 +87,8 @@ export type Database = {
         }
         Update: {
           audio_path?: string | null
+          clip_job_id?: string | null
+          clip_path?: string | null
           created_at?: string
           heading?: string
           id?: string

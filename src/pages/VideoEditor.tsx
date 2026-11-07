@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, generateSeo, type Scene, type Seo } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, animateScene, generateSeo, type Scene, type Seo } from "@/lib/videoApi";
 import { Input } from "@/components/ui/input";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
@@ -94,7 +94,7 @@ export default function VideoEditor() {
       ]);
       if (e1 || e2) throw e1 ?? e2;
       const paths = [
-        ...(scenes ?? []).flatMap((s) => [s.image_path, s.audio_path]),
+        ...(scenes ?? []).flatMap((s) => [s.image_path, s.audio_path, s.clip_path]),
         video?.thumbnail_path,
         video?.music_path,
       ].filter(Boolean) as string[];
@@ -224,7 +224,7 @@ export default function VideoEditor() {
       const path = `${u.user!.id}/${scene.video_id}/${scene.id}-upload-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("video-assets").upload(path, f, { contentType: f.type });
       if (error) throw error;
-      const { error: e2 } = await supabase.from("video_scenes").update({ image_path: path }).eq("id", scene.id);
+      const { error: e2 } = await supabase.from("video_scenes").update({ image_path: path, clip_path: null }).eq("id", scene.id);
       if (e2) throw e2;
       await qc.invalidateQueries({ queryKey: ["video", id] });
       toast.success(`Scene ${scene.position + 1} now uses your image.`);
@@ -234,6 +234,51 @@ export default function VideoEditor() {
       setWorking((w) => ({ ...w, [key]: false }));
     }
   }, [id, qc]);
+
+  const pollClip = useCallback(async (scene: Scene) => {
+    const key = `${scene.id}-clip`;
+    setWorking((w) => ({ ...w, [key]: true }));
+    try {
+      for (let n = 0; n < 60; n++) {
+        await new Promise((r) => setTimeout(r, 8000));
+        const r = await animateScene(scene.id, "status");
+        if (r.status === "completed") { await qc.invalidateQueries({ queryKey: ["video", id] }); toast.success(`Scene ${scene.position + 1} is now animated.`); return; }
+        if (r.status === "failed" || r.status === "none") { if (r.error) toast.error(`Scene ${scene.position + 1}: ${r.error}`); await qc.invalidateQueries({ queryKey: ["video", id] }); return; }
+      }
+      toast.error("Animation is taking too long — reload the page later to check.");
+    } catch (e) {
+      toast.error(`Scene ${scene.position + 1}: ${(e as Error).message}`);
+    } finally {
+      setWorking((w) => ({ ...w, [key]: false }));
+    }
+  }, [id, qc]);
+
+  const animate = useCallback(async (scene: Scene) => {
+    const key = `${scene.id}-clip`;
+    setWorking((w) => ({ ...w, [key]: true }));
+    try {
+      await animateScene(scene.id, "start");
+      toast.message(`Animating scene ${scene.position + 1} — this takes 1–3 minutes.`);
+    } catch (e) {
+      toast.error(`Scene ${scene.position + 1}: ${(e as Error).message}`);
+      setWorking((w) => ({ ...w, [key]: false }));
+      return;
+    }
+    pollClip(scene);
+  }, [pollClip]);
+
+  const removeClip = useCallback(async (scene: Scene) => {
+    const { error } = await supabase.from("video_scenes").update({ clip_path: null }).eq("id", scene.id);
+    if (error) return toast.error("Couldn't switch back to the still image.");
+    await qc.invalidateQueries({ queryKey: ["video", id] });
+  }, [id, qc]);
+
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (!data || resumed.current) return;
+    resumed.current = true;
+    data.scenes.filter((s) => s.clip_job_id).forEach((s) => pollClip(s));
+  }, [data, pollClip]);
 
   const redoScript = useCallback(async (scene: Scene) => {
     const key = `${scene.id}-script`;
@@ -323,7 +368,7 @@ export default function VideoEditor() {
     setExportPct(0);
     try {
       const blob = await exportVideo(
-        data.scenes.map((s) => ({ imageUrl: data.urls[s.image_path!], audioUrl: s.audio_path ? data.urls[s.audio_path] : null, caption: s.narration })),
+        data.scenes.map((s) => ({ imageUrl: data.urls[s.image_path!], clipUrl: s.clip_path ? data.urls[s.clip_path] : null, audioUrl: s.audio_path ? data.urls[s.audio_path] : null, caption: s.narration })),
         setExportPct,
         ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
         { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
@@ -449,6 +494,7 @@ export default function VideoEditor() {
   const busyAny = Object.values(working).some(Boolean);
   const current = playing !== null ? scenes[playing] : scenes[0];
   const currentImg = current?.image_path ? urls[current.image_path] : null;
+  const currentClip = current?.clip_path ? urls[current.clip_path] : null;
   const secOf = (s: Scene) => sceneSeconds(s.audio_path ? audioSecs[s.id] : null, s.narration);
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
@@ -509,7 +555,11 @@ export default function VideoEditor() {
                   </div>
                 )}
                 <div className="absolute inset-0" style={trans ? layerCss(trans.next) : undefined}>
+                {currentClip ? (
+                  <video key={`${current?.id}-${playing}-clip`} src={currentClip} autoPlay={playing !== null} loop muted playsInline className="h-full w-full object-cover" />
+                ) : (
                 <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className="h-full w-full object-cover will-change-transform" style={{ transform: motionCss(curMotion) }} />
+                )}
                 </div>
                 {trans?.overlay && <div className="pointer-events-none absolute inset-0" style={{ background: trans.overlay.color, opacity: trans.overlay.a }} />}
                 <FxLayer fx={curMotion.fx} />
@@ -835,7 +885,8 @@ export default function VideoEditor() {
               <li key={s.id} className={`rounded-xl border bg-card p-4 ${playing === i ? "border-primary" : "border-border"}`}>
                 <div className="flex gap-3">
                   <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-md bg-muted">
-                    {s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
+                    {s.clip_path && urls[s.clip_path] ? <video src={urls[s.clip_path]} autoPlay loop muted playsInline className="h-full w-full object-cover" />
+                      : s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
                       : <div className={`h-full w-full ${working[`${s.id}-image`] ? "animate-pulse bg-secondary" : ""}`} />}
                     <span className="absolute bottom-1 right-1 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">{formatSeconds(secOf(s))}</span>
                   </div>
@@ -855,6 +906,12 @@ export default function VideoEditor() {
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) uploadImage(s, f); }} />
                     </label>
                   </Button>
+                  <Button size="sm" variant="outline" disabled={!s.image_path || working[`${s.id}-clip`] || working[`${s.id}-image`]} onClick={() => animate(s)}>
+                    {working[`${s.id}-clip`] ? "Animating… (1–3 min)" : s.clip_path ? "Re-animate" : "✨ Animate scene"}
+                  </Button>
+                  {s.clip_path && !working[`${s.id}-clip`] && (
+                    <Button size="sm" variant="ghost" onClick={() => removeClip(s)}>Use still image</Button>
+                  )}
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-script`] || working[`${s.id}-audio`]} onClick={() => redoScript(s)}>
                     {working[`${s.id}-script`] ? "Rewriting…" : "Redo script"}
                   </Button>

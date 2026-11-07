@@ -93,6 +93,8 @@ export type Scene = {
   visual_prompt: string;
   image_path: string | null;
   audio_path: string | null;
+  clip_path?: string | null;
+  clip_job_id?: string | null;
 };
 
 async function invoke<T>(name: string, body: unknown): Promise<T> {
@@ -119,6 +121,9 @@ export const generateThumbnail = (videoId: string, opts?: { mode?: "text"; text?
 
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>
   invoke<{ path: string }>("scene-asset", { sceneId, kind });
+
+export const animateScene = (sceneId: string, action: "start" | "status") =>
+  invoke<{ status: string; path?: string; error?: string; progress?: number | null }>("animate-scene", { sceneId, action });
 
 export const rewriteScene = (sceneId: string) =>
   invoke<{ narration: string }>("rewrite-scene", { sceneId });

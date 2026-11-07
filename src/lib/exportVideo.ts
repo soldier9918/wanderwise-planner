@@ -12,7 +12,19 @@ export type ExportMusic = { mood: string; volume: number; ducking: boolean; enab
 
 export type ExportSfx = { enabled: boolean; type: string; volume: number };
 
-export type ExportScene = { imageUrl: string; audioUrl: string | null; caption: string };
+export type ExportScene = { imageUrl: string; clipUrl?: string | null; audioUrl: string | null; caption: string };
+
+type Pic = HTMLImageElement | HTMLVideoElement;
+const dims = (p: Pic) => p instanceof HTMLVideoElement ? { w: p.videoWidth || 1280, h: p.videoHeight || 720 } : { w: p.width, h: p.height };
+
+function loadClip(url: string) {
+  return new Promise<HTMLVideoElement>((resolve, reject) => {
+    const v = document.createElement("video");
+    v.crossOrigin = "anonymous"; v.muted = true; v.loop = true; v.playsInline = true; v.preload = "auto";
+    v.oncanplay = () => resolve(v); v.onerror = reject;
+    v.src = url; v.load();
+  });
+}
 
 function loadImage(url: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -36,7 +48,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
   return lines;
 }
 
-function drawPic(ctx: CanvasRenderingContext2D, img: HTMLImageElement, m: Motion, l: Layer | null, W: number, H: number) {
+function drawPic(ctx: CanvasRenderingContext2D, img: Pic, m: Motion, l: Layer | null, W: number, H: number) {
   ctx.save();
   if (l) {
     ctx.globalAlpha = l.a;
@@ -48,8 +60,9 @@ function drawPic(ctx: CanvasRenderingContext2D, img: HTMLImageElement, m: Motion
   } else ctx.translate(W / 2, H / 2);
   ctx.translate(m.x * W, m.y * H);
   if (m.rot) ctx.rotate((m.rot * Math.PI) / 180);
-  const ratio = Math.max(W / img.width, H / img.height) * m.scale;
-  const iw = img.width * ratio, ih = img.height * ratio;
+  const d = dims(img);
+  const ratio = Math.max(W / d.w, H / d.h) * m.scale;
+  const iw = d.w * ratio, ih = d.h * ratio;
   ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
   ctx.restore();
 }
@@ -72,7 +85,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
 
   const loaded = await Promise.all(
     scenes.map(async (s) => {
-      const img = await loadImage(s.imageUrl);
+      const img: Pic = s.clipUrl ? await loadClip(s.clipUrl).catch(() => loadImage(s.imageUrl)) : await loadImage(s.imageUrl);
       let buffer: AudioBuffer | null = null;
       if (s.audioUrl) {
         const arr = await (await fetch(s.audioUrl)).arrayBuffer();
@@ -117,12 +130,14 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
       src.connect(dest);
       src.start();
     }
+    if (img instanceof HTMLVideoElement) { img.currentTime = 0; await img.play().catch(() => {}); }
+    if (i > 0) { const p = loaded[i - 1].img; if (p instanceof HTMLVideoElement) setTimeout(() => p.pause(), TRANSITION_SECS * 1000); }
     const start = performance.now();
     await new Promise<void>((resolve) => {
       const frame = () => {
         const t = (performance.now() - start) / 1000;
         const k = Math.min(t / dur, 1);
-        const m = motionAt(motion.type, i, k, motion.enabled);
+        const m = motionAt(motion.type, i, k, motion.enabled && !(img instanceof HTMLVideoElement));
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, W, H);
         const tr = transitionAt(transition.type, i, t / TRANSITION_SECS, transition.enabled);
