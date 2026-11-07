@@ -75,6 +75,7 @@ export default function VideoEditor() {
   }, []);
   const [dragSecs, setDragSecs] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
+  const [clipPct, setClipPct] = useState<Record<string, number>>({});
   useEffect(() => { if (playing === null) setPaused(false); }, [playing]);
   const togglePause = () => {
     const a = audioRef.current;
@@ -239,13 +240,20 @@ export default function VideoEditor() {
     const key = `${scene.id}-clip`;
     setWorking((w) => ({ ...w, [key]: true }));
     try {
+      const t0 = Date.now();
+      // Estimate from elapsed time (~2 min typical); use the real figure when the AI service reports one.
+      const tick = setInterval(() => setClipPct((p) => ({ ...p, [scene.id]: Math.max(p[scene.id] ?? 0, Math.min(95, ((Date.now() - t0) / 120000) * 95)) })), 1000);
+      setClipPct((p) => ({ ...p, [scene.id]: 2 }));
+      try {
       for (let n = 0; n < 60; n++) {
         await new Promise((r) => setTimeout(r, 8000));
         const r = await animateScene(scene.id, "status");
+        if (typeof r.progress === "number" && r.progress > 0) { const real = r.progress <= 1 ? r.progress * 100 : r.progress; setClipPct((p) => ({ ...p, [scene.id]: Math.max(p[scene.id] ?? 0, Math.min(99, real)) })); }
         if (r.status === "completed") { await qc.invalidateQueries({ queryKey: ["video", id] }); toast.success(`Scene ${scene.position + 1} is now animated.`); return; }
         if (r.status === "failed" || r.status === "none") { if (r.error) toast.error(`Scene ${scene.position + 1}: ${r.error}`); await qc.invalidateQueries({ queryKey: ["video", id] }); return; }
       }
       toast.error("Animation is taking too long — reload the page later to check.");
+      } finally { clearInterval(tick); setClipPct((p) => { const n = { ...p }; delete n[scene.id]; return n; }); }
     } catch (e) {
       toast.error(`Scene ${scene.position + 1}: ${(e as Error).message}`);
     } finally {
@@ -927,7 +935,16 @@ export default function VideoEditor() {
                   <Button size="sm" variant="outline" disabled={!s.image_path || working[`${s.id}-clip`] || working[`${s.id}-image`]} onClick={() => animate(s)}>
                     {working[`${s.id}-clip`] ? "Animating… (1–3 min)" : s.clip_path ? "Re-animate" : "✨ Animate scene"}
                   </Button>
-                  {s.clip_path && !working[`${s.id}-clip`] && (
+{working[`${s.id}-clip`] && (
+                    <div className="basis-full">
+                      <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                        <span>Animating scene {s.position + 1}…</span>
+                        <span className="tabular-nums">{Math.round(clipPct[s.id] ?? 0)}%</span>
+                      </div>
+                      <Progress value={clipPct[s.id] ?? 0} className="h-2" />
+                    </div>
+                  )}
+                                    {s.clip_path && !working[`${s.id}-clip`] && (
                     <Button size="sm" variant="ghost" onClick={() => removeClip(s)}>Use still image</Button>
                   )}
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-script`] || working[`${s.id}-audio`]} onClick={() => redoScript(s)}>
