@@ -1,6 +1,7 @@
 import { drawFx, motionAt, type Motion } from "./motion";
 import { TRANSITION_SECS, transitionAt, type Layer } from "./transition";
 import fixWebmDuration from "fix-webm-duration";
+import { clipRate } from "./durations";
 import { typedLine, typedPair, typedWords, type CaptionStyle } from "./typewriter";
 import { fontCss, safeColor, sizePx } from "./captionLook";
 import { captionWrapPx, ratioOf } from "./aspectRatio";
@@ -130,7 +131,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
       src.connect(dest);
       src.start();
     }
-    if (img instanceof HTMLVideoElement) { img.currentTime = 0; await img.play().catch(() => {}); }
+    if (img instanceof HTMLVideoElement) { img.loop = false; img.currentTime = 0; if (isFinite(img.duration) && img.duration) img.playbackRate = clipRate(img.duration, dur); await img.play().catch(() => {}); }
     if (i > 0) { const p = loaded[i - 1].img; if (p instanceof HTMLVideoElement) setTimeout(() => p.pause(), TRANSITION_SECS * 1000); }
     const start = performance.now();
     await new Promise<void>((resolve) => {

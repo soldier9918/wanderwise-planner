@@ -76,3 +76,11 @@ describe("locateTime", () => {
     expect(locateTime([10, 20], 99).index).toBe(1);
   });
 });
+
+import { clipRate, clipSecondsFor } from "./durations";
+describe("scene animation length", () => {
+  it("requests a clip as long as a 5s scene", () => expect(clipSecondsFor(5)).toBe(5));
+  it("caps clips at 10s", () => expect(clipSecondsFor(18)).toBe(10));
+  it("stretches a 10s clip over a 20s scene at half speed", () => expect(clipRate(10, 20)).toBe(0.5));
+  it("plays a 5s clip at normal speed in a 5s scene", () => expect(clipRate(5, 5)).toBe(1));
+});

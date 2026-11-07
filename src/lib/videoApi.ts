@@ -122,8 +122,8 @@ export const generateThumbnail = (videoId: string, opts?: { mode?: "text"; text?
 export const generateSceneAsset = (sceneId: string, kind: "image" | "audio") =>
   invoke<{ path: string }>("scene-asset", { sceneId, kind });
 
-export const animateScene = (sceneId: string, action: "start" | "status") =>
-  invoke<{ status: string; path?: string; error?: string; progress?: number | null }>("animate-scene", { sceneId, action });
+export const animateScene = (sceneId: string, action: "start" | "status", seconds?: number) =>
+  invoke<{ status: string; path?: string; error?: string; progress?: number | null }>("animate-scene", { sceneId, action, seconds });
 
 export const rewriteScene = (sceneId: string) =>
   invoke<{ narration: string }>("rewrite-scene", { sceneId });

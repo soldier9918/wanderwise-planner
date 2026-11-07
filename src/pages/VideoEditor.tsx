@@ -14,7 +14,7 @@ import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editS
 import { Input } from "@/components/ui/input";
 import { exportVideo } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
-import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds } from "@/lib/durations";
+import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds, clipRate } from "@/lib/durations";
 import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
@@ -257,7 +257,7 @@ export default function VideoEditor() {
     const key = `${scene.id}-clip`;
     setWorking((w) => ({ ...w, [key]: true }));
     try {
-      await animateScene(scene.id, "start");
+      await animateScene(scene.id, "start", sceneSeconds(scene.audio_path ? audioSecs[scene.id] : null, scene.narration));
       toast.message(`Animating scene ${scene.position + 1} — this takes 1–3 minutes.`);
     } catch (e) {
       toast.error(`Scene ${scene.position + 1}: ${(e as Error).message}`);
@@ -265,7 +265,7 @@ export default function VideoEditor() {
       return;
     }
     pollClip(scene);
-  }, [pollClip]);
+  }, [pollClip, audioSecs]);
 
   const removeClip = useCallback(async (scene: Scene) => {
     const { error } = await supabase.from("video_scenes").update({ clip_path: null }).eq("id", scene.id);
@@ -556,7 +556,25 @@ export default function VideoEditor() {
                 )}
                 <div className="absolute inset-0" style={trans ? layerCss(trans.next) : undefined}>
                 {currentClip ? (
-                  <video key={`${current?.id}-${playing}-clip`} src={currentClip} autoPlay={playing !== null} loop muted playsInline className="h-full w-full object-cover" />
+                  <video
+                    key={`${current?.id}-${playing}-clip`}
+                    src={currentClip}
+                    muted playsInline
+                    className="h-full w-full object-cover"
+                    ref={(v) => {
+                      if (!v) return;
+                      // Play the clip once across the whole scene: stretch it to fit, never loop.
+                      const sync = () => {
+                        if (!isFinite(v.duration) || !v.duration || playing === null) return;
+                        const secs = sceneSecs[playing] || v.duration;
+                        v.playbackRate = clipRate(v.duration, secs);
+                        const want = Math.min(progress, 0.999) * v.duration;
+                        if (Math.abs(v.currentTime - want) > 0.35) v.currentTime = want;
+                        if (paused) v.pause(); else if (v.paused && !v.ended) v.play().catch(() => {});
+                      };
+                      if (v.readyState >= 1) sync(); else v.onloadedmetadata = sync;
+                    }}
+                  />
                 ) : (
                 <img key={`${current?.id}-${playing}`} src={currentImg} alt={current?.heading} className="h-full w-full object-cover will-change-transform" style={{ transform: motionCss(curMotion) }} />
                 )}

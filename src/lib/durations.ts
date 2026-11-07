@@ -72,3 +72,18 @@ export function locateTime(sceneSecs: number[], seconds: number) {
   }
   return { index: sceneSecs.length - 1, progress: 0.99 };
 }
+
+/** Clip lengths the animation model can make, in whole seconds. */
+export const CLIP_MIN_SECONDS = 3;
+export const CLIP_MAX_SECONDS = 10;
+
+/** Seconds of animation to request so one clip covers the whole scene. */
+export function clipSecondsFor(sceneSecs: number) {
+  return Math.min(CLIP_MAX_SECONDS, Math.max(CLIP_MIN_SECONDS, Math.ceil(sceneSecs)));
+}
+
+/** Playback speed that stretches a clip to last exactly the scene, so it plays once and never loops. */
+export function clipRate(clipSecs: number, sceneSecs: number) {
+  if (!(clipSecs > 0) || !(sceneSecs > 0)) return 1;
+  return Math.min(4, Math.max(0.25, clipSecs / sceneSecs));
+}

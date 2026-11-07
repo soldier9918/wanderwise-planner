@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
   try {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
-    const { sceneId, action } = await req.json();
+    const { sceneId, action, seconds } = await req.json();
+    const clipSecs = Math.min(10, Math.max(3, Math.ceil(typeof seconds === "number" && isFinite(seconds) ? seconds : 6)));
     if (typeof sceneId !== "string" || (action !== "start" && action !== "status")) return json({ error: "Invalid request." }, 400);
 
     const { data: scene, error } = await auth.client
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
       const aspect = ["9:16", "4:5"].includes(ratio) ? "9:16" : "16:9";
       const prompt = `<FIRST_FRAME> Bring this still image to life in a single continuous shot, no scene cuts. ` +
         `Animate the subject naturally and add living environmental motion that fits the scene (for example water currents, drifting particles, swaying plants, moving clouds, flickering light). ` +
-        `Scene context: ${scene.visual_prompt}. Gentle slow camera push-in. ` +
+        `Scene context: ${scene.visual_prompt}. Gentle slow camera push-in. The motion must keep evolving for the full ${clipSecs} seconds and never repeat or loop. ` +
         `Keep the subject's look, the composition, art style and colours unchanged. Consider micro-detail and natural physics. ` +
         `No on-screen text, no captions. Audio: no music, no dialogue, no sound.`;
       const res = await fetch(`${GATEWAY_URL}/v1/videos`, {
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: VIDEO_MODEL,
           input: [{ type: "image", data: toB64(bytes), mime_type: mime }, { type: "text", text: prompt }],
-          response_format: { type: "video", resolution: "720p", duration: "6s", aspect_ratio: aspect },
+          response_format: { type: "video", resolution: "720p", duration: `${clipSecs}s`, aspect_ratio: aspect },
         }),
       });
       if (!res.ok) return gatewayError(res);
