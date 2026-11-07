@@ -106,6 +106,20 @@
       "when": 1794010902978,
       "tag": "0014_scene_video_clip",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794095283260,
+      "tag": "0015_lock_legacy_price_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794095293065,
+      "tag": "0016_video_assets_owner_write",
+      "breakpoints": true
     }
   ]
 }
