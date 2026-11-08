@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CreditCard, Save, Wallet } from "lucide-react";
+import { CreditCard, Save, Ticket, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,17 @@ export default function TopUpSettings() {
           {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
           <Button type="submit" variant="outline" className="mt-5 w-full"><Save className="h-4 w-4" />Save draft settings</Button>
         </form>
+      </div>
+      <div className="mt-8 border-t border-border pt-6">
+        <h3 className="flex items-center gap-2 text-xl font-bold"><Ticket className="h-5 w-5 text-primary" />Redeem coupon</h3>
+        <p id="coupon-status" className="mt-2 text-sm text-muted-foreground">Coupon redemption is coming soon. No credits will be added until coupon rewards are configured.</p>
+        <div className="mt-4 grid max-w-xl gap-2">
+          <Label htmlFor="coupon-code">Coupon code</Label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input id="coupon-code" placeholder="Enter coupon code" maxLength={100} autoComplete="off" autoCapitalize="characters" spellCheck={false} aria-describedby="coupon-status" className="min-w-0 flex-1" />
+            <Button type="button" disabled><Ticket className="h-4 w-4" />Redeem</Button>
+          </div>
+        </div>
       </div>
     </section>
   );
