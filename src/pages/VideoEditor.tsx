@@ -26,6 +26,7 @@ import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type Musi
 import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
+import { remixToShorts } from "@/lib/shorts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -678,6 +679,13 @@ export default function VideoEditor() {
                   <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
                   <Button variant="outline" onClick={() => { audioRef.current?.pause(); setPlaying(null); }}>■ Stop</Button>
                 </>
+              )}
+              {ratio.value !== "9:16" && (
+                <Button variant="outline" disabled={busyAny} onClick={async () => {
+                  const t = toast.loading("Making your Shorts cut…");
+                  try { const nid = await remixToShorts(id!); toast.success("Shorts cut ready — your original is untouched.", { id: t }); navigate(`/video/${nid}`); }
+                  catch (e) { toast.error((e as Error).message, { id: t }); }
+                }}>📱 Remix for Shorts / TikTok</Button>
               )}
               <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
