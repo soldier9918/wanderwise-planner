@@ -1,6 +1,6 @@
 import { SCENE_COUNTS } from "@/lib/sceneCount";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Sparkles, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "
 
 export default function Dashboard({ fromUrl = false }: { fromUrl?: boolean }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [topic, setTopic] = useState("");
   const [style, setStyle] = useState<string>("Cinematic");
   const [voice, setVoice] = useState<string>("Kore");
@@ -44,6 +45,12 @@ export default function Dashboard({ fromUrl = false }: { fromUrl?: boolean }) {
   const [suggesting, setSuggesting] = useState(false);
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // "Create video" in the header points here; bring the form back into view.
+  useEffect(() => {
+    if (location.hash !== "#new-video") return;
+    document.getElementById("new-video")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [location.hash, fromUrl]);
 
   const makeThumbnail = async (videoId: string) => {
     setThumbBusy(videoId);
@@ -132,7 +139,7 @@ export default function Dashboard({ fromUrl = false }: { fromUrl?: boolean }) {
     <div className="min-h-screen">
       <SiteHeader />
       <main className="container grid gap-10 py-10 lg:grid-cols-[1.1fr_1fr]">
-        <section>
+        <section id="new-video" className="scroll-mt-24">
           <h1 className="text-4xl font-extrabold">{fromUrl ? "Article to video" : "New video"}</h1>
           <p className="mt-2 text-muted-foreground">{fromUrl ? "Paste a link to a blog post, news story or Wikipedia article. AI reads it, summarises it and writes a ready-to-render scene script." : "Describe your idea. AI writes the script, then makes the scenes and voiceover."}</p>
           <div className="mt-4 flex gap-2 text-sm">
