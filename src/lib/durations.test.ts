@@ -49,7 +49,7 @@ describe("formatSeconds", () => {
   });
 });
 
-import { isLengthAllowed, secondsPerScene, wordsForSeconds } from "./durations";
+import { isLengthAllowed, secondsPerScene, wordsForSeconds, VIDEO_LENGTHS } from "./durations";
 
 describe("video length", () => {
   it("4 scenes over 2 minutes is 30 seconds a scene", () => {
@@ -62,6 +62,21 @@ describe("video length", () => {
     expect(isLengthAllowed(30, 22)).toBe(false);
     expect(isLengthAllowed(600, 4)).toBe(false);
     expect(isLengthAllowed(120, 4)).toBe(true);
+  });
+  it("offers 15, 20 and 30 minutes beyond 10 minutes", () => {
+    expect(VIDEO_LENGTHS).toContain(900);
+    expect(VIDEO_LENGTHS).toContain(1200);
+    expect(VIDEO_LENGTHS).toContain(1800);
+    expect(VIDEO_LENGTHS[VIDEO_LENGTHS.length - 1]).toBe(1800);
+  });
+  it("lets long videos through only with enough scenes", () => {
+    expect(isLengthAllowed(900, 10)).toBe(true);   // 15 min, 90s a scene
+    expect(isLengthAllowed(900, 8)).toBe(false);   // would need 112s a scene
+    expect(isLengthAllowed(1200, 14)).toBe(true);  // 20 min
+    expect(isLengthAllowed(1200, 12)).toBe(false);
+    expect(isLengthAllowed(1800, 22)).toBe(true);  // 30 min is the longest that fits 22 scenes
+    expect(isLengthAllowed(1800, 20)).toBe(true);
+    expect(isLengthAllowed(1800, 18)).toBe(false);
   });
 });
 

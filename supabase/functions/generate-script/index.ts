@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     if (typeof topic !== "string" || topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(22, Math.max(3, Number(sceneCount) || 6));
 
-    const total = Math.min(600, Math.max(30, Math.round(Number(targetSeconds)) || 0)) || null;
+    const total = Math.min(1800, Math.max(30, Math.round(Number(targetSeconds)) || 0)) || null;
     const per = total ? Math.round(total / count) : 12;
     const words = Math.max(5, Math.round(per * 2.6));
     const apiKey = Deno.env.get("LOVABLE_API_KEY");

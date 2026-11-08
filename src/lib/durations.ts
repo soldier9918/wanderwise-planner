@@ -41,7 +41,7 @@ export function formatSeconds(total: number) {
 }
 
 /** Video lengths offered on the New video screen, in seconds. */
-export const VIDEO_LENGTHS = [30, 60, 120, 180, 240, 300, 420, 600] as const;
+export const VIDEO_LENGTHS = [30, 60, 120, 180, 240, 300, 420, 600, 900, 1200, 1800] as const;
 export const MIN_SCENE_SECONDS = 5;
 export const MAX_SCENE_SECONDS = 90;
 
