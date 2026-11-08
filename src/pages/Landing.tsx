@@ -4,6 +4,8 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/hooks/useAuth";
 import HeroBackground from "@/components/HeroBackground";
+import HeroReel from "@/components/HeroReel";
+import { useEffect, useState } from "react";
 import TypedHeadline from "@/components/TypedHeadline";
 import { Star, Play } from "lucide-react";
 import thumbMh370 from "@/assets/example-thumb-mh370.jpg";
@@ -91,13 +93,22 @@ const steps = [
 export default function Landing() {
   const { user } = useAuth();
   const cta = user ? "/dashboard" : "/auth?mode=signup";
+  const [reel, setReel] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let id: number;
+    const tick = (on: boolean) => { id = window.setTimeout(() => { setReel(!on); tick(!on); }, on ? 8000 : 10000); };
+    tick(false);
+    return () => clearTimeout(id);
+  }, []);
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-glow" />
-          <HeroBackground />
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${reel ? "opacity-0" : "opacity-100"}`}><HeroBackground /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${reel ? "opacity-100" : "opacity-0"}`}><HeroReel /></div>
           <div className="container relative py-20 md:py-32">
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse-dot" /> Faceless YouTube, made easy

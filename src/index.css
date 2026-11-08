@@ -95,3 +95,11 @@
     .marquee-track { animation: none; }
   }
 }
+
+@layer utilities {
+  .bg-hero-vignette {
+    background:
+      linear-gradient(90deg, hsl(var(--background) / 0.95) 0%, hsl(var(--background) / 0.8) 45%, hsl(var(--background) / 0.55) 100%),
+      radial-gradient(ellipse at center, transparent 30%, hsl(var(--background) / 0.8) 100%);
+  }
+}
