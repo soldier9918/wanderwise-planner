@@ -33,23 +33,23 @@ export default function SiteHeader() {
           </Button>
         )}
         <nav className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto">
-          {user && (
-            <Button asChild className="h-8 px-3 text-sm sm:h-9 sm:px-4" onClick={goToCreateForm}>
-              <Link to="/dashboard#new-video" className="inline-flex items-center gap-1.5">
-                <Plus className="h-4 w-4" />Create<span className="hidden sm:inline"> video</span>
-              </Link>
-            </Button>
-          )}
-          <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
-          <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
           {user ? (
             <>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/dashboard">My videos</Link></Button>
+              <Button asChild className="h-8 px-3 text-sm sm:h-9 sm:px-4" onClick={goToCreateForm}>
+                <Link to="/dashboard#new-video" className="inline-flex items-center gap-1.5">
+                  <Plus className="h-4 w-4" />Create<span className="hidden sm:inline"> video</span>
+                </Link>
+              </Button>
               <Button variant="ghost" asChild className={`hidden md:inline-flex ${navBtn}`}><Link to="/from-url">Article to video</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/dashboard">My videos</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
               <Button variant="outline" className={`hidden sm:inline-flex ${navBtn}`} onClick={doSignOut}>Sign out</Button>
             </>
           ) : (
             <>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/auth">Sign in</Link></Button>
               <Button asChild className={navBtn}><Link to="/auth?mode=signup">Start free</Link></Button>
             </>
