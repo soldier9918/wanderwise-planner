@@ -99,7 +99,7 @@ export default function Landing() {
   const headRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const secs = [10000, 8000, 11000];
+    const secs = [10000, 8000, 8000];
     const id = window.setTimeout(() => setMode((m) => (m + 1) % 3), secs[mode]);
     return () => clearTimeout(id);
   }, [mode]);
