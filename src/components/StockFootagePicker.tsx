@@ -41,7 +41,7 @@ export default function StockFootagePicker({ sceneId, sceneNo, defaultQuery, ori
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Stock footage for scene {sceneNo}</DialogTitle>
-          <DialogDescription>Free, royalty-free real-world clips from Pexels. The clip plays behind this scene's narration.</DialogDescription>
+          <DialogDescription>Free, royalty-free real-world clips from Pixabay. The clip plays behind this scene's narration.</DialogDescription>
         </DialogHeader>
         <form onSubmit={search} className="flex gap-2">
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. ocean waves at sunset" aria-label="Search stock footage" />
@@ -58,7 +58,7 @@ export default function StockFootagePicker({ sceneId, sceneNo, defaultQuery, ori
             </button>
           ))}
         </div>
-        <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground underline">Videos provided by Pexels</a>
+        <a href="https://pixabay.com" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground underline">Videos provided by Pixabay</a>
       </DialogContent>
     </Dialog>
   );

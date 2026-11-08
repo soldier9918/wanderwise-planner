@@ -147,5 +147,5 @@ export const generateSeo = (videoId: string) => invoke<{ seo: Seo }>("generate-s
 export type StockClip = { id: number; thumb: string; duration: number; author: string; preview: string };
 export const searchStock = (query: string, orientation: string) =>
   invoke<{ results: StockClip[] }>("stock-broll", { action: "search", query, orientation });
-export const applyStock = (sceneId: string, pexelsId: number) =>
-  invoke<{ path: string; credit: string }>("stock-broll", { action: "use", sceneId, pexelsId });
+export const applyStock = (sceneId: string, clipId: number) =>
+  invoke<{ path: string; credit: string }>("stock-broll", { action: "use", sceneId, clipId });
