@@ -67,7 +67,7 @@ describe("video length", () => {
     expect(VIDEO_LENGTHS).toContain(900);
     expect(VIDEO_LENGTHS).toContain(1200);
     expect(VIDEO_LENGTHS).toContain(1800);
-    expect(VIDEO_LENGTHS[VIDEO_LENGTHS.length - 1]).toBe(1800);
+    expect(VIDEO_LENGTHS[VIDEO_LENGTHS.length - 1]).toBe(3600);
   });
   it("lets long videos through only with enough scenes", () => {
     expect(isLengthAllowed(900, 10)).toBe(true);   // 15 min, 90s a scene
@@ -77,6 +77,10 @@ describe("video length", () => {
     expect(isLengthAllowed(1800, 22)).toBe(true);  // 30 min is the longest that fits 22 scenes
     expect(isLengthAllowed(1800, 20)).toBe(true);
     expect(isLengthAllowed(1800, 18)).toBe(false);
+    expect(isLengthAllowed(2700, 30)).toBe(true);  // 45 min
+    expect(isLengthAllowed(2700, 22)).toBe(false);
+    expect(isLengthAllowed(3600, 40)).toBe(true);  // 60 min
+    expect(isLengthAllowed(3600, 30)).toBe(false);
   });
 });
 

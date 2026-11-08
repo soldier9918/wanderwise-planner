@@ -1,3 +1,4 @@
+import { SCENE_COUNTS } from "@/lib/sceneCount";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -175,7 +176,7 @@ export default function Dashboard() {
                 <Label>Scenes</Label>
                 <Select value={scenes} onValueChange={setScenes}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"].map((n) => <SelectItem key={n} value={n}>{n} scenes</SelectItem>)}</SelectContent>
+                  <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n}>{n} scenes</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">

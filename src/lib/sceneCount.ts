@@ -1,7 +1,7 @@
 /** Scene counts offered in the "Scenes" menu. */
-export const SCENE_COUNTS = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22] as const;
+export const SCENE_COUNTS = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 30, 40, 50] as const;
 export const MIN_SCENES = 3;
-export const MAX_SCENES = 22;
+export const MAX_SCENES = 50;
 
 /** Keeps a requested count inside the range the script writer can deliver. */
 export function clampSceneCount(n: number) {

@@ -4,7 +4,7 @@ import { z } from "npm:zod@3";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
 
 const MIN_SCENES = 3;
-const MAX_SCENES = 22;
+const MAX_SCENES = 50;
 
 const schema = z.object({
   scenes: z.array(
