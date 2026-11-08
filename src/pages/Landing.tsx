@@ -5,6 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/hooks/useAuth";
 import HeroBackground from "@/components/HeroBackground";
 import HeroReel from "@/components/HeroReel";
+import HeroDotLogo from "@/components/HeroDotLogo";
 import { useEffect, useState } from "react";
 import TypedHeadline from "@/components/TypedHeadline";
 import { Star, Play } from "lucide-react";
@@ -93,22 +94,23 @@ const steps = [
 export default function Landing() {
   const { user } = useAuth();
   const cta = user ? "/dashboard" : "/auth?mode=signup";
-  const [reel, setReel] = useState(false);
+  // 0 = dot grid, 1 = thumbnail reel, 2 = VYDORA in dots
+  const [mode, setMode] = useState(0);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let id: number;
-    const tick = (on: boolean) => { id = window.setTimeout(() => { setReel(!on); tick(!on); }, on ? 8000 : 10000); };
-    tick(false);
+    const secs = [10000, 8000, 8000];
+    const id = window.setTimeout(() => setMode((m) => (m + 1) % 3), secs[mode]);
     return () => clearTimeout(id);
-  }, []);
+  }, [mode]);
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-glow" />
-          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${reel ? "opacity-0" : "opacity-100"}`}><HeroBackground /></div>
-          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${reel ? "opacity-100" : "opacity-0"}`}><HeroReel /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 0 ? "opacity-100" : "opacity-0"}`}><HeroBackground /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 1 ? "opacity-100" : "opacity-0"}`}><HeroReel /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 2 ? "opacity-100" : "opacity-0"}`}><HeroDotLogo active={mode === 2} /></div>
           <div className="container relative py-20 md:py-32">
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse-dot" /> Faceless YouTube, made easy
