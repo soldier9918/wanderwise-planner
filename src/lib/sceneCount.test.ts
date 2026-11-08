@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MAX_SCENES, MIN_SCENES, clampSceneCount, planSceneChange, sceneCountOptions } from "./sceneCount";
+import { MAX_SCENES, MIN_SCENES, SCENE_COUNTS, clampSceneCount, planSceneChange, sceneCountOptions } from "./sceneCount";
+
+describe("scene limits", () => {
+  it("starts at 4 scenes, the same floor the New video form offers", () => {
+    expect(MIN_SCENES).toBe(4);
+    expect(Math.min(...SCENE_COUNTS)).toBe(MIN_SCENES);
+    expect(sceneCountOptions(8)[0]).toBe(MIN_SCENES);
+  });
+});
 
 describe("clampSceneCount", () => {
   it("keeps counts inside the range the writer can deliver", () => {

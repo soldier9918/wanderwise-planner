@@ -3,7 +3,7 @@ import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
 
-const MIN_SCENES = 3;
+const MIN_SCENES = 4;
 const MAX_SCENES = 50;
 
 const schema = z.object({
