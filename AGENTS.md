@@ -7,3 +7,4 @@
 - "Use real facts" scripts search the web via the Firecrawl connector inside `generate-script` and store cited URLs in `videos.sources`. Why: grounds real-event scripts in sources users can check.
 - Background music is composed in the browser (Web Audio) per mood, with uploads stored in `video-assets`; ducking is a per-video toggle. Why: no licensing risk and no AI credits.
 - Per-scene "Animate scene" uses image-to-video via the `animate-scene` edge function (start job, client polls status, MP4 saved to `video-assets`, path in `video_scenes.clip_path`). Why: video jobs take minutes and gateway URLs expire.
+- Until payments are connected, top-up controls on Pricing are explicitly inactive and auto top-up preferences are device-local, user-scoped drafts only; never treat these drafts as billing authorization. Why: prevents implying charges or credit delivery without payment infrastructure.

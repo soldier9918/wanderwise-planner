@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import TopUpSettings from "@/components/TopUpSettings";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -75,6 +76,8 @@ export default function Pricing() {
             </p>
           </div>
         </section>
+
+        <TopUpSettings />
 
         <section className="mt-12">
           <h2 className="text-2xl font-bold">Plans <span className="ml-2 rounded-full border border-border px-2 py-0.5 align-middle text-xs font-semibold text-muted-foreground">Coming soon</span></h2>
