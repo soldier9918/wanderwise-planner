@@ -59,6 +59,7 @@ export type Database = {
       video_scenes: {
         Row: {
           audio_path: string | null
+          clip_credit: string | null
           clip_job_id: string | null
           clip_path: string | null
           created_at: string
@@ -73,6 +74,7 @@ export type Database = {
         }
         Insert: {
           audio_path?: string | null
+          clip_credit?: string | null
           clip_job_id?: string | null
           clip_path?: string | null
           created_at?: string
@@ -87,6 +89,7 @@ export type Database = {
         }
         Update: {
           audio_path?: string | null
+          clip_credit?: string | null
           clip_job_id?: string | null
           clip_path?: string | null
           created_at?: string
@@ -111,6 +114,7 @@ export type Database = {
       }
       videos: {
         Row: {
+          accent: string
           aspect_ratio: string
           caption_color: string
           caption_font: string
@@ -119,6 +123,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          logo_opacity: number
+          logo_path: string | null
+          logo_position: string
           motion_enabled: boolean
           motion_type: string
           music_ducking: boolean
@@ -126,11 +133,13 @@ export type Database = {
           music_mood: string
           music_path: string | null
           music_volume: number
+          narration_speed: number
           quality: string
           seo: Json | null
           sfx_enabled: boolean
           sfx_type: string
           sfx_volume: number
+          source_url: string | null
           sources: Json | null
           style: string
           target_seconds: number | null
@@ -145,6 +154,7 @@ export type Database = {
           voice: string
         }
         Insert: {
+          accent?: string
           aspect_ratio?: string
           caption_color?: string
           caption_font?: string
@@ -153,6 +163,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          logo_opacity?: number
+          logo_path?: string | null
+          logo_position?: string
           motion_enabled?: boolean
           motion_type?: string
           music_ducking?: boolean
@@ -160,11 +173,13 @@ export type Database = {
           music_mood?: string
           music_path?: string | null
           music_volume?: number
+          narration_speed?: number
           quality?: string
           seo?: Json | null
           sfx_enabled?: boolean
           sfx_type?: string
           sfx_volume?: number
+          source_url?: string | null
           sources?: Json | null
           style?: string
           target_seconds?: number | null
@@ -179,6 +194,7 @@ export type Database = {
           voice?: string
         }
         Update: {
+          accent?: string
           aspect_ratio?: string
           caption_color?: string
           caption_font?: string
@@ -187,6 +203,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          logo_opacity?: number
+          logo_path?: string | null
+          logo_position?: string
           motion_enabled?: boolean
           motion_type?: string
           music_ducking?: boolean
@@ -194,11 +213,13 @@ export type Database = {
           music_mood?: string
           music_path?: string | null
           music_volume?: number
+          narration_speed?: number
           quality?: string
           seo?: Json | null
           sfx_enabled?: boolean
           sfx_type?: string
           sfx_volume?: number
+          source_url?: string | null
           sources?: Json | null
           style?: string
           target_seconds?: number | null

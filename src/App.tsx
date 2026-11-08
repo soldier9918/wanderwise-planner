@@ -30,6 +30,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/from-url" element={<ProtectedRoute><Dashboard key="url" fromUrl /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
             {LEGAL_DOCS.map((doc) => (
               <Route key={doc.slug} path={`/${doc.slug}`} element={<Legal slug={doc.slug} />} />

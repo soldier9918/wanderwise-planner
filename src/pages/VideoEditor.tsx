@@ -24,6 +24,8 @@ import { Switch } from "@/components/ui/switch";
 import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
+import StockFootagePicker from "@/components/StockFootagePicker";
+import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -99,6 +101,7 @@ export default function VideoEditor() {
         ...(scenes ?? []).flatMap((s) => [s.image_path, s.audio_path, s.clip_path]),
         video?.thumbnail_path,
         video?.music_path,
+        video?.logo_path,
       ].filter(Boolean) as string[];
       const urls = await signedUrls(paths);
       return { video, scenes: (scenes ?? []) as Scene[], urls };
@@ -112,6 +115,7 @@ export default function VideoEditor() {
   const musicPlayer = useRef<MusicPlayer | null>(null);
   const [listening, setListening] = useState(false);
   const [musicBusy, setMusicBusy] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
   const stopMusic = () => { musicPlayer.current?.stop(); musicPlayer.current = null; };
   const startPreviewMusic = async (mood: string, volume: number) => {
     stopMusic();
@@ -277,7 +281,7 @@ export default function VideoEditor() {
   }, [pollClip, audioSecs]);
 
   const removeClip = useCallback(async (scene: Scene) => {
-    const { error } = await supabase.from("video_scenes").update({ clip_path: null }).eq("id", scene.id);
+    const { error } = await supabase.from("video_scenes").update({ clip_path: null, clip_credit: null }).eq("id", scene.id);
     if (error) return toast.error("Couldn't switch back to the still image.");
     await qc.invalidateQueries({ queryKey: ["video", id] });
   }, [id, qc]);
@@ -353,6 +357,8 @@ export default function VideoEditor() {
     const url = scene.audio_path ? data.urls[scene.audio_path] : null;
     if (url) {
       audio.src = url;
+      audio.preservesPitch = true;
+      audio.playbackRate = speedOf(data.video?.narration_speed);
       audio.onended = next;
       audio.play().catch(() => setPlaying(null));
       return () => { audio.onended = null; cleanupRaf(); };
@@ -393,6 +399,12 @@ export default function VideoEditor() {
         { enabled: data.video?.sfx_enabled ?? false, type: data.video?.sfx_type ?? "whoosh", volume: data.video?.sfx_volume ?? 50 },
         { enabled: data.video?.motion_enabled ?? true, type: data.video?.motion_type ?? "zoom-in" },
         { enabled: data.video?.transition_enabled ?? false, type: data.video?.transition_type ?? "crossfade" },
+        {
+          speed: speedOf(data.video?.narration_speed),
+          logoUrl: data.video?.logo_path ? data.urls[data.video.logo_path] : null,
+          logoPosition: data.video?.logo_position,
+          logoOpacity: data.video?.logo_opacity,
+        },
       );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -494,7 +506,7 @@ export default function VideoEditor() {
   const capPx = sizePx(video.caption_size);
   // Same canvas px as the export, so lines break alike.
   const capChars = Math.max(8, Math.floor(captionWrapPx(ratio.value) / (capPx * 0.6)));
-  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "tone" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume" | "motion_enabled" | "motion_type" | "transition_enabled" | "transition_type">>) => {
+  const saveLook = async (patch: Partial<Pick<typeof video, "caption_style" | "caption_font" | "caption_color" | "caption_size" | "aspect_ratio" | "quality" | "voice" | "tone" | "music_mood" | "music_enabled" | "music_volume" | "music_ducking" | "music_path" | "sfx_enabled" | "sfx_type" | "sfx_volume" | "motion_enabled" | "motion_type" | "transition_enabled" | "transition_type" | "narration_speed" | "accent" | "logo_path" | "logo_position" | "logo_opacity">>) => {
     qc.setQueryData(["video", id], { ...data, video: { ...video, ...patch } });
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
@@ -504,7 +516,8 @@ export default function VideoEditor() {
   const current = playing !== null ? scenes[playing] : scenes[0];
   const currentImg = current?.image_path ? urls[current.image_path] : null;
   const currentClip = current?.clip_path ? urls[current.clip_path] : null;
-  const secOf = (s: Scene) => sceneSeconds(s.audio_path ? audioSecs[s.id] : null, s.narration);
+  const speed = speedOf(video.narration_speed);
+  const secOf = (s: Scene) => sceneSeconds(s.audio_path && audioSecs[s.id] ? audioSecs[s.id] / speed : null, s.narration);
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
   const curMotion = motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null);
@@ -538,7 +551,7 @@ export default function VideoEditor() {
           <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
           <p className="mt-2 text-muted-foreground">{video.description}</p>
           {(() => {
-            const est = { scenes: scenes.length, useFacts: Array.isArray(video.sources) && video.sources.length > 0, animated: scenes.filter((s) => s.clip_path).length, thumbnail: !!video.thumbnail_path, seo: !!video.seo, quality: video.quality ?? "720p" };
+            const est = { scenes: scenes.length, useFacts: Array.isArray(video.sources) && video.sources.length > 0, animated: scenes.filter((s) => s.clip_path && !s.clip_credit).length, thumbnail: !!video.thumbnail_path, seo: !!video.seo, quality: video.quality ?? "720p" };
             return (
               <details className="mt-3 rounded-lg border border-border bg-card p-3 text-sm">
                 <summary className="cursor-pointer font-semibold">⚡ This video: about <span className="text-primary">{estimateCredits(est)} credits</span> with its current settings</summary>
@@ -602,6 +615,9 @@ export default function VideoEditor() {
                 </div>
                 {trans?.overlay && <div className="pointer-events-none absolute inset-0" style={{ background: trans.overlay.color, opacity: trans.overlay.a }} />}
                 <FxLayer fx={curMotion.fx} />
+                {video.logo_path && urls[video.logo_path] && (
+                  <img src={urls[video.logo_path]} alt="Channel logo" className={`pointer-events-none absolute max-h-[12%] max-w-[12%] object-contain ${video.logo_position.startsWith("top") ? "top-[3%]" : "bottom-[3%]"} ${video.logo_position.endsWith("left") ? "left-[3%]" : "right-[3%]"}`} style={{ opacity: video.logo_opacity / 100 }} />
+                )}
                 </>
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
@@ -715,6 +731,70 @@ export default function VideoEditor() {
                   toast.success("All voiceovers now use the new tone.");
                 }}
               />
+            </div>
+            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
+              <p className="text-sm font-semibold">Narration speed & accent</p>
+              <div className="grid gap-1 text-xs font-semibold text-muted-foreground">
+                Speed: {speed}×
+                <div className="flex gap-2">
+                  {NARRATION_SPEEDS.map((n) => (
+                    <Button key={n} size="sm" variant={speed === n ? "default" : "outline"} onClick={() => saveLook({ narration_speed: n })}>{n.toFixed(n === 1 ? 1 : 2)}×</Button>
+                  ))}
+                </div>
+                <span className="font-normal">Speeds up the voice without changing its pitch. Free.</span>
+              </div>
+              <LookSelect
+                label="Accent"
+                value={video.accent ?? "none"}
+                options={ACCENTS}
+                onChange={async (v) => {
+                  await saveLook({ accent: v });
+                  toast.info("Accent changed — re-recording every voiceover…");
+                  for (let i = 0; i < scenes.length; i += 3) {
+                    const results = await Promise.allSettled(scenes.slice(i, i + 3).map((s) => runAsset(s, "audio")));
+                    if (results.some((r) => r.status === "rejected" && /credits|limit/i.test(String((r as PromiseRejectedResult).reason)))) return;
+                  }
+                  toast.success("All voiceovers now use the new accent.");
+                }}
+              />
+            </div>
+            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
+              <p className="text-sm font-semibold">Channel logo / watermark</p>
+              <p className="-mt-2 text-xs text-muted-foreground">Shows semi-transparent in a corner of the preview and download.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {video.logo_path && urls[video.logo_path] && <img src={urls[video.logo_path]} alt="Your logo" className="h-10 w-10 rounded object-contain bg-muted" />}
+                <label className="inline-flex cursor-pointer items-center rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent/20">
+                  {logoBusy ? "Uploading…" : video.logo_path ? "Change logo" : "Upload logo"}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={logoBusy}
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!f) return;
+                      if (!f.type.startsWith("image/")) return toast.error("Please pick an image.");
+                      if (f.size > 5 * 1024 * 1024) return toast.error("Please pick a logo under 5 MB.");
+                      setLogoBusy(true);
+                      try {
+                        const { data: u } = await supabase.auth.getUser();
+                        const ext = f.type === "image/png" ? "png" : f.type === "image/webp" ? "webp" : "jpg";
+                        const path = `${u.user!.id}/${id}/logo-${Date.now()}.${ext}`;
+                        const { error } = await supabase.storage.from("video-assets").upload(path, f, { contentType: f.type });
+                        if (error) throw error;
+                        await supabase.from("videos").update({ logo_path: path }).eq("id", id!);
+                        toast.success("Logo added.");
+                        refresh();
+                      } catch (err) { toast.error(`Upload failed: ${(err as Error).message}`); }
+                      finally { setLogoBusy(false); }
+                    }} />
+                </label>
+                {video.logo_path && <Button size="sm" variant="ghost" onClick={() => saveLook({ logo_path: null })}>Remove</Button>}
+              </div>
+              <LookSelect label="Corner" value={video.logo_position} options={LOGO_POSITIONS} disabled={!video.logo_path} onChange={(v) => saveLook({ logo_position: v })} />
+              <div className="grid gap-1 text-xs font-semibold text-muted-foreground">
+                Logo opacity: {video.logo_opacity}%
+                <Slider value={[video.logo_opacity]} min={10} max={100} step={5} disabled={!video.logo_path}
+                  onValueChange={([v]) => qc.setQueryData(["video", id], { ...data, video: { ...video, logo_opacity: v } })}
+                  onValueCommit={([v]) => saveLook({ logo_opacity: v })} />
+              </div>
             </div>
             <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
               <label className="flex items-center justify-between gap-3 text-sm">
@@ -948,6 +1028,13 @@ export default function VideoEditor() {
                   <Button size="sm" variant="outline" disabled={!s.image_path || working[`${s.id}-clip`] || working[`${s.id}-image`]} onClick={() => animate(s)}>
                     {working[`${s.id}-clip`] ? "Animating… (1–3 min)" : s.clip_path ? "Re-animate" : "✨ Animate scene"} · {CREDIT_COSTS.animate} cr
                   </Button>
+<StockFootagePicker
+                    sceneId={s.id} sceneNo={i + 1} defaultQuery={s.heading}
+                    orientation={ratio.w > ratio.h ? "landscape" : ratio.w < ratio.h ? "portrait" : "square"}
+                    disabled={working[`${s.id}-clip`] || working[`${s.id}-image`] || !s.image_path}
+                    onDone={refresh}
+                  />
+                  {s.clip_credit && <p className="basis-full text-xs text-muted-foreground">🎞 {s.clip_credit}</p>}
 {working[`${s.id}-clip`] && (
                     <div className="basis-full">
                       <div className="mb-1 flex justify-between text-xs text-muted-foreground">

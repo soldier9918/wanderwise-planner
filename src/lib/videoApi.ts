@@ -95,6 +95,7 @@ export type Scene = {
   audio_path: string | null;
   clip_path?: string | null;
   clip_job_id?: string | null;
+  clip_credit?: string | null;
 };
 
 async function invoke<T>(name: string, body: unknown): Promise<T> {
@@ -110,7 +111,7 @@ async function invoke<T>(name: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export const generateScript = (input: { topic: string; style: string; voice: string; tone?: string; sceneCount: number; captionStyle: string; aspectRatio: string; quality?: string; targetSeconds?: number; useFacts?: boolean }) =>
+export const generateScript = (input: { topic: string; style: string; voice: string; tone?: string; sceneCount: number; captionStyle: string; aspectRatio: string; quality?: string; targetSeconds?: number; useFacts?: boolean; sourceUrl?: string; narrationSpeed?: number; accent?: string }) =>
   invoke<{ videoId: string }>("generate-script", input);
 
 export const suggestTopic = (hint?: string) =>
@@ -142,3 +143,9 @@ export async function signedUrls(paths: string[]) {
 
 export type Seo = { titles: string[]; description: string; hashtags: string[]; tags: string[] };
 export const generateSeo = (videoId: string) => invoke<{ seo: Seo }>("generate-seo", { videoId });
+
+export type StockClip = { id: number; thumb: string; duration: number; author: string; preview: string };
+export const searchStock = (query: string, orientation: string) =>
+  invoke<{ results: StockClip[] }>("stock-broll", { action: "search", query, orientation });
+export const applyStock = (sceneId: string, pexelsId: number) =>
+  invoke<{ path: string; credit: string }>("stock-broll", { action: "use", sceneId, pexelsId });

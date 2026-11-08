@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     const path = `${auth.user.id}/${scene.video_id}/${scene.id}-clip-${Date.now()}.mp4`;
     const { error: upErr } = await admin.storage.from("video-assets").upload(path, mp4, { contentType: "video/mp4", upsert: true });
     if (upErr) throw upErr;
-    await auth.client.from("video_scenes").update({ clip_path: path, clip_job_id: null }).eq("id", scene.id);
+    await auth.client.from("video_scenes").update({ clip_path: path, clip_credit: null, clip_job_id: null }).eq("id", scene.id);
     return json({ status: "completed", path });
   } catch (e) {
     console.error("animate-scene error", e);

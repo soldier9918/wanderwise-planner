@@ -2,7 +2,10 @@ import { SCENE_COUNTS } from "@/lib/sceneCount";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Sparkles } from "lucide-react";
+import { ImagePlus, Sparkles, Link2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { TEMPLATES } from "@/lib/templates";
+import { ACCENTS, NARRATION_SPEEDS } from "@/lib/voiceStyle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
@@ -19,7 +22,7 @@ import { MUSIC_MOODS } from "@/lib/music";
 import { estimateCredits } from "@/lib/credits";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
-export default function Dashboard() {
+export default function Dashboard({ fromUrl = false }: { fromUrl?: boolean }) {
   const navigate = useNavigate();
   const [topic, setTopic] = useState("");
   const [style, setStyle] = useState<string>("Cinematic");
@@ -33,6 +36,10 @@ export default function Dashboard() {
   const [length, setLength] = useState("60");
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [useFacts, setUseFacts] = useState(false);
+  const [url, setUrl] = useState("");
+  const [template, setTemplate] = useState<string | null>(null);
+  const [accent, setAccent] = useState("none");
+  const [speed, setSpeed] = useState("1");
   const [busy, setBusy] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
@@ -77,7 +84,7 @@ export default function Dashboard() {
       // Fetch each video's scene 1 image and sign URLs for thumbnails.
       const { data: allScenes } = await supabase
         .from("video_scenes")
-        .select("video_id, image_path, clip_path, position")
+        .select("video_id, image_path, clip_path, clip_credit, position")
         .in("video_id", data.map((v) => v.id));
       const scenes = (allScenes ?? []).filter((s) => s.position === 0);
       const creditsFor = (v: (typeof data)[number]) => {
@@ -85,7 +92,7 @@ export default function Dashboard() {
         return estimateCredits({
           scenes: mine.length,
           useFacts: Array.isArray(v.sources) && v.sources.length > 0,
-          animated: mine.filter((s) => s.clip_path).length,
+          animated: mine.filter((s) => s.clip_path && !s.clip_credit).length,
           thumbnail: !!v.thumbnail_path,
           seo: !!v.seo,
           quality: v.quality,
@@ -112,7 +119,7 @@ export default function Dashboard() {
     e.preventDefault();
     setBusy(true);
     try {
-      const { videoId } = await generateScript({ topic, style, voice, tone, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
+      const { videoId } = await generateScript({ topic, sourceUrl: fromUrl ? url.trim() : undefined, narrationSpeed: Number(speed), accent, style, voice, tone, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
       await supabase.from("videos").update({ music_mood: mood, music_enabled: mood !== "none" }).eq("id", videoId);
       navigate(`/video/${videoId}?autogen=1`);
     } catch (err) {
@@ -126,10 +133,36 @@ export default function Dashboard() {
       <SiteHeader />
       <main className="container grid gap-10 py-10 lg:grid-cols-[1.1fr_1fr]">
         <section>
-          <h1 className="text-4xl font-extrabold">New video</h1>
-          <p className="mt-2 text-muted-foreground">Describe your idea. AI writes the script, then makes the scenes and voiceover.</p>
+          <h1 className="text-4xl font-extrabold">{fromUrl ? "Article to video" : "New video"}</h1>
+          <p className="mt-2 text-muted-foreground">{fromUrl ? "Paste a link to a blog post, news story or Wikipedia article. AI reads it, summarises it and writes a ready-to-render scene script." : "Describe your idea. AI writes the script, then makes the scenes and voiceover."}</p>
+          <div className="mt-4 flex gap-2 text-sm">
+            <Link to="/dashboard" className={`rounded-full border px-3 py-1 ${!fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>From an idea</Link>
+            <Link to="/from-url" className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 ${fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}><Link2 className="h-3.5 w-3.5" />From a link</Link>
+          </div>
           <form onSubmit={create} className="mt-6 grid gap-5 rounded-xl border border-border bg-card p-6">
+            {fromUrl ? (
             <div className="grid gap-2">
+              <Label htmlFor="url">Article link</Label>
+              <Input id="url" type="url" required placeholder="https://en.wikipedia.org/wiki/Octopus" value={url} onChange={(e) => setUrl(e.target.value)} />
+              <Label htmlFor="angle" className="mt-2">Angle or focus (optional)</Label>
+              <Textarea id="angle" rows={2} placeholder="e.g. Focus on the most surprising facts, for a curious teenage audience" value={topic} onChange={(e) => setTopic(e.target.value)} />
+              <p className="text-xs text-muted-foreground">The article is listed as the source on your video. Reading it costs the same as "Use real facts".</p>
+            </div>
+            ) : (
+            <div className="grid gap-2">
+              <div>
+                <Label>Start from a template</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {TEMPLATES.map((t) => (
+                    <button key={t.id} type="button"
+                      onClick={() => { setTemplate(t.id); setTopic(t.idea); setTone(t.tone); setStyle(t.style); }}
+                      className={`rounded-full border px-3 py-1 text-sm transition-colors ${template === t.id ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary"}`}>
+                      {t.emoji} {t.label}
+                    </button>
+                  ))}
+                </div>
+                {template && <p className="mt-2 text-xs text-muted-foreground">Replace the [brackets] with your own subject. Tone and visual style were set for you.</p>}
+              </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="topic">Video idea</Label>
                 <Button type="button" variant="outline" size="sm" onClick={suggest} disabled={suggesting || busy}>
@@ -147,6 +180,7 @@ export default function Dashboard() {
                 </span>
               </label>
             </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="grid gap-2">
                 <Label>Format</Label>
@@ -164,6 +198,20 @@ export default function Dashboard() {
                 <Select value={voice} onValueChange={setVoice}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Accent</Label>
+                <Select value={accent} onValueChange={setAccent}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{ACCENTS.map((a) => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Narration speed</Label>
+                <Select value={speed} onValueChange={setSpeed}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{NARRATION_SPEEDS.map((n) => <SelectItem key={n} value={String(n)}>{n === 1 ? "1.0× — normal" : `${n}×`}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
@@ -216,7 +264,7 @@ export default function Dashboard() {
             </p>
             <p className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
               <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
-              <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts, quality })} credits</Link>
+              <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
             </p>
             <Button type="submit" size="lg" disabled={busy || !lengthOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
           </form>

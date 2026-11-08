@@ -7,6 +7,7 @@ import { fontCss, safeColor, sizePx } from "./captionLook";
 import { captionWrapPx, ratioOf } from "./aspectRatio";
 import { qualityOf } from "./quality";
 import { playSfx, sfxFor } from "./sfx";
+import { logoBox } from "./voiceStyle";
 import { duckSchedule, shouldPlayMusic, startMusic, type MusicPlayer } from "./music";
 
 export type ExportMusic = { mood: string; volume: number; ducking: boolean; enabled?: boolean; customUrl?: string | null };
@@ -69,7 +70,9 @@ function drawPic(ctx: CanvasRenderingContext2D, img: Pic, m: Motion, l: Layer | 
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number } = {}): Promise<Blob> {
+  const speed = extra.speed && extra.speed > 0 ? extra.speed : 1;
+  const logo = extra.logoUrl ? await loadImage(extra.logoUrl).catch(() => null) : null;
   const q = qualityOf(quality);
   const px = Math.round(sizePx(look.size ?? "medium") * q.scale);
   const fontStr = `bold ${px}px ${fontCss(look.font ?? "mono")}`;
@@ -103,7 +106,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise<Blob>((r) => (recorder.onstop = () => r(new Blob(chunks, { type: "video/webm" }))));
 
-  const durations = loaded.map((l) => (l.buffer ? l.buffer.duration + 0.4 : 4));
+  const durations = loaded.map((l) => (l.buffer ? l.buffer.duration / speed + 0.4 : 4));
   const total = durations.reduce((a, b) => a + b, 0);
   let elapsedBefore = 0;
 
@@ -118,14 +121,23 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   if (player) {
     const t0 = audioCtx.currentTime;
     const g = player.gain.gain;
-    duckSchedule(durations, loaded.map((l) => l.buffer?.duration ?? null), music!.volume, music!.ducking)
+    duckSchedule(durations, loaded.map((l) => (l.buffer ? l.buffer.duration / speed : null)), music!.volume, music!.ducking)
       .forEach((p) => g.setTargetAtTime(p.level, t0 + p.t, 0.08));
   }
   for (let i = 0; i < loaded.length; i++) {
     const { img, buffer, caption } = loaded[i];
     const dur = durations[i];
     if (i > 0 && sfx?.enabled) playSfx(audioCtx, dest, sfxFor(sfx.type, i - 1), audioCtx.currentTime, sfx.volume);
-    if (buffer) {
+    if (buffer && speed !== 1 && scenes[i].audioUrl) {
+      // Faster narration without the chipmunk effect: the browser keeps the pitch.
+      const el = new Audio();
+      el.crossOrigin = "anonymous";
+      el.src = scenes[i].audioUrl!;
+      el.preservesPitch = true;
+      el.playbackRate = speed;
+      audioCtx.createMediaElementSource(el).connect(dest);
+      await el.play().catch(() => {});
+    } else if (buffer) {
       const src = audioCtx.createBufferSource();
       src.buffer = buffer;
       src.connect(dest);
@@ -146,9 +158,15 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
         drawPic(ctx, img, m, tr?.next ?? null, W, H);
         if (tr?.overlay) { ctx.globalAlpha = tr.overlay.a; ctx.fillStyle = tr.overlay.color; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
         drawFx(ctx, m.fx, W, H);
+        if (logo) {
+          const b = logoBox(extra.logoPosition ?? "bottom-right", W, H, logo.width, logo.height);
+          ctx.globalAlpha = Math.min(1, Math.max(0.1, (extra.logoOpacity ?? 60) / 100));
+          ctx.drawImage(logo, b.x, b.y, b.w, b.h);
+          ctx.globalAlpha = 1;
+        }
         if (captionStyle !== "none") {
           ctx.font = fontStr;
-          const speak = buffer ? buffer.duration : dur;
+          const speak = buffer ? buffer.duration / speed : dur;
           const lines = wrap(ctx, caption, Math.round(captionWrapPx(aspect) * q.scale));
           let draw: string[] = [];
           if (captionStyle === "full") draw = lines;

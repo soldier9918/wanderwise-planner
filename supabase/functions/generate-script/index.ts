@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn } = await req.json();
+    const { topic: topicIn, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn, sourceUrl, narrationSpeed, accent: accentIn } = await req.json();
     const tone = typeof toneIn === "string" && TONES[toneIn] ? toneIn : "engaging";
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
@@ -34,7 +34,18 @@ Deno.serve(async (req) => {
       "4:5": "tall 4:5 vertical",
       "21:9": "ultra-wide 21:9 cinematic",
     } as Record<string, string>)[ratio];
-    if (typeof topic !== "string" || topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
+    const speed = [1, 1.15, 1.25].includes(Number(narrationSpeed)) ? Number(narrationSpeed) : 1;
+    const accent = ["british", "us", "australian", "scottish"].includes(accentIn) ? accentIn : "none";
+    let srcUrl: string | null = null;
+    if (sourceUrl !== undefined && sourceUrl !== null && sourceUrl !== "") {
+      try {
+        const u = new URL(String(sourceUrl));
+        if (!/^https?:$/.test(u.protocol)) throw new Error();
+        srcUrl = u.toString();
+      } catch { return json({ error: "Please paste a full web link starting with https://" }, 400); }
+    }
+    let topic = typeof topicIn === "string" ? topicIn : "";
+    if (!srcUrl && topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(50, Math.max(3, Number(sceneCount) || 6));
 
     const total = Math.min(3600, Math.max(30, Math.round(Number(targetSeconds)) || 0)) || null;
@@ -45,7 +56,7 @@ Deno.serve(async (req) => {
 
     let research = "";
     let sources: { title: string; url: string }[] | null = null;
-    if (useFacts === true) {
+    if (useFacts === true && !srcUrl) {
       const fcKey = Deno.env.get("FIRECRAWL_API_KEY");
       if (!fcKey) return json({ error: "Fact search is not set up." }, 500);
       const res = await fetch("https://connector-gateway.lovable.dev/firecrawl/v2/search", {
@@ -64,8 +75,29 @@ Deno.serve(async (req) => {
       research = items.map((r, i) => `[Source ${i + 1}] ${r.title ?? ""} (${r.url})\n${(r.markdown || r.description || "").slice(0, 6000)}`).join("\n\n");
     }
 
+    if (srcUrl) {
+      const fcKey = Deno.env.get("FIRECRAWL_API_KEY");
+      if (!fcKey) return json({ error: "Reading web pages is not set up." }, 500);
+      const res = await fetch("https://connector-gateway.lovable.dev/firecrawl/v2/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": fcKey },
+        body: JSON.stringify({ url: srcUrl, formats: ["markdown"], onlyMainContent: true }),
+      });
+      if (!res.ok) {
+        console.error("firecrawl scrape failed", res.status, await res.text());
+        return json({ error: "Couldn't read that page. Check the link is public and try again." }, 502);
+      }
+      const body = await res.json();
+      const md: string = body?.data?.markdown ?? body?.markdown ?? "";
+      const title: string = body?.data?.metadata?.title ?? body?.metadata?.title ?? srcUrl;
+      if (md.trim().length < 200) return json({ error: "That page doesn't have enough readable text to make a video from." }, 422);
+      research = `[Article] ${title} (${srcUrl})\n${md.slice(0, 20000)}` + (research ? `\n\n${research}` : "");
+      sources = [{ title: title.slice(0, 200), url: srcUrl }, ...(sources ?? [])];
+      if (topic.trim().length < 3) topic = `Summarise this article as a video: ${title}`;
+    }
+
     const factRules = research
-      ? ` FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
+      ? `${srcUrl ? " ARTICLE MODE: Summarise the provided article into the scenes, keeping its key points in order, in your own words." : ""} FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
       : "";
 
     const provider = createOpenAI({
@@ -111,7 +143,7 @@ Deno.serve(async (req) => {
     const { client, user } = auth;
     const { data: video, error: vErr } = await client
       .from("videos")
-      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, tone, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total, sources })
+      .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, tone, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total, sources, source_url: srcUrl, narration_speed: speed, accent })
       .select("id")
       .single();
     if (vErr) throw vErr;

@@ -4,6 +4,14 @@ import { toneOf } from "../_shared/tones.ts";
 const IMAGE_MODEL = "openai/gpt-image-2.5-sunburst";
 const SPEECH_MODEL = "google/gemini-3.1-flash-tts-preview";
 
+const ACCENTS: Record<string, string> = {
+  british: "a natural British (Received Pronunciation) accent",
+  us: "a natural General American accent",
+  australian: "a natural Australian accent",
+  scottish: "a natural Scottish accent",
+};
+const accentLine = (a?: string) => (a && ACCENTS[a] ? `, with ${ACCENTS[a]}` : "");
+
 function b64ToBytes(b64: string) {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
@@ -22,7 +30,7 @@ Deno.serve(async (req) => {
     // RLS ensures the scene belongs to the caller.
     const { data: scene, error } = await auth.client
       .from("video_scenes")
-      .select("id, video_id, narration, visual_prompt, videos(voice, aspect_ratio, tone)")
+      .select("id, video_id, narration, visual_prompt, videos(voice, aspect_ratio, tone, accent)")
       .eq("id", sceneId)
       .maybeSingle();
     if (error) throw error;
@@ -61,7 +69,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: SPEECH_MODEL,
           contents: [{ role: "user", parts: [{ // deno-lint-ignore no-explicit-any
-          text: `${toneOf((scene as any).videos?.tone).voice}: ${scene.narration}` }] }],
+          text: `${toneOf((scene as any).videos?.tone).voice}${accentLine((scene as any).videos?.accent)}: ${scene.narration}` }] }],
           generationConfig: {
             responseModalities: ["AUDIO"],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
@@ -82,7 +90,7 @@ Deno.serve(async (req) => {
     if (upErr) throw upErr;
 
     const column = kind === "image" ? "image_path" : "audio_path";
-    const { error: updErr } = await auth.client.from("video_scenes").update(kind === "image" ? { image_path: path, clip_path: null } : { audio_path: path }).eq("id", scene.id);
+    const { error: updErr } = await auth.client.from("video_scenes").update(kind === "image" ? { image_path: path, clip_path: null, clip_credit: null } : { audio_path: path }).eq("id", scene.id);
     if (updErr) throw updErr;
 
     return json({ path });

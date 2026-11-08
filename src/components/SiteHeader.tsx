@@ -26,6 +26,7 @@ export default function SiteHeader() {
           {user ? (
             <>
               <Button variant="ghost" asChild><Link to="/dashboard">My videos</Link></Button>
+              <Button variant="ghost" asChild className="hidden md:inline-flex"><Link to="/from-url">Article to video</Link></Button>
               <Button variant="outline" onClick={async () => { await signOut(); navigate("/"); }}>Sign out</Button>
             </>
           ) : (
