@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import VideoEditor from "./pages/VideoEditor";
 import Legal from "./pages/Legal";
 import Pricing from "./pages/Pricing";
+import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 import { LEGAL_DOCS } from "@/lib/legal";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/billing" element={<Billing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

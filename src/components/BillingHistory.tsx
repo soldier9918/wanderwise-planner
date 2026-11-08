@@ -1,9 +1,10 @@
 import { Download, Eye, ReceiptText, Wallet, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function BillingHistory() {
+export default function BillingHistory({ part = "history" }: { part?: "summary" | "history" }) {
   return (
-    <section id="billing-history" className="mt-10 scroll-mt-24 border-t border-border pt-8" aria-labelledby="billing-history-title">
+    <section id={part === "summary" ? "current-billing" : "billing-history"} className="mt-10 scroll-mt-24 border-t border-border pt-8">
+      {part === "summary" ? <>
       <h2 className="flex items-center gap-2 text-2xl font-bold"><Wallet className="h-6 w-6 text-primary" />Current billing</h2>
       <dl className="mt-5 grid gap-6 border-y border-border py-5 sm:grid-cols-2">
         <div>
@@ -26,6 +27,7 @@ export default function BillingHistory() {
           <tbody><tr><td colSpan={2} className="px-4 py-6 text-center text-muted-foreground">Usage records will appear once credit tracking is connected.</td></tr></tbody>
         </table>
       </div>
+      </> : <>
       <h2 id="billing-history-title" className="mt-8 flex items-center gap-2 text-2xl font-bold">
         <ReceiptText className="h-6 w-6 text-primary" />Billing history
       </h2>
@@ -49,6 +51,7 @@ export default function BillingHistory() {
         <Button variant="outline" disabled><Download className="h-4 w-4" />Download invoice</Button>
       </div>
       <p id="invoice-status" className="mt-2 text-xs text-muted-foreground">Invoice actions become available for completed purchases.</p>
+      </>}
     </section>
   );
 }

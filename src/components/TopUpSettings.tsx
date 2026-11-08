@@ -43,11 +43,11 @@ export default function TopUpSettings() {
   return (
     <section id="top-ups" className="mt-12 scroll-mt-24 border-t border-border pt-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-2xl font-bold"><Wallet className="h-6 w-6 text-primary" />Pay as you go</h2>
+        <h2 className="flex items-center gap-2 text-2xl font-bold"><Wallet className="h-6 w-6 text-primary" />Top up</h2>
         <span className="text-sm font-semibold text-accent">No subscription required</span>
       </div>
       <p className="mt-3 text-sm text-muted-foreground">Payments are not connected yet. Credit amounts per £ will be confirmed before purchases become available.</p>
-      <div className="mt-6 grid gap-8 lg:grid-cols-2">
+      <div className="mt-6 grid gap-8">
         <div>
           <h3 className="text-xl font-bold">One-time top-up</h3>
           <div role="group" aria-label="Top-up amount" className="mt-4 grid grid-cols-3 gap-2">
@@ -68,7 +68,7 @@ export default function TopUpSettings() {
         </div>
         <form onSubmit={save} className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="auto-topup" className="text-xl font-bold">Auto top-up</Label>
+            <h2 className="text-xl font-bold"><Label htmlFor="auto-topup" className="text-xl font-bold">Auto top-up</Label></h2>
             <Switch id="auto-topup" checked={draft.enabled} onCheckedChange={(enabled) => setDraft({ ...draft, enabled })} />
           </div>
           <p className="mt-2 text-sm text-muted-foreground">Draft only · No card saved · No automatic charges</p>
