@@ -88,6 +88,7 @@ export default function Dashboard() {
           animated: mine.filter((s) => s.clip_path).length,
           thumbnail: !!v.thumbnail_path,
           seo: !!v.seo,
+          quality: v.quality,
         });
       };
       const paths = [
@@ -214,8 +215,8 @@ export default function Dashboard() {
               {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : "That length doesn't fit this many scenes — pick another length."}
             </p>
             <p className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
-              <span className="text-muted-foreground">Estimated cost (script, images, voiceovers)</span>
-              <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts })} credits</Link>
+              <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
+              <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts, quality })} credits</Link>
             </p>
             <Button type="submit" size="lg" disabled={busy || !lengthOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
           </form>

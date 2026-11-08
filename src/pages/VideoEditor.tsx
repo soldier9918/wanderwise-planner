@@ -538,7 +538,7 @@ export default function VideoEditor() {
           <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
           <p className="mt-2 text-muted-foreground">{video.description}</p>
           {(() => {
-            const est = { scenes: scenes.length, useFacts: Array.isArray(video.sources) && video.sources.length > 0, animated: scenes.filter((s) => s.clip_path).length, thumbnail: !!video.thumbnail_path, seo: !!video.seo };
+            const est = { scenes: scenes.length, useFacts: Array.isArray(video.sources) && video.sources.length > 0, animated: scenes.filter((s) => s.clip_path).length, thumbnail: !!video.thumbnail_path, seo: !!video.seo, quality: video.quality ?? "720p" };
             return (
               <details className="mt-3 rounded-lg border border-border bg-card p-3 text-sm">
                 <summary className="cursor-pointer font-semibold">⚡ This video: about <span className="text-primary">{estimateCredits(est)} credits</span> with its current settings</summary>

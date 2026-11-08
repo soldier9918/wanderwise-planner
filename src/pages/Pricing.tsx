@@ -15,7 +15,8 @@ const MENU = [
   { label: "✨ Animate scene", credits: CREDIT_COSTS.animate, note: "Per scene — AI video is costly to make" },
   { label: "Thumbnail", credits: CREDIT_COSTS.thumbnail, note: "Per thumbnail or text redo" },
   { label: "SEO titles, description & tags", credits: CREDIT_COSTS.seo, note: "Per generation" },
-  { label: "Music, sound effects, camera motion, transitions, captions, download", credits: 0, note: "Always free" },
+  { label: "1080p Full HD export", credits: CREDIT_COSTS.fullHd, note: "Once per video — 720p HD is free" },
+  { label: "Music, sound effects, camera motion, transitions, captions, 720p download", credits: 0, note: "Always free" },
 ];
 
 const PLANS = [
@@ -30,7 +31,8 @@ export default function Pricing() {
   const [facts, setFacts] = useState(false);
   const [thumb, setThumb] = useState(true);
   const [seo, setSeo] = useState(true);
-  const input = { scenes, animated: Math.min(animated, scenes), useFacts: facts, thumbnail: thumb, seo };
+  const [hd, setHd] = useState(false);
+  const input = { scenes, animated: Math.min(animated, scenes), useFacts: facts, thumbnail: thumb, seo, quality: hd ? "1080p" : "720p" };
   const total = estimateCredits(input);
 
   return (
@@ -62,7 +64,7 @@ export default function Pricing() {
               <label className="grid gap-2 text-sm font-semibold">Animated scenes: {Math.min(animated, scenes)}
                 <Slider min={0} max={scenes} step={1} value={[Math.min(animated, scenes)]} onValueChange={([v]) => setAnimated(v)} />
               </label>
-              {([["Use real facts", facts, setFacts], ["Thumbnail", thumb, setThumb], ["SEO titles & tags", seo, setSeo]] as const).map(([l, v, set]) => (
+              {([["Use real facts", facts, setFacts], ["Thumbnail", thumb, setThumb], ["SEO titles & tags", seo, setSeo], ["1080p Full HD", hd, setHd]] as const).map(([l, v, set]) => (
                 <label key={l} className="flex items-center justify-between text-sm font-semibold">{l}<Switch checked={v} onCheckedChange={set} /></label>
               ))}
             </div>
