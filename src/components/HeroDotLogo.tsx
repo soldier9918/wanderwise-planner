@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 /** "VYDORA" drawn from thousands of tiny glowing dots that drift into place and shimmer. */
-export default function HeroDotLogo({ active }: { active: boolean }) {
+export default function HeroDotLogo({ active, target }: { active: boolean; target: RefObject<HTMLElement> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     if (!active) return;
@@ -19,10 +19,16 @@ export default function HeroDotLogo({ active }: { active: boolean }) {
     const off = document.createElement("canvas");
     off.width = W; off.height = H;
     const o = off.getContext("2d")!;
-    const size = Math.min(W / 7.5, H * 0.32);
+    const c = canvas.getBoundingClientRect();
+    const r = target.current?.getBoundingClientRect();
+    const cy = r ? r.top - c.top + r.height / 2 : H * 0.4;
+    const bh = r ? r.height : H * 0.3;
+    o.font = `800 100px "Bricolage Grotesque", sans-serif`;
+    const wAt100 = o.measureText("VYDORA").width;
+    const size = Math.min((W * 0.9 / wAt100) * 100, bh * 1.05);
     o.font = `800 ${size}px "Bricolage Grotesque", sans-serif`;
     o.textAlign = "center"; o.textBaseline = "middle";
-    o.fillText("VYDORA", W * (W > 900 ? 0.74 : 0.5), H * (W > 900 ? 0.68 : 0.85));
+    o.fillText("VYDORA", W / 2, cy);
     const data = o.getImageData(0, 0, W, H).data;
     const gap = Math.max(3, Math.round(size / 55));
     const pts: { x: number; y: number; sx: number; sy: number; s: number }[] = [];
