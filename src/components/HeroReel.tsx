@@ -1,19 +1,19 @@
-import thumbMh370 from "@/assets/example-thumb-mh370.jpg";
-import thumbRome from "@/assets/example-thumb-rome.jpg";
-import thumbBitcoin from "@/assets/example-thumb-bitcoin.jpg";
-import thumbSpace from "@/assets/example-thumb-space.jpg";
-import thumbStoic from "@/assets/example-thumb-stoic.jpg";
-import thumbAi from "@/assets/example-thumb-ai.jpg";
+import titanic from "@/assets/reel-titanic.jpg";
+import egypt from "@/assets/reel-egypt.jpg";
+import ocean from "@/assets/reel-ocean.jpg";
+import hustle from "@/assets/reel-hustle.jpg";
+import haunted from "@/assets/reel-haunted.jpg";
+import mars from "@/assets/reel-mars.jpg";
 
 const a = [
-  { img: thumbMh370, t: "The MH370 Mystery", v: "212K views" },
-  { img: thumbRome, t: "The Rise of Rome", v: "98K views" },
-  { img: thumbBitcoin, t: "Bitcoin Explained", v: "154K views" },
+  { img: titanic, t: "Titanic's Secret", v: "264K views" },
+  { img: egypt, t: "Egypt's Lost Pyramid", v: "119K views" },
+  { img: ocean, t: "Deep Ocean Monsters", v: "342K views" },
 ];
 const b = [
-  { img: thumbSpace, t: "Black Holes", v: "301K views" },
-  { img: thumbStoic, t: "5 Stoic Habits", v: "87K views" },
-  { img: thumbAi, t: "AI in 2030", v: "176K views" },
+  { img: hustle, t: "Side Hustle £10K", v: "73K views" },
+  { img: haunted, t: "Haunted Asylum", v: "188K views" },
+  { img: mars, t: "Mars Colony 2050", v: "205K views" },
 ];
 
 function Row({ items, dir }: { items: typeof a; dir: "left" | "right" }) {
