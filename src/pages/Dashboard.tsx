@@ -68,7 +68,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("videos")
-        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at, sources, seo")
+        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at, sources, seo, quality")
         .order("created_at", { ascending: false });
       if (error) throw error;
       type VideoRow = (typeof data)[number] & { thumb: string | null; credits: number };
