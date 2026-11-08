@@ -33,7 +33,7 @@ export default function Pricing() {
   const [thumb, setThumb] = useState(true);
   const [seo, setSeo] = useState(true);
   const [hd, setHd] = useState(false);
-  const input = { scenes, animated: Math.min(animated, scenes), useFacts: facts, thumbnail: thumb, seo, quality: hd ? "1080p" : "720p" };
+  const input = { scenes, animated, useFacts: facts, thumbnail: thumb, seo, quality: hd ? "1080p" : "720p" };
   const total = estimateCredits(input);
 
   return (
@@ -60,10 +60,10 @@ export default function Pricing() {
             <h2 className="text-xl font-bold">Cost calculator</h2>
             <div className="mt-5 grid gap-5">
               <label className="grid gap-2 text-sm font-semibold">Scenes: {scenes}
-                <Slider min={0} max={MAX_SCENES} step={1} value={[scenes]} onValueChange={([v]) => setScenes(Math.max(MIN_SCENES, v))} />
+                <Slider min={0} max={MAX_SCENES} step={1} value={[scenes]} onValueChange={([v]) => { const n = Math.max(MIN_SCENES, v); setScenes(n); setAnimated((a) => Math.min(a, n)); }} />
               </label>
-              <label className="grid gap-2 text-sm font-semibold">Animated scenes: {animated}{animated > scenes ? ` (capped at ${scenes} scenes)` : ""}
-                <Slider min={0} max={MAX_SCENES} step={1} value={[animated]} onValueChange={([v]) => setAnimated(v)} />
+              <label className="grid gap-2 text-sm font-semibold">Animated scenes: {animated} of {scenes}
+                <Slider min={0} max={MAX_SCENES} step={1} value={[animated]} onValueChange={([v]) => setAnimated(Math.min(v, scenes))} />
               </label>
               {([["Use real facts", facts, setFacts], ["Thumbnail", thumb, setThumb], ["SEO titles & tags", seo, setSeo], ["1080p Full HD", hd, setHd]] as const).map(([l, v, set]) => (
                 <label key={l} className="flex items-center justify-between text-sm font-semibold">{l}<Switch checked={v} onCheckedChange={set} /></label>
