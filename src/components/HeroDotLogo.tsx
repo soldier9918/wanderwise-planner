@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
+const reelImgs = Object.values(import.meta.glob("@/assets/reel-*.jpg", { eager: true, import: "default" })) as string[];
 
 type Pt = { x: number; y: number };
 
@@ -13,8 +14,7 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
     const p = css.getPropertyValue("--primary").trim();
     const ac = css.getPropertyValue("--accent").trim();
     const fg = css.getPropertyValue("--foreground").trim();
-    const st = css.getPropertyValue("--star").trim();
-    const dpr = window.devicePixelRatio || 1;
+      const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth, H = canvas.offsetHeight;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -23,7 +23,7 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
     const cy = r ? r.top - c.top + r.height / 2 : H * 0.4;
     const bh = r ? r.height : H * 0.3;
 
-    const sample = (text: string, maxH: number, gapDiv: number) => {
+    const sample = (text: string, maxH: number, gapDiv: number, yRatio = 1) => {
       const off = document.createElement("canvas");
       off.width = W; off.height = H;
       const o = off.getContext("2d")!;
@@ -35,19 +35,20 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
       const data = o.getImageData(0, 0, W, H).data;
       const gap = Math.max(2, Math.round(size / gapDiv));
       const out: Pt[] = [];
-      for (let y = 0; y < H; y += gap) for (let x = 0; x < W; x += gap)
+      for (let y = 0; y < H; y += Math.max(2, Math.round(gap * yRatio))) for (let x = 0; x < W; x += gap)
         if (data[(y * W + x) * 4 + 3] > 128) out.push({ x, y });
       return { pts: out, gap };
     };
     const A = sample("VYDORA", bh * 1.05, 55);
-    const B = sample("Idea to upload in minutes.", bh * 0.55, 22);
+    const B = sample("Idea to upload in minutes.", bh * 0.6, 14, 0.6);
     const N = Math.max(A.pts.length, B.pts.length);
     const dots = Array.from({ length: N }, (_, i) => ({
       a: A.pts[i % A.pts.length], b: B.pts[i % B.pts.length],
       inA: i < A.pts.length, inB: i < B.pts.length,
       sx: Math.random() * W, sy: Math.random() * H, s: Math.random(),
     }));
-    const palB = [ac, st, p];
+    const imgs = reelImgs.map((src) => { const im = new Image(); im.src = src; return im; });
+    const tileW = B.gap * 0.92, tileH = B.gap * 0.6 * 0.88;
     const ease = (k: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, k)), 3);
     const SWITCH = 4.5, MORPH = 1.8;
     const start = performance.now();
@@ -65,9 +66,19 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
         if (alphaMul <= 0.01) continue;
         const wave = (Math.sin(x / 60 - t * 2.5) + 1) / 2;
         const tw = Math.sin(t * 4 + d.s * 60) > 0.97;
-        let col: string;
-        if (e2 > 0.5) col = tw ? fg : palB[Math.floor((x / W) * 3 + wave * 0.99) % 3];
-        else col = tw ? ac : wave > 0.6 ? p : fg;
+        if (e2 > 0 && d.inB) {
+          const im = imgs[Math.floor(d.s * imgs.length)];
+          if (im.complete && im.naturalWidth) {
+            const sc = 0.3 + 0.7 * e2;
+            ctx.globalAlpha = e2 * (0.6 + wave * 0.4);
+            ctx.drawImage(im, x - (tileW * sc) / 2, y - (tileH * sc) / 2, tileW * sc, tileH * sc);
+            ctx.globalAlpha = 1;
+          }
+          if (tw && e2 > 0.9) { ctx.strokeStyle = `hsl(${p} / 0.9)`; ctx.lineWidth = 1; ctx.strokeRect(x - tileW / 2, y - tileH / 2, tileW, tileH); }
+          if (e2 >= 1) continue;
+          alphaMul *= 1 - e2;
+        }
+        const col = tw ? ac : wave > 0.6 ? p : fg;
         ctx.fillStyle = `hsl(${col} / ${(tw ? 0.95 : 0.25 + wave * 0.5) * alphaMul})`;
         ctx.beginPath(); ctx.arc(x, y, tw ? gap * 0.45 : gap * 0.34, 0, Math.PI * 2); ctx.fill();
       }
