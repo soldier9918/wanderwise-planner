@@ -63,7 +63,7 @@ export default function Pricing() {
                 <Slider min={MIN_SCENES} max={MAX_SCENES} step={1} value={[scenes]} onValueChange={([v]) => setScenes(v)} />
               </label>
               <label className="grid gap-2 text-sm font-semibold">Animated scenes: {Math.min(animated, scenes)}
-                <Slider min={0} max={scenes} step={1} value={[Math.min(animated, scenes)]} onValueChange={([v]) => setAnimated(v)} />
+                <Slider min={0} max={MAX_SCENES} step={1} value={[Math.min(animated, scenes)]} onValueChange={([v]) => setAnimated(Math.min(v, scenes))} />
               </label>
               {([["Use real facts", facts, setFacts], ["Thumbnail", thumb, setThumb], ["SEO titles & tags", seo, setSeo], ["1080p Full HD", hd, setHd]] as const).map(([l, v, set]) => (
                 <label key={l} className="flex items-center justify-between text-sm font-semibold">{l}<Switch checked={v} onCheckedChange={set} /></label>
