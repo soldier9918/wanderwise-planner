@@ -1,6 +1,8 @@
 import { useEffect, useRef, type RefObject } from "react";
 
-/** "VYDORA" drawn from thousands of tiny glowing dots that drift into place and shimmer. */
+type Pt = { x: number; y: number };
+
+/** "VYDORA" drawn from glowing dots, then the dots re-form into the slogan in new colours. */
 export default function HeroDotLogo({ active, target }: { active: boolean; target: RefObject<HTMLElement> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -11,42 +13,63 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
     const p = css.getPropertyValue("--primary").trim();
     const ac = css.getPropertyValue("--accent").trim();
     const fg = css.getPropertyValue("--foreground").trim();
+    const st = css.getPropertyValue("--star").trim();
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth, H = canvas.offsetHeight;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // sample text
-    const off = document.createElement("canvas");
-    off.width = W; off.height = H;
-    const o = off.getContext("2d")!;
     const c = canvas.getBoundingClientRect();
     const r = target.current?.getBoundingClientRect();
     const cy = r ? r.top - c.top + r.height / 2 : H * 0.4;
     const bh = r ? r.height : H * 0.3;
-    o.font = `800 100px "Bricolage Grotesque", sans-serif`;
-    const wAt100 = o.measureText("VYDORA").width;
-    const size = Math.min((W * 0.9 / wAt100) * 100, bh * 1.05);
-    o.font = `800 ${size}px "Bricolage Grotesque", sans-serif`;
-    o.textAlign = "center"; o.textBaseline = "middle";
-    o.fillText("VYDORA", W / 2, cy);
-    const data = o.getImageData(0, 0, W, H).data;
-    const gap = Math.max(3, Math.round(size / 55));
-    const pts: { x: number; y: number; sx: number; sy: number; s: number }[] = [];
-    for (let y = 0; y < H; y += gap) for (let x = 0; x < W; x += gap)
-      if (data[(y * W + x) * 4 + 3] > 128) pts.push({ x, y, sx: Math.random() * W, sy: Math.random() * H, s: Math.random() });
+
+    const sample = (text: string, maxH: number, gapDiv: number) => {
+      const off = document.createElement("canvas");
+      off.width = W; off.height = H;
+      const o = off.getContext("2d")!;
+      o.font = `800 100px "Bricolage Grotesque", sans-serif`;
+      const size = Math.min((W * 0.9 / o.measureText(text).width) * 100, maxH);
+      o.font = `800 ${size}px "Bricolage Grotesque", sans-serif`;
+      o.textAlign = "center"; o.textBaseline = "middle";
+      o.fillText(text, W / 2, cy);
+      const data = o.getImageData(0, 0, W, H).data;
+      const gap = Math.max(2, Math.round(size / gapDiv));
+      const out: Pt[] = [];
+      for (let y = 0; y < H; y += gap) for (let x = 0; x < W; x += gap)
+        if (data[(y * W + x) * 4 + 3] > 128) out.push({ x, y });
+      return { pts: out, gap };
+    };
+    const A = sample("VYDORA", bh * 1.05, 55);
+    const B = sample("Idea to upload in minutes.", bh * 0.55, 22);
+    const N = Math.max(A.pts.length, B.pts.length);
+    const dots = Array.from({ length: N }, (_, i) => ({
+      a: A.pts[i % A.pts.length], b: B.pts[i % B.pts.length],
+      inA: i < A.pts.length, inB: i < B.pts.length,
+      sx: Math.random() * W, sy: Math.random() * H, s: Math.random(),
+    }));
+    const palB = [ac, st, p];
+    const ease = (k: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, k)), 3);
+    const SWITCH = 4.5, MORPH = 1.8;
     const start = performance.now();
     let raf = 0;
     const draw = (now: number) => {
       const t = (now - start) / 1000;
-      const k = Math.min(1, t / 2.2), e = 1 - Math.pow(1 - k, 3);
+      const e1 = ease(t / 2.2), e2 = ease((t - SWITCH) / MORPH);
+      const gap = A.gap + (B.gap - A.gap) * e2;
       ctx.clearRect(0, 0, W, H);
-      for (const d of pts) {
-        const x = d.sx + (d.x - d.sx) * e, y = d.sy + (d.y - d.sy) * e;
-        const wave = (Math.sin(d.x / 60 - t * 2.5) + 1) / 2;
+      for (const d of dots) {
+        const ax = d.sx + (d.a.x - d.sx) * e1, ay = d.sy + (d.a.y - d.sy) * e1;
+        const x = ax + (d.b.x - ax) * e2, y = ay + (d.b.y - ay) * e2;
+        let alphaMul = 1;
+        if (!d.inA) alphaMul = e2; else if (!d.inB) alphaMul = 1 - e2;
+        if (alphaMul <= 0.01) continue;
+        const wave = (Math.sin(x / 60 - t * 2.5) + 1) / 2;
         const tw = Math.sin(t * 4 + d.s * 60) > 0.97;
-        const col = tw ? ac : wave > 0.6 ? p : fg;
-        ctx.fillStyle = `hsl(${col} / ${tw ? 0.95 : 0.2 + wave * 0.45})`;
-        ctx.beginPath(); ctx.arc(x, y, tw ? gap * 0.45 : gap * 0.32, 0, Math.PI * 2); ctx.fill();
+        let col: string;
+        if (e2 > 0.5) col = tw ? fg : palB[Math.floor((x / W) * 3 + wave * 0.99) % 3];
+        else col = tw ? ac : wave > 0.6 ? p : fg;
+        ctx.fillStyle = `hsl(${col} / ${(tw ? 0.95 : 0.25 + wave * 0.5) * alphaMul})`;
+        ctx.beginPath(); ctx.arc(x, y, tw ? gap * 0.45 : gap * 0.34, 0, Math.PI * 2); ctx.fill();
       }
       raf = requestAnimationFrame(draw);
     };
