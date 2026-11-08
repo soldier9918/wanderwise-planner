@@ -14,6 +14,7 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
     const p = css.getPropertyValue("--primary").trim();
     const ac = css.getPropertyValue("--accent").trim();
     const fg = css.getPropertyValue("--foreground").trim();
+    const bg = css.getPropertyValue("--background").trim();
       const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth, H = canvas.offsetHeight;
     canvas.width = W * dpr; canvas.height = H * dpr;
@@ -70,11 +71,19 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
           const im = imgs[Math.floor(d.s * imgs.length)];
           if (im.complete && im.naturalWidth) {
             const sc = 0.3 + 0.7 * e2;
-            ctx.globalAlpha = e2 * (0.6 + wave * 0.4);
-            ctx.drawImage(im, x - (tileW * sc) / 2, y - (tileH * sc) / 2, tileW * sc, tileH * sc);
+            const tw2 = tileW * sc, th2 = tileH * sc;
+            const tx = x - tw2 / 2, ty = y - th2 / 2;
+            // darken each thumbnail so the slogan reads as deep ink, not bright mosaic
+            ctx.globalAlpha = e2;
+            ctx.filter = "brightness(0.22) saturate(0.5) contrast(1.2)";
+            ctx.drawImage(im, tx, ty, tw2, th2);
+            ctx.filter = "none";
+            ctx.globalAlpha = e2 * (0.45 + wave * 0.2);
+            ctx.fillStyle = `hsl(${bg})`;
+            ctx.fillRect(tx, ty, tw2, th2);
             ctx.globalAlpha = 1;
           }
-          if (tw && e2 > 0.9) { ctx.strokeStyle = `hsl(${p} / 0.9)`; ctx.lineWidth = 1; ctx.strokeRect(x - tileW / 2, y - tileH / 2, tileW, tileH); }
+          if (tw && e2 > 0.9) { ctx.strokeStyle = `hsl(${p} / 0.45)`; ctx.lineWidth = 1; ctx.strokeRect(x - tileW / 2, y - tileH / 2, tileW, tileH); }
           if (e2 >= 1) continue;
           alphaMul *= 1 - e2;
         }
