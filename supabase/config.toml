@@ -1,7 +1,5 @@
 project_id = "rarqwsbilnmmrhfkdwpb"
 
-
-
-
-
-
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
