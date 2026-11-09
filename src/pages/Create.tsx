@@ -19,6 +19,8 @@ import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
 import { estimateCredits } from "@/lib/credits";
+import { useAccount } from "@/lib/account";
+import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, FREE_MAX_SCENES } from "@/lib/tiers";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
 export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
@@ -33,6 +35,9 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
   const [quality, setQuality] = useState<string>(DEFAULT_QUALITY);
   const [mood, setMood] = useState<string>("none");
   const [length, setLength] = useState("60");
+  const { data: account } = useAccount();
+  const pro = account?.pro ?? false;
+  const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForTier(Number(scenes), pro);
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [useFacts, setUseFacts] = useState(false);
   const [url, setUrl] = useState("");
@@ -144,7 +149,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Label>Voice</Label>
               <Select value={voice} onValueChange={setVoice}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>)}</SelectContent>
+                <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{voiceAllowed(v.id, pro) ? v.label : `🔒 ${v.label} · PRO`}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
@@ -172,7 +177,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Label>Scenes</Label>
               <Select value={scenes} onValueChange={setScenes}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n}>{n} scenes</SelectItem>)}</SelectContent>
+                <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n} disabled={!scenesAllowedForTier(Number(n), pro)}>{scenesAllowedForTier(Number(n), pro) ? `${n} scenes` : `🔒 ${n} scenes · PRO`}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
@@ -180,7 +185,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Select value={length} onValueChange={setLength}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{VIDEO_LENGTHS.map((s) => (
-                  <SelectItem key={s} value={String(s)} disabled={!isLengthAllowed(s, Number(scenes))}>{s < 60 ? `${s} seconds` : `${s / 60} min`}</SelectItem>
+                  <SelectItem key={s} value={String(s)} disabled={!isLengthAllowed(s, Number(scenes)) || !lengthAllowedForTier(s, pro)}>{!lengthAllowedForTier(s, pro) ? "🔒 " : ""}{s < 60 ? `${s} seconds` : `${s / 60} min`}{!lengthAllowedForTier(s, pro) ? " · PRO" : ""}</SelectItem>
                 ))}</SelectContent>
               </Select>
             </div>
@@ -213,7 +218,8 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
             <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
           </p>
-          <Button type="submit" size="lg" disabled={busy || !lengthOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
+          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes and 2-minute videos. <Link to="/billing" className="text-primary underline">Top up</Link> to unlock every narrator and long videos.</p>}
+          <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
       </main>
     </div>

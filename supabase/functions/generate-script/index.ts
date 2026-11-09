@@ -1,3 +1,4 @@
+import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier } from "../_shared/tiers.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
@@ -23,6 +24,14 @@ Deno.serve(async (req) => {
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
     const { topic: topicIn, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn, sourceUrl, narrationSpeed, accent: accentIn } = await req.json();
+    const [{ data: paid }, { data: isAdmin }] = await Promise.all([
+      auth.client.from("credit_ledger").select("id").eq("user_id", auth.user.id).in("reason", ["purchase", "topup", "subscription"]).gt("amount", 0).limit(1),
+      auth.client.rpc("has_role", { _user_id: auth.user.id, _role: "admin" }),
+    ]);
+    const pro = !!isAdmin || (paid?.length ?? 0) > 0;
+    if (!voiceAllowed(String(voice), pro)) return json({ error: "That narrator is on the Pro plan. Top up to unlock it." }, 403);
+    if (!scenesAllowedForTier(Number(sceneCount) || 6, pro)) return json({ error: "Free plan videos can have up to 6 scenes. Top up to unlock more." }, 403);
+    if (targetSeconds && !lengthAllowedForTier(Number(targetSeconds), pro)) return json({ error: "Free plan videos can be up to 2 minutes. Top up to unlock longer videos." }, 403);
     const tone = typeof toneIn === "string" && TONES[toneIn] ? toneIn : "engaging";
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";

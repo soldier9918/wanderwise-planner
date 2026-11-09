@@ -28,6 +28,7 @@ import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
 import { duplicateVideo, useAccount } from "@/lib/account";
+import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -725,13 +726,13 @@ export default function VideoEditor() {
                 label="Scenes"
                 value={String(scenes.length)}
                 disabled={sceneBusy || busyAny}
-                options={sceneCountOptions(scenes.length).map((n) => ({ value: String(n), label: `${n} scenes` }))}
+                options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
               <LookSelect
                 label="Narrator"
                 value={video.voice ?? "Kore"}
-                options={VOICES.map((v) => ({ value: v.id, label: v.label }))}
+                options={VOICES.filter((v) => v.id === (video.voice ?? "Kore") || voiceAllowed(v.id, account?.pro ?? false)).map((v) => ({ value: v.id, label: v.label }))}
                 onChange={async (v) => {
                   await saveLook({ voice: v });
                   toast.info("Narrator changed — re-recording every voiceover with the new voice…");
