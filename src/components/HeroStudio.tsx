@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+const imgs = Object.values(import.meta.glob("@/assets/reel-*.jpg", { eager: true, import: "default" }) as Record<string, string>);
 
 /** "AI studio" hero: tilted glowing scene frames, light streams and a live voice waveform. */
 export default function HeroStudio({ active }: { active: boolean }) {
@@ -22,9 +23,9 @@ export default function HeroStudio({ active }: { active: boolean }) {
     const mob = W < 768;
     const frames = Array.from({ length: mob ? 6 : 10 }, (_, i) => ({
       x: Math.random(), y: Math.random() * 0.9 + 0.05, z: 0.4 + Math.random() * 0.8,
-      rot: (Math.random() - 0.5) * 0.5, ph: i * 1.7, col: i % 3 === 0 ? ac : p,
+      rot: (Math.random() - 0.5) * 0.5, ph: i * 1.7, pic: i, col: i % 3 === 0 ? ac : p,
     }));
-    const parts = Array.from({ length: mob ? 220 : 500 }, () => ({ t: Math.random(), sp: 0.002 + Math.random() * 0.006, lane: Math.random(), s: Math.random() }));
+    const pics = imgs.map((u) => { const im = new Image(); im.src = u; return im; });
     const start = performance.now();
     let raf = 0;
     const draw = (now: number) => {
@@ -32,16 +33,6 @@ export default function HeroStudio({ active }: { active: boolean }) {
       const fade = Math.min(1, t / 1.2);
       ctx.clearRect(0, 0, W, H);
       ctx.globalAlpha = fade;
-      // light streams: particles flowing from left-centre outward
-      const ox = W * 0.08, oy = H * 0.5;
-      for (const q of parts) {
-        q.t += q.sp; if (q.t > 1) q.t = 0;
-        const ang = (q.lane - 0.5) * 1.6 + Math.sin(t * 0.5 + q.s * 6) * 0.08;
-        const d = q.t * W * 1.1;
-        const x = ox + Math.cos(ang) * d + mx * 30 * q.t, y = oy + Math.sin(ang) * d * 0.6 + my * 30 * q.t;
-        ctx.fillStyle = `hsl(${q.s > 0.8 ? ac : q.s > 0.4 ? p : fg} / ${(1 - q.t) * 0.7})`;
-        ctx.fillRect(x, y, 1.6, 1.6);
-      }
       // floating scene frames
       for (const f of frames) {
         const fw = (mob ? 120 : 200) * f.z, fh = fw * 9 / 16;
@@ -58,6 +49,8 @@ export default function HeroStudio({ active }: { active: boolean }) {
         ctx.strokeStyle = `hsl(${f.col} / ${a + 0.25})`; ctx.lineWidth = 1.2;
         ctx.strokeRect(-fw / 2, -fh / 2, fw, fh);
         ctx.shadowBlur = 0;
+        const im = pics[f.pic % pics.length];
+        if (im?.complete && im.naturalWidth) { ctx.globalAlpha = fade * (0.35 + 0.5 * f.z); ctx.drawImage(im, -fw / 2, -fh / 2, fw, fh); ctx.globalAlpha = fade; }
         // play triangle
         ctx.fillStyle = `hsl(${fg} / ${a + 0.2})`;
         const s = fw * 0.07;
