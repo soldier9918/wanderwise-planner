@@ -35,6 +35,8 @@ export default function SiteFooter() {
               </li>
             ))}
           </ul>
+          <h3 className="mt-8 text-xs uppercase tracking-widest text-muted-foreground">Help &amp; contact</h3>
+          <a className="mt-4 block text-sm transition-colors hover:text-primary" href="mailto:contact@vydora.ai">contact@vydora.ai</a>
         </div>
       </div>
 

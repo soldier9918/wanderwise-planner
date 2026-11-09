@@ -94,7 +94,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
         body: [
           "You can edit or delete any video from your dashboard at any time.",
           "You can download your exported video, thumbnail and script whenever you like, so your work is never locked in.",
-          "You can ask us to delete your account and everything attached to it by emailing us from the address you signed up with.",
+          "You can ask us to delete your account and everything attached to it by emailing contact@vydora.ai from the address you signed up with.",
           "If you are in the UK, EU or another region with data-protection laws, you can request a copy of your data, ask for corrections, or object to certain processing, the same way.",
         ],
       },
@@ -104,7 +104,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
         body: [
           "Your files sit in private storage with per-account folders, and are only reachable through short-lived links issued to you.",
           "Access to your projects is checked on every request, so a signed-out visitor cannot load your videos.",
-          "No system is perfectly secure. If you ever believe your account is compromised, change your password and tell us.",
+          "No system is perfectly secure. If you ever believe your account is compromised, change your password and email contact@vydora.ai.",
         ],
       },
       {
@@ -306,7 +306,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
         id: "contact",
         heading: "Questions",
         body: [
-          "If you want to know exactly what we hold about you, contact us from the email address you signed up with.",
+          "If you want to know exactly what we hold about you, email contact@vydora.ai from the address you signed up with.",
         ],
       },
     ],
@@ -347,7 +347,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
         id: "problems",
         heading: "Technical problems",
         body: [
-          "If a bug stops you using a feature you paid for, tell us. We will try to fix it or give you a credit.",
+          "If a bug stops you using a feature you paid for, email contact@vydora.ai. We will try to fix it or give you a credit.",
           "If the problem is serious and we cannot resolve it, we will refund the affected charge.",
         ],
       },
