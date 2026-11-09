@@ -7,6 +7,7 @@ import HeroBackground from "@/components/HeroBackground";
 import HeroReel from "@/components/HeroReel";
 import HeroDotLogo from "@/components/HeroDotLogo";
 import HeroStudio from "@/components/HeroStudio";
+import HeroDotGrid from "@/components/HeroDotGrid";
 import { useEffect, useRef, useState } from "react";
 import TypedHeadline from "@/components/TypedHeadline";
 import { Star, Play } from "lucide-react";
@@ -100,8 +101,8 @@ export default function Landing() {
   const headRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const secs = [12000, 8000, 8000, 9000];
-    const id = window.setTimeout(() => setMode((m) => (m + 1) % 4), secs[mode]);
+    const secs = [12000, 8000, 8000, 9000, 9000];
+    const id = window.setTimeout(() => setMode((m) => (m + 1) % 5), secs[mode]);
     return () => clearTimeout(id);
   }, [mode]);
   return (
@@ -114,6 +115,7 @@ export default function Landing() {
           <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 2 ? "opacity-100" : "opacity-0"}`}><HeroReel /></div>
           <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 0 ? "opacity-100" : "opacity-0"}`}><HeroDotLogo active={mode === 0} target={headRef} /></div>
           <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 3 ? "opacity-100" : "opacity-0"}`}><HeroStudio active={mode === 3} /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 4 ? "opacity-100" : "opacity-0"}`}><HeroDotGrid /></div>
           <div className="container relative py-20 md:py-32">
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse-dot" /> Faceless YouTube, made easy
