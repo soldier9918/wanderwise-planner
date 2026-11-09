@@ -14,3 +14,4 @@
 - Stock B-roll comes from Pixabay (search results cached 15 min to respect rate limits) via the `stock-broll` edge function, saved as the scene's `clip_path` with `clip_credit` set; credit estimates count only clips without `clip_credit` as AI animations. Why: stock footage is free, AI animation is not.
 - Narration speed is applied at playback (preview + export, pitch preserved); accent is a TTS instruction in `scene-asset`. Why: speed changes need no re-recording.
 - "Remix for Shorts" copies a video and its scene rows into a new 9:16 video that reuses the same media paths (no regeneration). Why: original stays intact and remixing costs no credits; never delete shared media when a video row is deleted.
+- My Library (/library) stores user files privately in video-assets under <user_id>/library/, listed via storage (no table). Why: reuses owner-scoped storage policies.

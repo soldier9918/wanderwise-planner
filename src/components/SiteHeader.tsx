@@ -43,6 +43,7 @@ export default function SiteHeader() {
               </Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/from-url">Article to video</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/dashboard">My videos</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/library">My Library</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
               <Button variant="outline" className={navBtn} onClick={doSignOut}>Sign out</Button>
@@ -78,6 +79,7 @@ export default function SiteHeader() {
                 </Link>
                 <Link to="/from-url" onClick={close} className={mobileLink}>Article to video</Link>
                 <Link to="/dashboard" onClick={close} className={mobileLink}>My videos</Link>
+                <Link to="/library" onClick={close} className={mobileLink}>My Library</Link>
                 <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>
                 <Link to="/billing" onClick={close} className={mobileLink}>Billing</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
