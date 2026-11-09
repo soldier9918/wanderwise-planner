@@ -125,7 +125,6 @@ async function handlePreview(req: Request): Promise<Response> {
 const handler = createAuthEmailHandler({
   apiKey: Deno.env.get('LOVABLE_API_KEY')!,
   from: `${SITE_NAME} <noreply@${SENDER_DOMAIN}>`,
-  replyTo: "contact@vydora.ai",
   senderDomain: SENDER_DOMAIN,
   sendUrl: Deno.env.get('LOVABLE_SEND_URL'),
   emails: {
