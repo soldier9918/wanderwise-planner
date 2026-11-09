@@ -29,7 +29,7 @@ export const SignupEmail = ({ siteName, siteUrl, recipient, confirmationUrl }: S
         </Button>
         <Text style={small}>If the button doesn't work, copy and paste this link into your browser:</Text>
         <Text style={urlText}>
-          <Link href={confirmationUrl} style={link}>{confirmationUrl}</Link>
+          {confirmationUrl}
         </Text>
         <Text style={text}>If you didn't create a Vydora account, you can ignore this email and no account will be activated.</Text>
         <Hr style={hr} />

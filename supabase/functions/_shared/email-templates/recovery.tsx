@@ -28,7 +28,7 @@ export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps)
         </Button>
         <Text style={small}>If the button doesn't work, copy and paste this link into your browser:</Text>
         <Text style={urlText}>
-          <Link href={confirmationUrl} style={link}>{confirmationUrl}</Link>
+          {confirmationUrl}
         </Text>
         <Text style={text}>If you didn't ask to reset your password, you can ignore this email. Your password will stay the same and your account is safe.</Text>
         <Hr style={hr} />
