@@ -662,17 +662,38 @@ export default function VideoEditor() {
             </div>
             {scenes.length > 0 && (
               <div className="mt-3 flex items-center gap-3">
-                <span className="w-10 text-xs tabular-nums text-muted-foreground">{formatSeconds(elapsedSecs)}</span>
-                <Slider
-                  aria-label="Video position"
-                  className="flex-1"
-                  min={0}
-                  max={Math.max(1, totalSecs)}
-                  step={0.5}
-                  value={[dragSecs ?? elapsedSecs]}
-                  onValueChange={([v]) => setDragSecs(v)}
-                  onValueCommit={([v]) => { setDragSecs(null); seekTo(v); }}
-                />
+                <span className="w-24 text-xs tabular-nums text-muted-foreground">{formatSeconds(elapsedSecs)}{playing !== null ? ` · Scene ${playing + 1}/${scenes.length}` : ""}</span>
+                <div className="relative flex-1 pb-5">
+                  <Slider
+                    aria-label="Video position"
+                    min={0}
+                    max={Math.max(1, totalSecs)}
+                    step={0.5}
+                    value={[dragSecs ?? elapsedSecs]}
+                    onValueChange={([v]) => setDragSecs(v)}
+                    onValueCommit={([v]) => { setDragSecs(null); seekTo(v); }}
+                  />
+                  {sceneSecs.map((_, i) => {
+                    const start = sceneSecs.slice(0, i).reduce((a, b) => a + b, 0);
+                    const left = `${(start / Math.max(1, totalSecs)) * 100}%`;
+                    const active = (playing ?? 0) === i && playing !== null;
+                    return (
+                      <div key={i}>
+                        {i > 0 && <span className="pointer-events-none absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-[calc(50%+10px)] rounded bg-foreground/60" style={{ left }} />}
+                        <button
+                          type="button"
+                          aria-label={`Jump to scene ${i + 1}`}
+                          title={`Scene ${i + 1}`}
+                          onClick={() => seekTo(start)}
+                          className={`absolute bottom-0 rounded px-1 text-[10px] font-semibold leading-4 tabular-nums transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          style={{ left: `calc(${left} + ${(sceneSecs[i] / Math.max(1, totalSecs)) * 50}%)`, transform: "translateX(-50%)" }}
+                        >
+                          {i + 1}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
                 <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
                 <Button size="sm" variant="outline" aria-label={full ? "Exit full screen" : "Full screen"} onClick={toggleFull}>{full ? "✕" : "⛶"}</Button>
               </div>
