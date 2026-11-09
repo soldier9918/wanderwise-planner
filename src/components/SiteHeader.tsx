@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Menu, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,34 +18,34 @@ export function Logo() {
 export default function SiteHeader() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const navBtn = "h-8 px-2.5 text-sm sm:h-9 sm:px-4";
-  const doSignOut = async () => { await signOut(); navigate("/"); };
-  const goToCreateForm = () =>
+  const [open, setOpen] = useState(false);
+  const navBtn = "h-9 px-4 text-sm";
+  const close = () => setOpen(false);
+  const doSignOut = async () => { close(); await signOut(); navigate("/"); };
+  const goToCreateForm = () => {
+    close();
     document.getElementById("new-video")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const mobileLink = "block rounded-md px-3 py-3 text-base font-medium hover:bg-muted";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
-      <div className="container flex min-h-16 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2">
+      <div className="container flex h-16 items-center justify-between gap-2">
         <Logo />
-        {/* phones: sign out sits beside the logo so the links keep their own row */}
-        {user && (
-          <Button variant="outline" className={`${navBtn} sm:hidden`} aria-label="Sign out" onClick={doSignOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
-        )}
-        <nav className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto">
+        <nav className="hidden items-center gap-1 md:flex">
           {user ? (
             <>
-              <Button asChild className="h-8 px-3 text-sm sm:h-9 sm:px-4" onClick={goToCreateForm}>
+              <Button asChild className={navBtn} onClick={goToCreateForm}>
                 <Link to="/dashboard#new-video" className="inline-flex items-center gap-1.5">
-                  <Plus className="h-4 w-4" />Create<span className="hidden sm:inline"> video</span>
+                  <Plus className="h-4 w-4" />Create video
                 </Link>
               </Button>
-              <Button variant="ghost" asChild className={`hidden md:inline-flex ${navBtn}`}><Link to="/from-url">Article to video</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/from-url">Article to video</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/dashboard">My videos</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
-              <Button variant="outline" className={`hidden sm:inline-flex ${navBtn}`} onClick={doSignOut}>Sign out</Button>
+              <Button variant="outline" className={navBtn} onClick={doSignOut}>Sign out</Button>
             </>
           ) : (
             <>
@@ -55,7 +56,45 @@ export default function SiteHeader() {
             </>
           )}
         </nav>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </Button>
       </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 top-16 z-30 bg-background/60 md:hidden" onClick={close} />
+          <nav className="absolute inset-x-0 top-16 z-40 border-b border-border bg-background p-3 shadow-lg md:hidden">
+            {user ? (
+              <>
+                <Link to="/dashboard#new-video" onClick={goToCreateForm} className="mb-2 flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 font-semibold text-primary-foreground">
+                  <Plus className="h-4 w-4" />Create video
+                </Link>
+                <Link to="/from-url" onClick={close} className={mobileLink}>Article to video</Link>
+                <Link to="/dashboard" onClick={close} className={mobileLink}>My videos</Link>
+                <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>
+                <Link to="/billing" onClick={close} className={mobileLink}>Billing</Link>
+                <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
+                  <LogOut className="h-4 w-4" />Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>
+                <Link to="/billing" onClick={close} className={mobileLink}>Billing</Link>
+                <Link to="/auth" onClick={close} className={mobileLink}>Sign in</Link>
+                <Link to="/auth?mode=signup" onClick={close} className="mt-2 block rounded-md bg-primary px-3 py-3 text-center font-semibold text-primary-foreground">Start free</Link>
+              </>
+            )}
+          </nav>
+        </>
+      )}
     </header>
   );
 }
