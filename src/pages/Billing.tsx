@@ -3,6 +3,7 @@ import SiteFooter from "@/components/SiteFooter";
 import BillingHistory from "@/components/BillingHistory";
 import InviteEarn from "@/components/InviteEarn";
 import TopUpSettings from "@/components/TopUpSettings";
+import SubscriptionPlans from "@/components/SubscriptionPlans";
 
 export default function Billing() {
   return (
@@ -11,6 +12,7 @@ export default function Billing() {
       <main className="container max-w-3xl py-12">
         <h1 className="text-4xl font-extrabold">Billing</h1>
         <BillingHistory part="summary" />
+        <SubscriptionPlans />
         <TopUpSettings />
         <InviteEarn />
         <BillingHistory />
