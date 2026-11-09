@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import HeroBackground from "@/components/HeroBackground";
 import HeroReel from "@/components/HeroReel";
 import HeroDotLogo from "@/components/HeroDotLogo";
+import HeroStudio from "@/components/HeroStudio";
 import { useEffect, useRef, useState } from "react";
 import TypedHeadline from "@/components/TypedHeadline";
 import { Star, Play } from "lucide-react";
@@ -94,13 +95,13 @@ const steps = [
 export default function Landing() {
   const { user } = useAuth();
   const cta = user ? "/create" : "/auth?mode=signup";
-  // 0 = dot grid, 1 = thumbnail reel, 2 = VYDORA in dots
+  // 0 = VYDORA in dots, 1 = dot grid, 2 = thumbnail reel, 3 = AI studio
   const [mode, setMode] = useState(0);
   const headRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const secs = [10000, 8000, 8000];
-    const id = window.setTimeout(() => setMode((m) => (m + 1) % 3), secs[mode]);
+    const secs = [12000, 8000, 8000, 9000];
+    const id = window.setTimeout(() => setMode((m) => (m + 1) % 4), secs[mode]);
     return () => clearTimeout(id);
   }, [mode]);
   return (
@@ -109,14 +110,15 @@ export default function Landing() {
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-glow" />
-          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 0 ? "opacity-100" : "opacity-0"}`}><HeroBackground /></div>
-          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 1 ? "opacity-100" : "opacity-0"}`}><HeroReel /></div>
-          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 2 ? "opacity-100" : "opacity-0"}`}><HeroDotLogo active={mode === 2} target={headRef} /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 1 ? "opacity-100" : "opacity-0"}`}><HeroBackground /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 2 ? "opacity-100" : "opacity-0"}`}><HeroReel /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 0 ? "opacity-100" : "opacity-0"}`}><HeroDotLogo active={mode === 0} target={headRef} /></div>
+          <div className={`absolute inset-0 transition-opacity duration-[1500ms] ${mode === 3 ? "opacity-100" : "opacity-0"}`}><HeroStudio active={mode === 3} /></div>
           <div className="container relative py-20 md:py-32">
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse-dot" /> Faceless YouTube, made easy
             </p>
-            <div ref={headRef} className={`transition-opacity duration-700 ${mode === 2 ? "invisible opacity-0" : "opacity-100"}`}>{mode !== 2 && <TypedHeadline />}{mode === 2 && <h1 className="text-5xl md:text-8xl font-extrabold leading-[0.95]" aria-label="Vydora"><span className="block">&nbsp;</span><span className="block">&nbsp;</span></h1>}</div>
+            <div ref={headRef} className={`transition-opacity duration-700 ${mode === 0 ? "invisible opacity-0" : "opacity-100"}`}>{mode !== 0 && <TypedHeadline />}{mode === 0 && <h1 className="text-5xl md:text-8xl font-extrabold leading-[0.95]" aria-label="Vydora"><span className="block">&nbsp;</span><span className="block">&nbsp;</span></h1>}</div>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
               Vydora turns a single sentence into a full YouTube video — script, scenes and voiceover — powered by AI.
             </p>
