@@ -22,10 +22,6 @@ export default function SiteHeader() {
   const navBtn = "h-9 px-4 text-sm";
   const close = () => setOpen(false);
   const doSignOut = async () => { close(); await signOut(); navigate("/"); };
-  const goToCreateForm = () => {
-    close();
-    document.getElementById("new-video")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const mobileLink = "block rounded-md px-3 py-3 text-base font-medium hover:bg-muted";
 
@@ -36,8 +32,8 @@ export default function SiteHeader() {
         <nav className="hidden items-center gap-1 md:flex">
           {user ? (
             <>
-              <Button asChild className={navBtn} onClick={goToCreateForm}>
-                <Link to="/dashboard#new-video" className="inline-flex items-center gap-1.5">
+              <Button asChild className={navBtn}>
+                <Link to="/create" className="inline-flex items-center gap-1.5">
                   <Plus className="h-4 w-4" />Create video
                 </Link>
               </Button>
@@ -74,7 +70,7 @@ export default function SiteHeader() {
           <nav className="absolute inset-x-0 top-16 z-40 border-b border-border bg-background p-3 shadow-lg md:hidden">
             {user ? (
               <>
-                <Link to="/dashboard#new-video" onClick={goToCreateForm} className="mb-2 flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 font-semibold text-primary-foreground">
+                <Link to="/create" onClick={close} className="mb-2 flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 font-semibold text-primary-foreground">
                   <Plus className="h-4 w-4" />Create video
                 </Link>
                 <Link to="/from-url" onClick={close} className={mobileLink}>Article to video</Link>

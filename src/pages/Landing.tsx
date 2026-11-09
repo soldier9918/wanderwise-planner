@@ -93,7 +93,7 @@ const steps = [
 
 export default function Landing() {
   const { user } = useAuth();
-  const cta = user ? "/dashboard" : "/auth?mode=signup";
+  const cta = user ? "/create" : "/auth?mode=signup";
   // 0 = dot grid, 1 = thumbnail reel, 2 = VYDORA in dots
   const [mode, setMode] = useState(0);
   const headRef = useRef<HTMLDivElement>(null);

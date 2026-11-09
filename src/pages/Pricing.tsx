@@ -105,7 +105,7 @@ export default function Pricing() {
           ))}
         </section>
 
-        <div className="mt-12 text-center"><Button size="lg" asChild><Link to="/dashboard">Make a video</Link></Button></div>
+        <div className="mt-12 text-center"><Button size="lg" asChild><Link to="/create">Make a video</Link></Button></div>
       </main>
       <SiteFooter />
     </div>

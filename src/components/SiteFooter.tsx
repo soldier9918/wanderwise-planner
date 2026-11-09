@@ -16,7 +16,7 @@ export default function SiteFooter() {
         <div>
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground">Create</h3>
           <ul className="mt-4 space-y-2 text-sm">
-            <li><Link className="transition-colors hover:text-primary" to="/dashboard#new-video">New video</Link></li>
+            <li><Link className="transition-colors hover:text-primary" to="/create">Create video</Link></li>
             <li><Link className="transition-colors hover:text-primary" to="/from-url">Article to video</Link></li>
             <li><Link className="transition-colors hover:text-primary" to="/dashboard">My videos</Link></li>
             <li><Link className="transition-colors hover:text-primary" to="/pricing">Pricing &amp; costs</Link></li>

@@ -7,7 +7,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
+import MyVideos from "./pages/MyVideos";
+import Create from "./pages/Create";
 import VideoEditor from "./pages/VideoEditor";
 import Legal from "./pages/Legal";
 import Pricing from "./pages/Pricing";
@@ -30,8 +31,10 @@ const App = () => (
             <Route path="/billing" element={<Billing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/from-url" element={<ProtectedRoute><Dashboard key="url" fromUrl /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><MyVideos /></ProtectedRoute>} />
+            <Route path="/my-videos" element={<ProtectedRoute><MyVideos /></ProtectedRoute>} />
+            <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
+            <Route path="/from-url" element={<ProtectedRoute><Create key="url" fromUrl /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
             {LEGAL_DOCS.map((doc) => (
