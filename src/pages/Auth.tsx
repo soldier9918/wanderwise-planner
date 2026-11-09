@@ -17,6 +17,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -29,7 +30,7 @@ export default function Auth() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
         if (error) throw error;
-        toast.success("Check your email to confirm your account.");
+        setSentTo(email);
       } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -55,6 +56,19 @@ export default function Auth() {
       <div className="absolute inset-0 bg-glow" />
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex justify-center"><Logo /></div>
+        {sentTo ? (
+        <div className="rounded-xl border border-border bg-card p-6 text-center">
+          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-primary/15 text-2xl">✉️</div>
+          <h1 className="text-2xl font-bold">Check your email</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            We sent a confirmation link to <span className="font-medium text-foreground">{sentTo}</span>. Click it to activate your account, then sign in.
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">Can't see it? Check your spam or junk folder.</p>
+          <Button className="mt-6 w-full" variant="outline" onClick={() => { setSentTo(null); setMode("signin"); setPassword(""); }}>
+            Back to sign in
+          </Button>
+        </div>
+        ) : (
         <div className="rounded-xl border border-border bg-card p-6">
           <h1 className="text-2xl font-bold">
             {mode === "signup" ? "Create your account" : mode === "signin" ? "Welcome back" : "Reset password"}
@@ -92,6 +106,7 @@ export default function Auth() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );
