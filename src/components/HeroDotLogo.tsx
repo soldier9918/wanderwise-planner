@@ -15,6 +15,7 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
     const fg = css.getPropertyValue("--foreground").trim();
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    if (W < 1 || H < 1) return;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const c = canvas.getBoundingClientRect();
