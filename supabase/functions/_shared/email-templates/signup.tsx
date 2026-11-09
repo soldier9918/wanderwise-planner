@@ -28,9 +28,7 @@ export const SignupEmail = ({
   confirmationUrl,
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
+    <Head />
     <Preview>Confirm your email for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
@@ -49,7 +47,7 @@ export const SignupEmail = ({
           </Link>
           ) by clicking the button below:
         </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
+        <Button style={button} href={confirmationUrl}>
           Verify Email
         </Button>
         <Text style={footer}>
@@ -80,18 +78,15 @@ const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
   backgroundColor: '#ea385c',
   color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #000000',
+  fontSize: '15px',
+  fontWeight: 'bold' as const,
+  fontFamily: 'Manrope, Arial, sans-serif',
+  lineHeight: '20px',
+  border: '1px solid #ea385c',
   borderRadius: '8px',
-  padding: '12px 20px',
+  padding: '12px 24px',
+  display: 'inline-block',
+  textAlign: 'center' as const,
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-`
