@@ -16,7 +16,7 @@ export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
   ledger.filter((l) => l.amount < 0 && now - new Date(l.created_at).getTime() <= 30 * 864e5).reduce((n, l) => n - l.amount, 0);
 
 export const REASON_LABEL: Record<string, string> = {
-  starter: "Starter credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite",
+  starter: "Starter credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
 };
 
 export function useAccount() {
@@ -25,12 +25,13 @@ export function useAccount() {
     queryKey: ["account", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: acct }, { data: ledger }] = await Promise.all([
+      const [{ data: acct }, { data: ledger }, { data: admin }] = await Promise.all([
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
         supabase.from("credit_ledger").select("amount, reason, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }),
+        supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
       ]);
       const rows = (ledger ?? []) as LedgerRow[];
-      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), watermark: needsWatermark(rows) };
+      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, watermark: !admin && needsWatermark(rows) };
     },
   });
 }

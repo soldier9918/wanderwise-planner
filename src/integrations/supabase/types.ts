@@ -101,6 +101,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_scenes: {
         Row: {
           audio_path: string | null
@@ -285,11 +303,66 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_credits: {
+        Args: { _amount: number; _note: string; _user: string }
+        Returns: undefined
+      }
+      admin_ledger: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          email: string
+          id: string
+          reason: string
+        }[]
+      }
+      admin_overview: { Args: never; Returns: Json }
+      admin_users: {
+        Args: never
+        Returns: {
+          balance: number
+          confirmed: boolean
+          created_at: string
+          email: string
+          invites: number
+          is_admin: boolean
+          last_sign_in_at: string
+          paid_total: number
+          plan: string
+          provider: string
+          referral_code: string
+          referred_by_email: string
+          user_id: string
+          videos: number
+        }[]
+      }
+      admin_videos: {
+        Args: { _limit?: number }
+        Returns: {
+          aspect_ratio: string
+          created_at: string
+          email: string
+          id: string
+          quality: string
+          scenes: number
+          style: string
+          title: string
+          voice: string
+        }[]
+      }
       claim_referral: { Args: { _code: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       new_referral_code: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -416,6 +489,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

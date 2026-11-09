@@ -134,6 +134,13 @@
       "when": 1794195800955,
       "tag": "0018_credits_referrals",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794196471021,
+      "tag": "0019_admin_roles",
+      "breakpoints": true
     }
   ]
 }
