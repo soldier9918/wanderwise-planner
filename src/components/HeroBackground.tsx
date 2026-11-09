@@ -1,56 +1,55 @@
 import { useEffect, useRef } from "react";
 
-/** Animated AI-style dot grid: dots ripple, glow and shift colour across the hero. */
+const CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン0123456789VYDORA▶";
+
+/** Matrix-style digital rain: columns of glyphs falling down the hero. */
 export default function HeroBackground() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
     const css = getComputedStyle(document.documentElement);
-    const tok = (n: string) => css.getPropertyValue(n).trim().split(/\s+/);
-    const [ph, ps, pl] = tok("--primary");
-    const [ah, as, al] = tok("--accent");
-    const [fh, fs, fl] = tok("--foreground");
+    const ac = css.getPropertyValue("--accent").trim();
+    const p = css.getPropertyValue("--primary").trim();
+    const fg = css.getPropertyValue("--foreground").trim();
+    const bg = css.getPropertyValue("--background").trim();
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let raf = 0, W = 0, H = 0;
-    const gap = window.innerWidth < 768 ? 8 : 10;
+    const size = window.innerWidth < 768 ? 14 : 16;
+    let W = 0, H = 0, drops: { y: number; sp: number; red: boolean }[] = [];
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       W = canvas.offsetWidth; H = canvas.offsetHeight;
       canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drops = Array.from({ length: Math.ceil(W / size) }, () => ({ y: Math.random() * -H / size, sp: 0.3 + Math.random() * 0.7, red: Math.random() < 0.08 }));
+      ctx.fillStyle = `hsl(${bg})`; ctx.fillRect(0, 0, W, H);
     };
     resize();
     window.addEventListener("resize", resize);
+    let raf = 0, last = 0;
     const draw = (now: number) => {
-      const t = now / 1000;
-      ctx.clearRect(0, 0, W, H);
-      const cx = W * (0.5 + 0.3 * Math.sin(t * 0.25)), cy = H * (0.4 + 0.2 * Math.cos(t * 0.3));
-      for (let x = gap / 2; x < W; x += gap) for (let y = gap / 2; y < H; y += gap) {
-        const d = Math.hypot(x - cx, y - cy);
-        const wave = (Math.sin(d / 40 - t * 2.2) + 1) / 2;
-        const fall = Math.max(0, 1 - d / (Math.max(W, H) * 0.7));
-        const v = wave * fall;
-        const seed = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-        const spark = (seed - Math.floor(seed));
-        const twinkle = Math.sin(t * 3 + spark * 50) > 0.985;
-        let col: string, a: number, r: number;
-        if (twinkle) { col = `${ah} ${as} ${al}`; a = 0.9; r = 1.3; }
-        else if (v > 0.55) { col = `${ph} ${ps} ${pl}`; a = 0.2 + v * 0.6; r = 0.7 + v * 0.6; }
-        else { col = `${fh} ${fs} ${fl}`; a = 0.07 + v * 0.14; r = 0.6; }
-        ctx.fillStyle = `hsl(${col.split(" ").join(" ")} / ${a})`;
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      }
-      // scanning line
-      const sy = ((t * 80) % (H + 200)) - 100;
-      const g = ctx.createLinearGradient(0, sy - 60, 0, sy);
-      g.addColorStop(0, `hsl(${ph} ${ps} ${pl} / 0)`);
-      g.addColorStop(1, `hsl(${ph} ${ps} ${pl} / 0.08)`);
-      ctx.fillStyle = g; ctx.fillRect(0, sy - 60, W, 60);
-      if (!reduce) raf = requestAnimationFrame(draw);
+      raf = requestAnimationFrame(draw);
+      if (now - last < 50) return;
+      last = now;
+      ctx.fillStyle = `hsl(${bg} / 0.12)`; ctx.fillRect(0, 0, W, H);
+      ctx.font = `${size}px "JetBrains Mono", monospace`;
+      drops.forEach((d, i) => {
+        const ch = CHARS[(Math.random() * CHARS.length) | 0];
+        const x = i * size, y = d.y * size;
+        ctx.fillStyle = `hsl(${fg} / 0.95)`; ctx.fillText(ch, x, y);
+        ctx.fillStyle = `hsl(${d.red ? p : ac} / 0.75)`; ctx.fillText(CHARS[(Math.random() * CHARS.length) | 0], x, y - size);
+        d.y += d.sp;
+        if (y > H && Math.random() > 0.975) { d.y = 0; d.red = Math.random() < 0.08; }
+      });
+      if (reduce) cancelAnimationFrame(raf);
     };
     raf = requestAnimationFrame(draw);
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
   }, []);
-  return <canvas ref={ref} className="absolute inset-0 h-full w-full" aria-hidden />;
+  return (
+    <div className="absolute inset-0" aria-hidden>
+      <canvas ref={ref} className="absolute inset-0 h-full w-full opacity-60" />
+      <div className="absolute inset-0 bg-hero-vignette" />
+    </div>
+  );
 }
