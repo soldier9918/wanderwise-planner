@@ -40,7 +40,7 @@ export default function HeroDotLogo({ active, target }: { active: boolean; targe
       return { pts: out, gap };
     };
 
-    const A = sample("VYDORA", bh * 1.05, 55);
+    const A = sample("VYDORA", bh * 1.05, 90);
     const dots = A.pts.map((a) => ({ a, sx: Math.random() * W, sy: Math.random() * H, s: Math.random() }));
     const ease = (k: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, k)), 3);
     const start = performance.now();

@@ -13,7 +13,7 @@ export default function HeroBackground() {
     const [fh, fs, fl] = tok("--foreground");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0, W = 0, H = 0;
-    const gap = 22;
+    const gap = window.innerWidth < 768 ? 8 : 10;
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       W = canvas.offsetWidth; H = canvas.offsetHeight;
@@ -35,9 +35,9 @@ export default function HeroBackground() {
         const spark = (seed - Math.floor(seed));
         const twinkle = Math.sin(t * 3 + spark * 50) > 0.985;
         let col: string, a: number, r: number;
-        if (twinkle) { col = `${ah} ${as} ${al}`; a = 0.9; r = 1.8; }
-        else if (v > 0.55) { col = `${ph} ${ps} ${pl}`; a = 0.2 + v * 0.6; r = 1 + v * 1.2; }
-        else { col = `${fh} ${fs} ${fl}`; a = 0.05 + v * 0.12; r = 0.9; }
+        if (twinkle) { col = `${ah} ${as} ${al}`; a = 0.9; r = 1.3; }
+        else if (v > 0.55) { col = `${ph} ${ps} ${pl}`; a = 0.2 + v * 0.6; r = 0.7 + v * 0.6; }
+        else { col = `${fh} ${fs} ${fl}`; a = 0.07 + v * 0.14; r = 0.6; }
         ctx.fillStyle = `hsl(${col.split(" ").join(" ")} / ${a})`;
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       }
