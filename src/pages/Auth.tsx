@@ -46,7 +46,7 @@ export default function Auth() {
     }
   };
 
-  const oauth = async (provider: "google" | "lovable") => {
+  const oauth = async (provider: "google") => {
     const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
     if (result.error) toast.error(result.error.message ?? "Sign-in failed");
   };
@@ -76,7 +76,6 @@ export default function Auth() {
           {mode !== "forgot" && (
             <div className="mt-6 grid gap-2">
               <Button variant="outline" onClick={() => oauth("google")}>Continue with Google</Button>
-              <Button variant="outline" onClick={() => oauth("lovable")}>Continue with Lovable</Button>
               <div className="my-2 text-center text-xs uppercase tracking-widest text-muted-foreground">or</div>
             </div>
           )}
