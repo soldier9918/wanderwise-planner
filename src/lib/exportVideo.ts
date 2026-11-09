@@ -70,7 +70,7 @@ function drawPic(ctx: CanvasRenderingContext2D, img: Pic, m: Motion, l: Layer | 
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number } = {}): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number; format?: "mp4" | "webm" } = {}): Promise<Blob> {
   const speed = extra.speed && extra.speed > 0 ? extra.speed : 1;
   const logo = extra.logoUrl ? await loadImage(extra.logoUrl).catch(() => null) : null;
   const q = qualityOf(quality);
@@ -100,11 +100,12 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   );
 
   const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-  const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
+  const mime = pickMime(extra.format ?? "mp4");
+  const isMp4 = mime.startsWith("video/mp4");
   const recorder = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: q.bitrate } : undefined);
   const chunks: Blob[] = [];
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-  const done = new Promise<Blob>((r) => (recorder.onstop = () => r(new Blob(chunks, { type: "video/webm" }))));
+  const done = new Promise<Blob>((r) => (recorder.onstop = () => r(new Blob(chunks, { type: isMp4 ? "video/mp4" : "video/webm" }))));
 
   const durations = loaded.map((l) => (l.buffer ? l.buffer.duration / speed + 0.4 : 4));
   const total = durations.reduce((a, b) => a + b, 0);
@@ -207,5 +208,16 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   const raw = await done;
   await audioCtx.close();
   // Browser recordings have no length stored, so many players stop after the first part.
+  if (isMp4) return raw;
   return await fixWebmDuration(raw, total * 1000, { logger: false });
+}
+
+const MP4_TYPES = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1,mp4a", "video/mp4;codecs=avc1,opus", "video/mp4"];
+const WEBM_TYPES = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+const supported = (m: string) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m);
+/** True when this browser can record MP4 directly. */
+export const canRecordMp4 = () => MP4_TYPES.some(supported);
+function pickMime(format: "mp4" | "webm"): string {
+  const order = format === "mp4" ? [...MP4_TYPES, ...WEBM_TYPES] : [...WEBM_TYPES, ...MP4_TYPES];
+  return order.find(supported) ?? "";
 }

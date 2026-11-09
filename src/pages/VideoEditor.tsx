@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, animateScene, generateSeo, type Scene, type Seo } from "@/lib/videoApi";
 import { Input } from "@/components/ui/input";
-import { exportVideo } from "@/lib/exportVideo";
+import { exportVideo, canRecordMp4 } from "@/lib/exportVideo";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds, clipRate } from "@/lib/durations";
 import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
@@ -61,6 +61,7 @@ export default function VideoEditor() {
   const [playing, setPlaying] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
+  const [exportFormat, setExportFormat] = useState<"mp4" | "webm">(() => (localStorage.getItem("vydora-export-format") as "mp4" | "webm") || "mp4");
   const [thumbBusy, setThumbBusy] = useState(false);
   const [sceneBusy, setSceneBusy] = useState(false);
   // Measured length of each voiceover clip, keyed by scene id.
@@ -405,11 +406,14 @@ export default function VideoEditor() {
           logoUrl: data.video?.logo_path ? data.urls[data.video.logo_path] : null,
           logoPosition: data.video?.logo_position,
           logoOpacity: data.video?.logo_opacity,
+          format: exportFormat,
         },
       );
+      const ext = blob.type.startsWith("video/mp4") ? "mp4" : "webm";
+      if (exportFormat === "mp4" && ext === "webm") toast.info("This browser can't record MP4, so you got WebM. Try Safari or an up-to-date Chrome/Edge for MP4.");
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${(data.video?.title ?? "video").replace(/[^\w\s-]/g, "").trim() || "video"}.webm`;
+      a.download = `${(data.video?.title ?? "video").replace(/[^\w\s-]/g, "").trim() || "video"}.${ext}`;
       a.click();
       toast.success("Video downloaded");
     } catch (e) {
@@ -687,6 +691,10 @@ export default function VideoEditor() {
                   catch (e) { toast.error((e as Error).message, { id: t }); }
                 }}>📱 Remix for Shorts / TikTok</Button>
               )}
+              <select aria-label="Download format" value={exportFormat} disabled={exportPct !== null} onChange={(e) => { const v = e.target.value as "mp4" | "webm"; setExportFormat(v); localStorage.setItem("vydora-export-format", v); }} className="h-10 rounded-md border border-input bg-background px-2 text-sm">
+                <option value="mp4">MP4{canRecordMp4() ? "" : " (not in this browser)"}</option>
+                <option value="webm">WebM</option>
+              </select>
               <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
               </Button>
