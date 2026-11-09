@@ -18,6 +18,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [sentKind, setSentKind] = useState<"signup" | "reset">("signup");
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -30,6 +31,7 @@ export default function Auth() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
         if (error) throw error;
+        setSentKind("signup");
         setSentTo(email);
       } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -37,7 +39,8 @@ export default function Auth() {
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
         if (error) throw error;
-        toast.success("Password reset link sent — check your email.");
+        setSentKind("reset");
+        setSentTo(email);
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -61,7 +64,7 @@ export default function Auth() {
           <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-primary/15 text-2xl">✉️</div>
           <h1 className="text-2xl font-bold">Check your email</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            We sent a confirmation link to <span className="font-medium text-foreground">{sentTo}</span>. Click it to activate your account, then sign in.
+            {sentKind === "reset" ? "We sent a password reset link to " : "We sent a confirmation link to "}<span className="font-medium text-foreground">{sentTo}</span>.{sentKind === "reset" ? " Open the link to set a new password." : " Click it to activate your account, then sign in."}
           </p>
           <p className="mt-3 text-xs text-muted-foreground">Can't see it? Check your spam or junk folder.</p>
           <Button className="mt-6 w-full" variant="outline" onClick={() => { setSentTo(null); setMode("signin"); setPassword(""); }}>
