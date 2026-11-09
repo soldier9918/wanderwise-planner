@@ -15,6 +15,7 @@ import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
+import { ReferralCatcher } from "@/lib/account";
 import { LEGAL_DOCS } from "@/lib/legal";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
       <AuthProvider>
         <Sonner />
         <BrowserRouter>
+          <ReferralCatcher />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<Pricing />} />

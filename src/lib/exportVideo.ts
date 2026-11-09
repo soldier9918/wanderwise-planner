@@ -19,6 +19,26 @@ export type ExportScene = { imageUrl: string; clipUrl?: string | null; audioUrl:
 type Pic = HTMLImageElement | HTMLVideoElement;
 const dims = (p: Pic) => p instanceof HTMLVideoElement ? { w: p.videoWidth || 1280, h: p.videoHeight || 720 } : { w: p.width, h: p.height };
 
+/** Free-plan "Made with Vydora" pill, bottom-left. */
+function drawWatermark(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  const fs = Math.max(12, Math.round(Math.min(W, H) * 0.028));
+  ctx.save();
+  ctx.font = `700 ${fs}px Manrope, sans-serif`;
+  const text = "Made with Vydora";
+  const pad = fs * 0.7, dot = fs * 0.35;
+  const w = ctx.measureText(text).width + pad * 2 + dot * 2 + fs * 0.4, h = fs * 1.9;
+  const x = Math.round(W * 0.025), y = H - h - Math.round(H * 0.03);
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = "rgba(10,10,12,0.75)";
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, h / 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "hsl(348,84%,60%)";
+  ctx.beginPath(); ctx.arc(x + pad + dot, y + h / 2, dot, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#f5f1ea"; ctx.textBaseline = "middle";
+  ctx.fillText(text, x + pad + dot * 2 + fs * 0.4, y + h / 2);
+  ctx.restore();
+}
+
 function loadClip(url: string) {
   return new Promise<HTMLVideoElement>((resolve, reject) => {
     const v = document.createElement("video");
@@ -70,7 +90,7 @@ function drawPic(ctx: CanvasRenderingContext2D, img: Pic, m: Motion, l: Layer | 
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number; format?: "mp4" | "webm" } = {}): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number; format?: "mp4" | "webm"; watermark?: boolean } = {}): Promise<Blob> {
   const speed = extra.speed && extra.speed > 0 ? extra.speed : 1;
   const logo = extra.logoUrl ? await loadImage(extra.logoUrl).catch(() => null) : null;
   const q = qualityOf(quality);
@@ -165,6 +185,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
           ctx.drawImage(logo, b.x, b.y, b.w, b.h);
           ctx.globalAlpha = 1;
         }
+        if (extra.watermark) drawWatermark(ctx, W, H);
         if (captionStyle !== "none") {
           ctx.font = fontStr;
           const speak = buffer ? buffer.duration / speed : dur;

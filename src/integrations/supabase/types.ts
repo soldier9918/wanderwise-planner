@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_accounts: {
+        Row: {
+          created_at: string
+          referral_code: string
+          referred_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          referral_code: string
+          referred_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          referral_code?: string
+          referred_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           adults: number
@@ -240,7 +285,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_referral: { Args: { _code: string }; Returns: string }
+      new_referral_code: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

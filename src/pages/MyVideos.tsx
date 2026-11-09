@@ -1,17 +1,26 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Plus } from "lucide-react";
+import { Copy, ImagePlus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { generateThumbnail, signedUrls } from "@/lib/videoApi";
 import { estimateCredits } from "@/lib/credits";
+import { duplicateVideo } from "@/lib/account";
 
 export default function MyVideos() {
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [dupBusy, setDupBusy] = useState<string | null>(null);
+  const duplicate = async (videoId: string) => {
+    setDupBusy(videoId);
+    try { const nid = await duplicateVideo(videoId); toast.success("Copy ready"); navigate(`/video/${nid}`); }
+    catch (err) { toast.error((err as Error).message); }
+    finally { setDupBusy(null); }
+  };
 
   const makeThumbnail = async (videoId: string) => {
     setThumbBusy(videoId);
@@ -114,6 +123,10 @@ export default function MyVideos() {
                 >
                   <ImagePlus className="h-4 w-4" />
                   {thumbBusy === v.id ? "Creating…" : v.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="ml-2 mt-3" disabled={dupBusy === v.id}
+                  onClick={(e) => { e.preventDefault(); duplicate(v.id); }}>
+                  <Copy className="h-4 w-4" />{dupBusy === v.id ? "Duplicating…" : "Duplicate"}
                 </Button>
               </div>
             </Link>

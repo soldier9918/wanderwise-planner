@@ -1,6 +1,7 @@
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import BillingHistory from "@/components/BillingHistory";
+import InviteEarn from "@/components/InviteEarn";
 import TopUpSettings from "@/components/TopUpSettings";
 
 export default function Billing() {
@@ -11,6 +12,7 @@ export default function Billing() {
         <h1 className="text-4xl font-extrabold">Billing</h1>
         <BillingHistory part="summary" />
         <TopUpSettings />
+        <InviteEarn />
         <BillingHistory />
       </main>
       <SiteFooter />

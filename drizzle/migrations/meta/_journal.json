@@ -127,6 +127,13 @@
       "when": 1794159521097,
       "tag": "0017_voice_speed_accent_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794195800955,
+      "tag": "0018_credits_referrals",
+      "breakpoints": true
     }
   ]
 }

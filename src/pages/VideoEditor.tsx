@@ -27,6 +27,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
+import { duplicateVideo, useAccount } from "@/lib/account";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -57,6 +58,7 @@ export default function VideoEditor() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { data: account } = useAccount();
   const [working, setWorking] = useState<Record<string, boolean>>({});
   const [playing, setPlaying] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
@@ -407,6 +409,7 @@ export default function VideoEditor() {
           logoPosition: data.video?.logo_position,
           logoOpacity: data.video?.logo_opacity,
           format: exportFormat,
+          watermark: account?.watermark ?? true,
         },
       );
       const ext = blob.type.startsWith("video/mp4") ? "mp4" : "webm";
@@ -691,6 +694,11 @@ export default function VideoEditor() {
                   catch (e) { toast.error((e as Error).message, { id: t }); }
                 }}>📱 Remix for Shorts / TikTok</Button>
               )}
+              <Button variant="outline" disabled={busyAny} onClick={async () => {
+                const t = toast.loading("Duplicating…");
+                try { const nid = await duplicateVideo(id!); toast.success("Copy ready — your original is untouched.", { id: t }); navigate(`/video/${nid}`); }
+                catch (e) { toast.error((e as Error).message, { id: t }); }
+              }}>⧉ Duplicate</Button>
               <select aria-label="Download format" value={exportFormat} disabled={exportPct !== null} onChange={(e) => { const v = e.target.value as "mp4" | "webm"; setExportFormat(v); localStorage.setItem("vydora-export-format", v); }} className="h-10 rounded-md border border-input bg-background px-2 text-sm">
                 <option value="mp4">MP4{canRecordMp4() ? "" : " (not in this browser)"}</option>
                 <option value="webm">WebM</option>
@@ -698,6 +706,7 @@ export default function VideoEditor() {
               <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
               </Button>
+              {account?.watermark && <p className="w-full text-xs text-muted-foreground">Free plan: downloads include a small "Made with Vydora" badge. <Link to="/billing" className="text-primary underline">Top up</Link> to remove it.</p>}
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || done === scenes.length}>
                 Generate missing assets
               </Button>

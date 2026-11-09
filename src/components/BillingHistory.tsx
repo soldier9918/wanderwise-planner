@@ -1,7 +1,10 @@
 import { Download, Eye, ReceiptText, Wallet, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { REASON_LABEL, used30d, useAccount } from "@/lib/account";
 
 export default function BillingHistory({ part = "history" }: { part?: "summary" | "history" }) {
+  const { data: acct } = useAccount();
+  const recent = (acct?.ledger ?? []).filter((l) => Date.now() - new Date(l.created_at).getTime() <= 30 * 864e5);
   return (
     <section id={part === "summary" ? "current-billing" : "billing-history"} className="mt-10 scroll-mt-24 border-t border-border pt-8">
       {part === "summary" ? <>
@@ -9,13 +12,13 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
       <dl className="mt-5 grid gap-6 border-y border-border py-5 sm:grid-cols-2">
         <div>
           <dt className="text-sm font-semibold text-muted-foreground">Credits remaining</dt>
-          <dd className="mt-2 font-display text-3xl font-bold text-primary" aria-label="Credit balance unavailable">—</dd>
-          <dd className="mt-2 text-xs text-muted-foreground">Balance unavailable · Credit tracking not connected</dd>
+          <dd className="mt-2 font-display text-3xl font-bold text-primary">{acct ? acct.balance : "—"}</dd>
+          <dd className="mt-2 text-xs text-muted-foreground">{acct?.ledger.some((l) => l.reason === "starter") ? "🎉 Includes your 30 starter credits" : "Credits on your account"}</dd>
         </div>
         <div>
           <dt className="flex items-center gap-2 text-sm font-semibold text-muted-foreground"><Activity className="h-4 w-4" />Credits used · Last 30 days</dt>
-          <dd className="mt-2 font-display text-3xl font-bold" aria-label="Thirty-day usage unavailable">—</dd>
-          <dd className="mt-2 text-xs text-muted-foreground">Usage unavailable · Credit tracking not connected</dd>
+          <dd className="mt-2 font-display text-3xl font-bold">{acct ? used30d(acct.ledger) : "—"}</dd>
+          <dd className="mt-2 text-xs text-muted-foreground">Credits spent in the last 30 days</dd>
         </div>
       </dl>
       <h3 className="mt-6 text-lg font-bold">Usage · Last 30 days</h3>
@@ -24,7 +27,9 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
           <thead className="border-b border-border bg-card text-muted-foreground">
             <tr><th scope="col" className="px-4 py-3 font-semibold">Activity / Date</th><th scope="col" className="px-4 py-3 text-right font-semibold">Credits used</th></tr>
           </thead>
-          <tbody><tr><td colSpan={2} className="px-4 py-6 text-center text-muted-foreground">Usage records will appear once credit tracking is connected.</td></tr></tbody>
+          <tbody>{recent.length ? recent.map((l, i) => (
+            <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td></tr>
+          )) : <tr><td colSpan={2} className="px-4 py-6 text-center text-muted-foreground">No credit activity in the last 30 days.</td></tr>}</tbody>
         </table>
       </div>
       </> : <>
