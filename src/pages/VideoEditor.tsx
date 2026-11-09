@@ -71,6 +71,8 @@ export default function VideoEditor() {
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekRef = useRef(0);
+  // When set, playback stops at the end of this one scene instead of continuing.
+  const soloRef = useRef(false);
   const [full, setFull] = useState(false);
   const toggleFull = () => {
     if (full) { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); setFull(false); }
@@ -358,7 +360,7 @@ export default function VideoEditor() {
     };
     raf = requestAnimationFrame(tick);
     const cleanupRaf = () => cancelAnimationFrame(raf);
-    const next = () => setPlaying((p) => (p !== null && p + 1 < data.scenes.length ? p + 1 : null));
+    const next = () => setPlaying((p) => (!soloRef.current && p !== null && p + 1 < data.scenes.length ? p + 1 : null));
     const url = scene.audio_path ? data.urls[scene.audio_path] : null;
     if (url) {
       audio.src = url;
@@ -671,7 +673,7 @@ export default function VideoEditor() {
             {full && (
               <div className="mt-3 flex justify-center gap-3">
                 {playing === null ? (
-                  <Button onClick={() => setPlaying(0)}>▶ Preview</Button>
+                  <Button onClick={() => { soloRef.current = false; setPlaying(0); }}>▶ Preview</Button>
                 ) : (
                   <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
                 )}
@@ -681,7 +683,7 @@ export default function VideoEditor() {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {playing === null ? (
-                <Button onClick={() => setPlaying(0)} disabled={!scenes.length}>▶ Preview</Button>
+                <Button onClick={() => { soloRef.current = false; setPlaying(0); }} disabled={!scenes.length}>▶ Preview</Button>
               ) : (
                 <>
                   <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
@@ -1079,7 +1081,40 @@ export default function VideoEditor() {
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-audio`]} onClick={() => runAsset(s, "audio").catch(() => {})}>
                     {working[`${s.id}-audio`] ? "Recording…" : s.audio_path ? "Redo voiceover" : "Make voiceover"}
                   </Button>
-                  {s.audio_path && <Button size="sm" variant="ghost" onClick={() => setPlaying(i)}>▶ Play</Button>}
+                </div>
+                <div className="relative mt-3 overflow-hidden rounded-lg border border-border bg-muted" style={{ aspectRatio: ratio.css, maxWidth: ratio.w < ratio.h ? 260 : undefined, marginInline: ratio.w < ratio.h ? "auto" : undefined }}>
+                  {s.clip_path && urls[s.clip_path] ? (
+                    <video src={urls[s.clip_path]} muted playsInline loop className="h-full w-full object-cover"
+                      ref={(v) => { if (!v) return; if (playing === i && !paused) v.play().catch(() => {}); else v.pause(); }} />
+                  ) : s.image_path && urls[s.image_path] ? (
+                    <img src={urls[s.image_path]} alt={s.heading} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className={`grid h-full place-items-center text-sm text-muted-foreground ${working[`${s.id}-image`] ? "animate-pulse" : ""}`}>No image yet</div>
+                  )}
+                  {playing === i && captionStyle !== "none" && (
+                    <p className="pointer-events-none absolute inset-x-3 bottom-3 rounded bg-background/70 px-2 py-1 text-center text-sm font-semibold text-foreground">
+                      {typedLine(wrapByChars(s.narration, capChars), progress)}
+                    </p>
+                  )}
+                  {playing !== i && (
+                    <button type="button" aria-label={`Play scene ${i + 1}`} disabled={!s.image_path}
+                      onClick={() => { soloRef.current = true; setPaused(false); setPlaying(i); }}
+                      className="absolute inset-0 grid place-items-center bg-background/20 transition hover:bg-background/40 disabled:cursor-not-allowed">
+                      <span className="grid h-14 w-14 place-items-center rounded-full bg-primary text-xl text-primary-foreground shadow-lg">▶</span>
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 flex items-center gap-3">
+                  {playing === i ? (
+                    <>
+                      <Button size="sm" onClick={togglePause}>{paused ? "▶" : "❚❚"}</Button>
+                      <Button size="sm" variant="outline" onClick={() => { audioRef.current?.pause(); setPlaying(null); }}>■</Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" disabled={!s.image_path} onClick={() => { soloRef.current = true; setPaused(false); setPlaying(i); }}>▶ Play scene</Button>
+                  )}
+                  <Progress value={playing === i ? progress * 100 : 0} className="h-1.5 flex-1" />
+                  <span className="text-xs tabular-nums text-muted-foreground">{formatSeconds(playing === i ? progress * secOf(s) : 0)} / {formatSeconds(secOf(s))}</span>
                 </div>
               </li>
             ))}
