@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Menu, Plus, X } from "lucide-react";
+import { Coins, LogOut, Menu, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccount } from "@/lib/account";
 
 export function Logo() {
   return (
@@ -17,9 +18,12 @@ export function Logo() {
 
 export default function SiteHeader() {
   const { user, signOut } = useAuth();
+  const { data: acct } = useAccount();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const navBtn = "h-9 px-4 text-sm";
+  const low = acct ? acct.balance <= 5 : false;
+  const balancePill = "inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 text-sm font-semibold tabular-nums";
   const close = () => setOpen(false);
   const doSignOut = async () => { close(); await signOut(); navigate("/"); };
 
@@ -42,6 +46,12 @@ export default function SiteHeader() {
               <Button variant="ghost" asChild className={navBtn}><Link to="/library">My Library</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
+              <Button variant="outline" asChild className={`${balancePill} ${low ? "border-primary/60 text-primary" : ""}`}>
+                <Link to="/billing" aria-label="Credit balance">
+                  <Coins className="h-4 w-4 text-primary" />
+                  {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
+                </Link>
+              </Button>
               <Button variant="outline" className={navBtn} onClick={doSignOut}>Sign out</Button>
             </>
           ) : (
@@ -77,6 +87,10 @@ export default function SiteHeader() {
                 <Link to="/dashboard" onClick={close} className={mobileLink}>My videos</Link>
                 <Link to="/library" onClick={close} className={mobileLink}>My Library</Link>
                 <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>
+                <Link to="/billing" onClick={close} className={`${balancePill} mb-2 w-full justify-center ${low ? "border-primary/60 text-primary" : ""}`}>
+                  <Coins className="h-4 w-4 text-primary" />
+                  {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
+                </Link>
                 <Link to="/billing" onClick={close} className={mobileLink}>Billing</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
                   <LogOut className="h-4 w-4" />Sign out
