@@ -122,7 +122,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
                   {suggesting ? "Thinking…" : "Suggest an idea"}
                 </Button>
               </div>
-              <Textarea id="topic" rows={4} required minLength={3} placeholder="e.g. Why octopuses might be the smartest animals on Earth"
+              <Textarea id="topic" rows={4} required minLength={3} placeholder="e.g. The real reason the Titanic sank in under three hours"
                 value={topic} onChange={(e) => setTopic(e.target.value)} />
               <label className="flex items-start gap-3 rounded-lg border border-border p-3">
                 <Switch checked={useFacts} onCheckedChange={setUseFacts} className="mt-0.5" />
