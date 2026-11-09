@@ -633,6 +633,13 @@ export default function VideoEditor() {
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
+              {playing === null && currentImg && (
+                <button type="button" aria-label="Play preview"
+                  onClick={() => { soloRef.current = false; setPaused(false); setPlaying(0); }}
+                  className="absolute inset-0 grid place-items-center bg-background/20 transition hover:bg-background/40">
+                  <span className="grid h-16 w-16 place-items-center rounded-full bg-primary text-2xl text-primary-foreground shadow-lg">▶</span>
+                </button>
+              )}
               {current && (
                 <span className="absolute right-3 top-3 rounded-md bg-background/80 px-2 py-1 text-xs font-semibold tabular-nums text-foreground">
                   {playing !== null ? `${formatSeconds(elapsedSecs)} / ${formatSeconds(totalSecs)}` : formatSeconds(totalSecs)}
