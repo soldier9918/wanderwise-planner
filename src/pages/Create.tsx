@@ -218,7 +218,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
             <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
           </p>
-          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Top up</Link> to unlock every narrator, long videos and 1080p.</p>}
+          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator, long videos and 1080p.</p>}
           <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
       </main>

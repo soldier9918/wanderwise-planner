@@ -11,6 +11,8 @@ export type LedgerRow = { amount: number; reason: string; created_at: string };
 
 /** Free accounts (never paid) get the "Made with Vydora" export badge. */
 export const needsWatermark = (ledger: LedgerRow[]) => !ledger.some((l) => PAID_REASONS.includes(l.reason) && l.amount > 0);
+/** Pro features (all narrators, long videos, 1080p) need a subscription, not just a top-up. */
+export const hasSubscription = (ledger: LedgerRow[]) => ledger.some((l) => l.reason === "subscription" && l.amount > 0);
 export const balanceOf = (ledger: LedgerRow[]) => ledger.reduce((n, l) => n + l.amount, 0);
 export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
   ledger.filter((l) => l.amount < 0 && now - new Date(l.created_at).getTime() <= 30 * 864e5).reduce((n, l) => n - l.amount, 0);
@@ -31,7 +33,7 @@ export function useAccount() {
         supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
       ]);
       const rows = (ledger ?? []) as LedgerRow[];
-      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, pro: !!admin || !needsWatermark(rows), watermark: !admin && needsWatermark(rows) };
+      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, pro: !!admin || hasSubscription(rows), watermark: !admin && needsWatermark(rows) };
     },
   });
 }
