@@ -17,4 +17,4 @@
 - "Remix for Shorts" copies a video and its scene rows into a new 9:16 video that reuses the same media paths (no regeneration). Why: original stays intact and remixing costs no credits; never delete shared media when a video row is deleted.
 - My Library (/library) stores user files privately in video-assets under <user_id>/library/, listed via storage (no table). Why: reuses owner-scoped storage policies.
 - Admin access uses the `user_roles` table + `has_role()`; admin data comes only from SECURITY DEFINER `admin_*` RPCs that check the role. Admins skip the export watermark. Why: never trust client-side checks for privileges.
-- Free vs Pro: free tier locks premium narrators, >6 scenes and >2 min; enforced in generate-script; Pro = paid ledger row or admin. Why: drives upgrades, server is the source of truth.
+- Free vs Pro: free tier locks premium narrators, >6 scenes, >2 min and 1080p; enforced in generate-script; Pro = paid ledger row or admin. Why: drives upgrades, server is the source of truth.

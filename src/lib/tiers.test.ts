@@ -9,3 +9,10 @@ describe("free vs pro tiers", () => {
   it("pro users can make 60 minutes", () => expect(lengthAllowedForTier(3600, true)).toBe(true));
   it("free users capped at 6 scenes", () => expect(scenesAllowedForTier(8, false)).toBe(false));
 });
+
+import { qualityAllowedForTier } from "./tiers";
+describe("1080p tier lock", () => {
+  it("free users cannot pick 1080p", () => expect(qualityAllowedForTier("1080p", false)).toBe(false));
+  it("free users can pick 720p", () => expect(qualityAllowedForTier("720p", false)).toBe(true));
+  it("pro users can pick 1080p", () => expect(qualityAllowedForTier("1080p", true)).toBe(true));
+});

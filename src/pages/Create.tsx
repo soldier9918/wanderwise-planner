@@ -20,7 +20,7 @@ import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
 import { estimateCredits } from "@/lib/credits";
 import { useAccount } from "@/lib/account";
-import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, FREE_MAX_SCENES } from "@/lib/tiers";
+import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, qualityAllowedForTier, FREE_MAX_SCENES } from "@/lib/tiers";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
 export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
@@ -37,7 +37,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
   const [length, setLength] = useState("60");
   const { data: account } = useAccount();
   const pro = account?.pro ?? false;
-  const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForTier(Number(scenes), pro);
+  const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForTier(Number(scenes), pro) && qualityAllowedForTier(quality, pro);
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [useFacts, setUseFacts] = useState(false);
   const [url, setUrl] = useState("");
@@ -193,7 +193,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Label>Quality</Label>
               <Select value={quality} onValueChange={setQuality}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{QUALITIES.map((q) => <SelectItem key={q.value} value={q.value}>{q.label}</SelectItem>)}</SelectContent>
+                <SelectContent>{QUALITIES.map((q) => { const ok = qualityAllowedForTier(q.value, pro); return <SelectItem key={q.value} value={q.value} disabled={!ok}>{ok ? q.label : `🔒 ${q.short} · PRO`}</SelectItem>; })}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
@@ -218,7 +218,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
             <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
           </p>
-          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes and 2-minute videos. <Link to="/billing" className="text-primary underline">Top up</Link> to unlock every narrator and long videos.</p>}
+          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Top up</Link> to unlock every narrator, long videos and 1080p.</p>}
           <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
       </main>

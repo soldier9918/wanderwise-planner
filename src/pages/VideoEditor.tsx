@@ -393,7 +393,7 @@ export default function VideoEditor() {
         ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
         { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
         data.video?.aspect_ratio ?? "16:9",
-        data.video?.quality ?? "720p",
+        account?.pro ? (data.video?.quality ?? "720p") : "720p",
         {
           mood: data.video?.music_mood ?? "none",
           enabled: data.video?.music_enabled ?? true,
@@ -721,7 +721,7 @@ export default function VideoEditor() {
                 Format
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
-              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES} onChange={(v) => saveLook({ quality: v })} />
+              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.pro || q.value !== "1080p" || video.quality === "1080p")} onChange={(v) => saveLook({ quality: v })} />
               <LookSelect
                 label="Scenes"
                 value={String(scenes.length)}

@@ -1,4 +1,4 @@
-import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier } from "../_shared/tiers.ts";
+import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, qualityAllowedForTier } from "../_shared/tiers.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
     if (!scenesAllowedForTier(Number(sceneCount) || 6, pro)) return json({ error: "Free plan videos can have up to 6 scenes. Top up to unlock more." }, 403);
     if (targetSeconds && !lengthAllowedForTier(Number(targetSeconds), pro)) return json({ error: "Free plan videos can be up to 2 minutes. Top up to unlock longer videos." }, 403);
     const tone = typeof toneIn === "string" && TONES[toneIn] ? toneIn : "engaging";
+    if (!qualityAllowedForTier(String(quality), pro)) return json({ error: "1080p Full HD is on paid plans. Upgrade to unlock it." }, 403);
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
