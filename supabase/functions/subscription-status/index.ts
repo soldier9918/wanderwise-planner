@@ -22,7 +22,9 @@ Deno.serve(async (req) => {
       const plan = PLANS[typeof price === "string" ? price : price?.id ?? ""];
       if (plan && current && plan.tier !== current.tier) pending = { tier: plan.tier, effective_at: new Date(next.start_date * 1000).toISOString() };
     }
-    return json({ current_tier: current?.tier ?? null, cancel_at_period_end: sub.cancel_at_period_end, pending });
+    const endTs = (sub as any).cancel_at ?? (sub.cancel_at_period_end ? (item?.current_period_end ?? (sub as any).current_period_end) : null);
+    const cancel_at = endTs ? new Date(endTs * 1000).toISOString() : null;
+    return json({ current_tier: current?.tier ?? null, cancel_at_period_end: sub.cancel_at_period_end, cancel_at, pending: cancel_at ? null : pending });
   } catch (e) {
     console.error("subscription-status", e);
     return json({ error: "Couldn't load subscription details." }, 500);

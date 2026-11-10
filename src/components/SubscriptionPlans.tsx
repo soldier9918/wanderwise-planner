@@ -40,10 +40,11 @@ export default function SubscriptionPlans() {
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("subscription-status", { body: {} });
       if (error) throw error;
-      return data as { pending: { tier: string; effective_at: string } | null };
+      return data as { cancel_at: string | null; pending: { tier: string; effective_at: string } | null };
     },
   });
   const pending = active ? status?.pending ?? null : null;
+  const cancelAt = active ? status?.cancel_at ?? null : null;
   const pendingName = pending ? (pending.tier === "pro" ? "Pro" : "Creator") : null;
   const fmtDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
@@ -89,6 +90,10 @@ export default function SubscriptionPlans() {
       <p className="mt-2 text-sm text-muted-foreground">Current plan: <span className="font-semibold text-foreground">{current}</span>
         {active?.current_period_end && <> · {active.cancel_at_period_end ? "ends" : "renews"} {fmtDate(active.current_period_end)}</>}
         {active?.status === "past_due" && <span className="text-primary"> · payment overdue</span>}</p>
+      {cancelAt && <div className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium">
+        Cancellation scheduled — {fmtDate(cancelAt)}.
+        <span className="block font-normal text-muted-foreground">You keep {current} features and all your credits until then. Plan changes are paused while cancellation is pending.</span>
+        <Button size="sm" className="mt-3" disabled={!!busy} onClick={() => go("customer-portal", "reverse")}>{busy === "reverse" && <Loader2 className="h-4 w-4 animate-spin" />}Reverse cancellation</Button></div>}
       {pending && <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium">
         Scheduled downgrade: {current} → {pendingName} on {fmtDate(pending.effective_at)}.
         <span className="block font-normal text-muted-foreground">You keep {current} features and all your credits until then.</span></p>}
@@ -106,6 +111,7 @@ export default function SubscriptionPlans() {
               <Button className="mt-auto w-full" variant="outline" disabled>{active ? "Free tier" : "Current plan"}</Button>
             ) : (
               current === p.name ? <Button className="mt-auto w-full" variant="outline" disabled>Current plan</Button>
+              : cancelAt ? <Button className="mt-auto w-full" variant="outline" disabled>Cancellation scheduled</Button>
               : pendingName === p.name ? <Button className="mt-auto w-full" variant="outline" disabled>Downgrade scheduled</Button>
               : <Button className="mt-auto w-full" variant={p.featured ? "default" : "outline"} disabled={!!busy}
                   onClick={() => active ? go("customer-portal", "portal") : go("create-checkout", p.tier!, { plan: p.tier })}>
