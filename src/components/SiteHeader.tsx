@@ -82,11 +82,11 @@ export default function SiteHeader() {
           variant="ghost"
           size="icon"
           className="min-[1150px]:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label="Menu"
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
         >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          <Menu className="h-6 w-6" />
         </Button>
       </div>
       {open && (
@@ -111,12 +111,17 @@ export default function SiteHeader() {
                 <Link to="/dashboard" onClick={close} className={`${mobileLink} ${on("/dashboard")}`}>My videos</Link>
                 <Link to="/library" onClick={close} className={`${mobileLink} ${on("/library")}`}>My Library</Link>
                 <Link to="/pricing" onClick={close} className={`${mobileLink} ${on("/pricing")}`}>Pricing</Link>
-                <Link to="/billing" onClick={close} className={`${balancePill} mb-2 w-full justify-center ${low ? "border-primary/60 text-primary" : ""}`}>
-                  <Coins className="h-4 w-4 text-primary" />
-                  {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
-                </Link>
-                <Link to="/billing#top-ups" onClick={(e) => { close(); onTopUpClick(e); }} className="mb-2 flex items-center justify-center gap-2 rounded-md border border-primary/60 px-3 py-2 font-semibold text-primary"><Plus className="h-4 w-4" />Top up credits</Link>
                 <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Plans &amp; Billing</Link>
+                <div className="mb-2 flex items-center gap-2">
+                  <Link to="/billing" onClick={close} className={`${balancePill} min-w-0 flex-1 justify-center ${low ? "border-primary/60 text-primary" : ""}`}>
+                    <Coins className="h-4 w-4 text-primary" />
+                    {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
+                  </Link>
+                  <button onClick={close} aria-label="Close menu" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <Link to="/billing#top-ups" onClick={(e) => { close(); onTopUpClick(e); }} className="mb-2 flex items-center justify-center gap-2 rounded-md border border-primary/60 px-3 py-2 font-semibold text-primary"><Plus className="h-4 w-4" />Top up credits</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
                   <LogOut className="h-4 w-4" />Sign out
                 </button>
