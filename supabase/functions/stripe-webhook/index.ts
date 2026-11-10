@@ -12,28 +12,37 @@ async function userForCustomer(customerId: string, meta?: Stripe.Metadata | null
 }
 
 async function syncSubscription(sub: Stripe.Subscription) {
-  const priceId = sub.items.data[0]?.price?.id;
+  const item = sub.items.data[0] as any;
+  const priceId = item?.price?.id ?? item?.plan?.id;
   const plan = priceId ? PLANS[priceId] : undefined;
   if (!plan) return; // not a Vydora price (e.g. another app on the same account)
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
   const userId = await userForCustomer(customerId, sub.metadata);
   if (!userId) return;
+  // Events can arrive out of order: never let a stale "incomplete" overwrite a live plan for the same subscription.
+  const { data: cur } = await db.from("user_subscriptions").select("status, stripe_subscription_id").eq("user_id", userId).maybeSingle();
+  if (cur?.stripe_subscription_id === sub.id && ["active", "trialing"].includes(cur.status) && ["incomplete"].includes(sub.status)) return;
+  const periodEnd = item?.current_period_end ?? (sub as any).current_period_end;
   const { error } = await db.from("user_subscriptions").upsert({
     user_id: userId, stripe_customer_id: customerId, stripe_subscription_id: sub.id,
     plan_tier: plan.tier, price_id: priceId, status: sub.status,
-    current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+    current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
     cancel_at_period_end: sub.cancel_at_period_end, updated_at: new Date().toISOString(),
   }, { onConflict: "user_id" });
   if (error) throw error;
 }
 
 async function grantInvoiceCredits(inv: Stripe.Invoice) {
-  if (inv.status !== "paid" || !inv.subscription) return;
-  const line = inv.lines.data.find((l) => l.price?.id && PLANS[l.price.id]);
-  if (!line?.price) return;
-  const plan = PLANS[line.price.id];
+  const anyInv = inv as any;
+  const subId = anyInv.subscription ?? anyInv.parent?.subscription_details?.subscription;
+  if (inv.status !== "paid" || !subId) return;
+  // Newer Stripe API versions put the price under pricing.price_details.price.
+  const linePrice = (l: any): string | undefined => l.pricing?.price_details?.price ?? l.price?.id ?? l.plan?.id;
+  const priceId = inv.lines.data.map(linePrice).find((id) => id && PLANS[id]);
+  if (!priceId) return;
+  const plan = PLANS[priceId];
   const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer!.id;
-  const userId = await userForCustomer(customerId, inv.subscription_details?.metadata);
+  const userId = await userForCustomer(customerId, anyInv.subscription_details?.metadata ?? anyInv.parent?.subscription_details?.metadata ?? inv.lines.data[0]?.metadata);
   if (!userId) throw new Error(`No Vydora user for customer ${customerId}`);
   // Unique index on stripe_invoice_id means each invoice credits at most once.
   const { error } = await db.from("credit_ledger").insert({ user_id: userId, amount: plan.credits, reason: "subscription", stripe_invoice_id: inv.id });
@@ -74,6 +83,7 @@ Deno.serve(async (req) => {
         const s = event.data.object as Stripe.Checkout.Session;
         if (s.metadata?.app === "vydora" && s.subscription) {
           await syncSubscription(await stripe.subscriptions.retrieve(String(s.subscription)));
+          if (s.invoice) await grantInvoiceCredits(await stripe.invoices.retrieve(String(s.invoice))); // safety net; deduped by invoice id
         } else if (s.metadata?.app === "vydora" && s.mode === "payment" && s.metadata?.kind === "topup") {
           await grantTopUp(s);
         }

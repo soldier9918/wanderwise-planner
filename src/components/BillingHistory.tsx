@@ -1,9 +1,11 @@
-import { Download, Eye, ReceiptText, Wallet, Activity } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Download, Eye, ReceiptText, Wallet, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { REASON_LABEL, used30d, useAccount } from "@/lib/account";
 
 export default function BillingHistory({ part = "history" }: { part?: "summary" | "history" }) {
   const { data: acct } = useAccount();
+  const [open, setOpen] = useState(false);
   const recent = (acct?.ledger ?? []).filter((l) => Date.now() - new Date(l.created_at).getTime() <= 30 * 864e5);
   return (
     <section id={part === "summary" ? "current-billing" : "billing-history"} className="mt-10 scroll-mt-24 border-t border-border pt-8">
@@ -21,8 +23,11 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
           <dd className="mt-2 text-xs text-muted-foreground">Credits spent in the last 30 days</dd>
         </div>
       </dl>
-      <h3 className="mt-6 text-lg font-bold">Usage · Last 30 days</h3>
-      <div className="mt-3 overflow-x-auto rounded-lg border border-border">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="mt-6 flex w-full items-center justify-between text-left text-lg font-bold">
+        <span>Usage · Last 30 days <span className="text-sm font-normal text-muted-foreground">({recent.length})</span></span>
+        <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="mt-3 overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-card text-muted-foreground">
             <tr><th scope="col" className="px-4 py-3 font-semibold">Activity / Date</th><th scope="col" className="px-4 py-3 text-right font-semibold">Credits used</th></tr>
@@ -31,7 +36,7 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
             <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td></tr>
           )) : <tr><td colSpan={2} className="px-4 py-6 text-center text-muted-foreground">No credit activity in the last 30 days.</td></tr>}</tbody>
         </table>
-      </div>
+      </div>}
       </> : <>
       <h2 id="billing-history-title" className="mt-8 flex items-center gap-2 text-2xl font-bold">
         <ReceiptText className="h-6 w-6 text-primary" />Billing history
