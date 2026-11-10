@@ -149,3 +149,7 @@ export const searchStock = (query: string, orientation: string) =>
   invoke<{ results: StockClip[] }>("stock-broll", { action: "search", query, orientation });
 export const applyStock = (sceneId: string, clipId: number) =>
   invoke<{ path: string; credit: string }>("stock-broll", { action: "use", sceneId, clipId });
+
+export type SeriesPlan = { title: string; logline: string; visualMotif: string; episodes: { title: string; hook: string; synopsis: string }[] };
+export const generateSeries = (input: { topic: string; parts: 3 | 5; tone: string; style: string }) =>
+  invoke<{ plan: SeriesPlan }>("generate-series", input);

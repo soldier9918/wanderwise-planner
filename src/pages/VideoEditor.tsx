@@ -13,6 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, animateScene, generateSeo, type Scene, type Seo } from "@/lib/videoApi";
 import { Input } from "@/components/ui/input";
 import { exportVideo, canRecordMp4 } from "@/lib/exportVideo";
+import { loadCards, isActive, type BrandCard } from "@/lib/brandCards";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
 import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds, clipRate } from "@/lib/durations";
 import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
@@ -389,6 +390,10 @@ export default function VideoEditor() {
     setPlaying(null);
     setExportPct(0);
     try {
+      const cards = loadCards(data.video?.user_id);
+      const cardPaths = [cards.intro, cards.outro].filter((c) => isActive(c) && c.mode === "clip" && c.clipPath).map((c) => c.clipPath!);
+      const cardUrls = cardPaths.length ? await signedUrls(cardPaths) : {};
+      const toCard = (c: BrandCard) => isActive(c) ? { title: c.title, subtitle: c.subtitle, seconds: c.seconds, clipUrl: c.mode === "clip" && c.clipPath ? cardUrls[c.clipPath] : null } : null;
       const blob = await exportVideo(
         data.scenes.map((s) => ({ imageUrl: data.urls[s.image_path!], clipUrl: s.clip_path ? data.urls[s.clip_path] : null, audioUrl: s.audio_path ? data.urls[s.audio_path] : null, caption: s.narration })),
         setExportPct,
@@ -413,6 +418,8 @@ export default function VideoEditor() {
           logoOpacity: data.video?.logo_opacity,
           format: exportFormat,
           watermark: account?.watermark ?? true,
+          intro: toCard(cards.intro),
+          outro: toCard(cards.outro),
         },
       );
       const ext = blob.type.startsWith("video/mp4") ? "mp4" : "webm";

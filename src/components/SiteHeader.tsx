@@ -42,6 +42,7 @@ export default function SiteHeader() {
                 </Link>
               </Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/from-url">Article to video</Link></Button>
+              <Button variant="ghost" asChild className={navBtn}><Link to="/series">Series</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/dashboard">My videos</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/library">My Library</Link></Button>
               <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
@@ -84,6 +85,7 @@ export default function SiteHeader() {
                   <Plus className="h-4 w-4" />Create video
                 </Link>
                 <Link to="/from-url" onClick={close} className={mobileLink}>Article to video</Link>
+                <Link to="/series" onClick={close} className={mobileLink}>Series generator</Link>
                 <Link to="/dashboard" onClick={close} className={mobileLink}>My videos</Link>
                 <Link to="/library" onClick={close} className={mobileLink}>My Library</Link>
                 <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>

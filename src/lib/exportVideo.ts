@@ -14,6 +14,9 @@ export type ExportMusic = { mood: string; volume: number; ducking: boolean; enab
 
 export type ExportSfx = { enabled: boolean; type: string; volume: number };
 
+/** Intro/outro bumper: a branded title card, or a saved clip. */
+export type ExportCard = { title: string; subtitle: string; clipUrl?: string | null; seconds: number };
+
 export type ExportScene = { imageUrl: string; clipUrl?: string | null; audioUrl: string | null; caption: string };
 
 type Pic = HTMLImageElement | HTMLVideoElement;
@@ -58,6 +61,32 @@ function loadImage(url: string) {
   });
 }
 
+/** Branded title card (or the saved clip) with a gentle fade in/out. */
+function drawCard(ctx: CanvasRenderingContext2D, card: { title: string; subtitle: string; clip: HTMLVideoElement | null; secs: number }, t: number, W: number, H: number) {
+  ctx.fillStyle = "#0b0a0c";
+  ctx.fillRect(0, 0, W, H);
+  if (card.clip) {
+    const d = dims(card.clip);
+    const r = Math.min(W / d.w, H / d.h);
+    ctx.drawImage(card.clip, (W - d.w * r) / 2, (H - d.h * r) / 2, d.w * r, d.h * r);
+  } else {
+    const fade = Math.min(1, t / 0.5, Math.max(0, (card.secs - t) / 0.5));
+    const base = Math.min(W, H);
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "hsl(348,84%,60%)";
+    ctx.fillRect(W / 2 - base * 0.06, H / 2 + base * 0.02, base * 0.12, Math.max(3, base * 0.008));
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#f5f1ea";
+    ctx.font = `800 ${Math.round(base * 0.09)}px "Bricolage Grotesque", sans-serif`;
+    ctx.fillText(card.title, W / 2, H / 2 - base * 0.02, W * 0.9);
+    ctx.fillStyle = "#c9f04a";
+    ctx.font = `600 ${Math.round(base * 0.045)}px Manrope, sans-serif`;
+    ctx.fillText(card.subtitle, W / 2, H / 2 + base * 0.1, W * 0.9);
+    ctx.restore();
+  }
+}
+
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
   const words = text.split(" ");
   const lines: string[] = [];
@@ -90,7 +119,7 @@ function drawPic(ctx: CanvasRenderingContext2D, img: Pic, m: Motion, l: Layer | 
 }
 
 /** Renders scenes (image + voiceover + captions) into a downloadable WebM, in real time. */
-export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number; format?: "mp4" | "webm"; watermark?: boolean } = {}): Promise<Blob> {
+export async function exportVideo(scenes: ExportScene[], onProgress: (p: number) => void, captionStyle: CaptionStyle = "typewriter", look: { font?: string; color?: string; size?: string } = {}, aspect = "16:9", quality = "720p", music?: ExportMusic, sfx?: ExportSfx, motion: { enabled: boolean; type: string } = { enabled: true, type: "zoom-in" }, transition: { enabled: boolean; type: string } = { enabled: false, type: "crossfade" }, extra: { speed?: number; logoUrl?: string | null; logoPosition?: string; logoOpacity?: number; format?: "mp4" | "webm"; watermark?: boolean; intro?: ExportCard | null; outro?: ExportCard | null } = {}): Promise<Blob> {
   const speed = extra.speed && extra.speed > 0 ? extra.speed : 1;
   const logo = extra.logoUrl ? await loadImage(extra.logoUrl).catch(() => null) : null;
   const q = qualityOf(quality);
@@ -119,6 +148,15 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
     }),
   );
 
+  const prepCard = async (c?: ExportCard | null) => {
+    if (!c) return null;
+    const clip = c.clipUrl ? await loadClip(c.clipUrl).catch(() => null) : null;
+    const secs = clip && isFinite(clip.duration) && clip.duration > 0 ? Math.min(clip.duration, 30) : c.seconds;
+    return { ...c, clip, secs };
+  };
+  const introCard = await prepCard(extra.intro);
+  const outroCard = await prepCard(extra.outro);
+
   const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
   const mime = pickMime(extra.format ?? "mp4");
   const isMp4 = mime.startsWith("video/mp4");
@@ -128,7 +166,26 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
   const done = new Promise<Blob>((r) => (recorder.onstop = () => r(new Blob(chunks, { type: isMp4 ? "video/mp4" : "video/webm" }))));
 
   const durations = loaded.map((l) => (l.buffer ? l.buffer.duration / speed + 0.4 : 4));
-  const total = durations.reduce((a, b) => a + b, 0);
+  const cardSecs = (introCard?.secs ?? 0) + (outroCard?.secs ?? 0);
+  const total = durations.reduce((a, b) => a + b, 0) + cardSecs;
+  const playCard = async (card: NonNullable<typeof introCard>) => {
+    if (card.clip) {
+      card.clip.loop = false; card.clip.muted = false; card.clip.currentTime = 0;
+      try { audioCtx.createMediaElementSource(card.clip).connect(dest); } catch { /* already wired */ }
+      await card.clip.play().catch(() => {});
+    }
+    const start = performance.now();
+    await new Promise<void>((resolve) => {
+      const frame = () => {
+        const t = (performance.now() - start) / 1000;
+        drawCard(ctx, card, t, W, H);
+        onProgress(Math.min((elapsedBefore + t) / total, 1));
+        if (t < card.secs) setTimeout(frame, 1000 / 30); else { card.clip?.pause(); resolve(); }
+      };
+      frame();
+    });
+    elapsedBefore += card.secs;
+  };
   let elapsedBefore = 0;
 
   let player: MusicPlayer | null = null;
@@ -145,6 +202,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
     duckSchedule(durations, loaded.map((l) => (l.buffer ? l.buffer.duration / speed : null)), music!.volume, music!.ducking)
       .forEach((p) => g.setTargetAtTime(p.level, t0 + p.t, 0.08));
   }
+  if (introCard) await playCard(introCard);
   for (let i = 0; i < loaded.length; i++) {
     const { img, buffer, caption } = loaded[i];
     const dur = durations[i];
@@ -224,6 +282,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
     });
     elapsedBefore += dur;
   }
+  if (outroCard) await playCard(outroCard);
   player?.stop();
   recorder.stop();
   const raw = await done;

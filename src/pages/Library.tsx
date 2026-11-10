@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import BrandCardsSettings from "@/components/BrandCardsSettings";
 
 const BUCKET = "video-assets";
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -77,6 +78,7 @@ export default function Library() {
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">Images, video and audio, up to 50 MB each.</p>
+        <BrandCardsSettings clips={items.filter((i) => i.type.startsWith("video/")).map((i) => ({ name: i.name, path: i.path }))} />
 
         {loading ? (
           <div className="mt-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>

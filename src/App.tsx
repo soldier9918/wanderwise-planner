@@ -14,6 +14,7 @@ import Legal from "./pages/Legal";
 import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import Library from "./pages/Library";
+import Series from "./pages/Series";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { ReferralCatcher } from "@/lib/account";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/my-videos" element={<ProtectedRoute><MyVideos /></ProtectedRoute>} />
             <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
             <Route path="/from-url" element={<ProtectedRoute><Create key="url" fromUrl /></ProtectedRoute>} />
+            <Route path="/series" element={<ProtectedRoute><Series /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
             <Route path="/admin-kb20" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
