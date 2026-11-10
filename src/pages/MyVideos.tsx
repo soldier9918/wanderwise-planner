@@ -10,6 +10,19 @@ import { generateThumbnail, signedUrls } from "@/lib/videoApi";
 import { estimateCredits } from "@/lib/credits";
 import { duplicateVideo } from "@/lib/account";
 
+type Kind = "normal" | "article" | "series";
+const GROUPS: { kind: Kind; label: string }[] = [
+  { kind: "normal", label: "Videos" },
+  { kind: "article", label: "Article to video" },
+  { kind: "series", label: "Series" },
+];
+// Series episodes are titled "<Series> [Part n/N]: ..." by the Series page; articles keep their link.
+function videoKind(v: { title: string; source_url?: string | null }): Kind {
+  if (/\[Part \d+\/\d+\]/.test(v.title)) return "series";
+  if (v.source_url) return "article";
+  return "normal";
+}
+
 export default function MyVideos() {
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -40,7 +53,7 @@ export default function MyVideos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("videos")
-        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at, sources, seo, quality")
+        .select("id, title, topic, style, aspect_ratio, thumbnail_path, created_at, sources, seo, quality, source_url")
         .order("created_at", { ascending: false });
       if (error) throw error;
       type VideoRow = (typeof data)[number] & { thumb: string | null; credits: number };
@@ -102,7 +115,14 @@ export default function MyVideos() {
               <Button className="mt-4" asChild><Link to="/create">Create your first video</Link></Button>
             </div>
           )}
-          {videos?.map((v) => (
+          {videos && videos.length > 0 && GROUPS.map((g) => {
+            const list = videos.filter((v) => videoKind(v) === g.kind);
+            if (!list.length) return null;
+            return (
+              <section key={g.kind} className="mt-4 first:mt-0">
+                <h2 className="mb-3 font-display text-xl font-bold">{g.label} <span className="text-sm font-normal text-muted-foreground">({list.length})</span></h2>
+                <div className="grid gap-3">
+          {list.map((v) => (
             <Link key={v.id} to={`/video/${v.id}`} className="group flex gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary">
               {v.thumb ? (
                 <img src={v.thumb} alt="" className="h-20 w-32 shrink-0 rounded-lg object-cover" />
@@ -131,6 +151,10 @@ export default function MyVideos() {
               </div>
             </Link>
           ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </main>
     </div>
