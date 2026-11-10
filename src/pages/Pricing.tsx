@@ -21,7 +21,7 @@ const MENU = [
 ];
 
 const PLANS = [
-  { name: "Free", price: "£0", credits: "30 credits once", desc: "Enough for one short video to try things out." },
+  { name: "Free", price: "£0", credits: "30 credits / month", desc: "Enough for a short video each month to try things out." },
   { name: "Creator", price: "£19/mo", credits: "600 credits / month", desc: "About 15–18 standard videos, or 3 fully animated.", to: "/billing#subscriptions" },
   { name: "Pro", price: "£49/mo", credits: "2,000 credits / month", desc: "About 60 standard videos, or 10–12 fully animated.", to: "/billing#subscriptions" },
 ];

@@ -507,6 +507,7 @@ export type Database = {
           voice: string
         }[]
       }
+      claim_monthly_free_credits: { Args: never; Returns: number }
       claim_referral: { Args: { _code: string }; Returns: string }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {

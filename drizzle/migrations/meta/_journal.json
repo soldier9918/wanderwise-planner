@@ -176,6 +176,13 @@
       "when": 1794320000000,
       "tag": "0024_reconcile_creator_invoice",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794342675746,
+      "tag": "0025_monthly_free_credits",
+      "breakpoints": true
     }
   ]
 }

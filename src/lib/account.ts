@@ -19,7 +19,7 @@ export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
   ledger.filter((l) => l.amount < 0 && now - new Date(l.created_at).getTime() <= 30 * 864e5).reduce((n, l) => n - l.amount, 0);
 
 export const REASON_LABEL: Record<string, string> = {
-  starter: "Starter credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
+  starter: "Starter credits", monthly_free: "Monthly free credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
   topup: "Credit top-up", coupon: "Coupon code", thumbnail: "Thumbnail", seo: "SEO title & tags", scene_voice: "Scene voiceover", scene_image: "Scene image", script: "Video script", animate: "Scene animation",
 };
 
@@ -32,6 +32,8 @@ export function useAccount() {
     staleTime: 0,
     refetchOnWindowFocus: "always",
     queryFn: async () => {
+      // Free accounts get +30 credits each month; the server decides eligibility.
+      await supabase.rpc("claim_monthly_free_credits");
       const [{ data: acct }, { data: ledger }, { data: admin }, { data: sub }] = await Promise.all([
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
         supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id").eq("user_id", user!.id).order("created_at", { ascending: false }),

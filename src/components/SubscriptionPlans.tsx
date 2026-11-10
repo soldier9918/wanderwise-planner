@@ -13,7 +13,7 @@ const PLANS = [
   {
     name: "Free",
     price: "£0",
-    credits: `${STARTER_CREDITS} starter credits once`,
+    credits: `${STARTER_CREDITS} credits / month`,
     perks: [
       `${FREE_VOICES.length} narrators`,
       `Videos up to ${FREE_MINUTES} min · ${FREE_MAX_SCENES} scenes`,
