@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Coins, LogOut, Menu, Plus, X } from "lucide-react";
+import { Coins, Gift, LogOut, Menu, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "@/lib/account";
 import { scrollToSection } from "@/components/ScrollToTop";
+import ProfileMenu, { planLabel } from "@/components/ProfileMenu";
 
 export function Logo() {
   return (
@@ -66,7 +67,7 @@ export default function SiteHeader() {
                   <Plus className="h-4 w-4" />
                 </Link>
               </div>
-              <Button variant="outline" className={navBtn} onClick={doSignOut}>Sign out</Button>
+              <ProfileMenu onSignOut={doSignOut} />
             </>
           ) : (
             <>
@@ -94,6 +95,14 @@ export default function SiteHeader() {
           <nav className="absolute inset-x-0 top-16 z-40 border-b border-border bg-background p-3 shadow-lg min-[1150px]:hidden">
             {user ? (
               <>
+                <div className="mb-3 flex items-center gap-3 rounded-md border border-border/70 bg-card p-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-primary/60 font-display text-sm font-bold uppercase text-primary">{user.email?.charAt(0)}</span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{user.email}</p>
+                    <p className="text-xs text-primary">{planLabel(acct)} plan</p>
+                  </div>
+                  <Link to="/billing#invite" onClick={close} className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary"><Gift className="h-4 w-4" />Invite</Link>
+                </div>
                 <Link to="/create" onClick={close} className="mb-2 flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 font-semibold text-primary-foreground">
                   <Plus className="h-4 w-4" />Create video
                 </Link>
