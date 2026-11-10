@@ -1,3 +1,4 @@
+import { charge, refund, COSTS } from "../_shared/credits.ts";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient, gatewayError } from "../_shared/common.ts";
 
 const IMAGE_MODEL = "openai/gpt-image-2.5-sunburst";
@@ -30,6 +31,12 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
+    if ((mode === "text" || custom) && !video.thumbnail_path) return json({ error: "Make a thumbnail first." }, 400);
+    const COST = COSTS.thumbnail;
+    const denied = await charge(auth.user.id, COST, "thumbnail");
+    if (denied) return denied;
+    let charged = COST;
+    try {
 
     const size = ({ "16:9": "1536x1024", "21:9": "1536x1024", "9:16": "1024x1536", "4:5": "1024x1536", "1:1": "1024x1024" } as Record<string, string>)[video.aspect_ratio ?? "16:9"] ?? "1536x1024";
     const prompt =
@@ -81,7 +88,11 @@ Deno.serve(async (req) => {
     const { error: updErr } = await auth.client.from("videos").update({ thumbnail_path: path }).eq("id", video.id);
     if (updErr) throw updErr;
 
+    charged = 0;
     return json({ path });
+    } finally {
+      if (charged) await refund(auth.user.id, charged, "refund_thumbnail");
+    }
   } catch (e) {
     console.error("generate-thumbnail error", e);
     return json({ error: "Something went wrong creating the thumbnail." }, 500);

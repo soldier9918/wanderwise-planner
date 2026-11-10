@@ -436,6 +436,14 @@ export type Database = {
         Returns: boolean
       }
       new_referral_code: { Args: never; Returns: string }
+      refund_credits: {
+        Args: { _amount: number; _reason: string; _user: string }
+        Returns: undefined
+      }
+      spend_credits: {
+        Args: { _amount: number; _reason: string; _user: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "user"

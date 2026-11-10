@@ -1,3 +1,4 @@
+import { charge, refund, COSTS } from "../_shared/credits.ts";
 import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, qualityAllowedForTier } from "../_shared/tiers.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
@@ -57,6 +58,11 @@ Deno.serve(async (req) => {
     let topic = typeof topicIn === "string" ? topicIn : "";
     if (!srcUrl && topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(50, Math.max(3, Number(sceneCount) || 6));
+    const cost = COSTS.script + (useFacts || srcUrl ? COSTS.facts : 0) + (qual === "1080p" ? COSTS.fullHd : 0);
+    const denied = await charge(auth.user.id, cost, "video_script");
+    if (denied) return denied;
+    let charged = cost;
+    try {
 
     const total = Math.min(3600, Math.max(30, Math.round(Number(targetSeconds)) || 0)) || null;
     const per = total ? Math.round(total / count) : 12;
@@ -170,7 +176,11 @@ Deno.serve(async (req) => {
     );
     if (sErr) throw sErr;
 
+    charged = 0;
     return json({ videoId: video.id });
+    } finally {
+      if (charged) await refund(auth.user.id, charged, "refund_script");
+    }
   } catch (e) {
     if ((e as Error)?.name === "AbortError") return new Response(null, { status: 499, headers: corsHeaders });
     console.error("generate-script error", e);

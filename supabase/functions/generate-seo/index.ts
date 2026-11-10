@@ -1,3 +1,4 @@
+import { charge, refund, COSTS } from "../_shared/credits.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
@@ -23,6 +24,11 @@ Deno.serve(async (req) => {
     const { client } = auth;
     const { data: video } = await client.from("videos").select("id,title,description,topic").eq("id", videoId).maybeSingle();
     if (!video) return json({ error: "Video not found." }, 404);
+    const COST = COSTS.seo;
+    const denied = await charge(auth.user.id, COST, "seo");
+    if (denied) return denied;
+    let charged = COST;
+    try {
     const { data: scenes } = await client.from("video_scenes").select("heading,narration").eq("video_id", videoId).order("position");
     const script = (scenes ?? []).map((s, i) => `${i + 1}. ${s.heading}: ${s.narration}`).join("\n").slice(0, 12000);
 
@@ -59,7 +65,11 @@ Deno.serve(async (req) => {
     };
     const { error } = await client.from("videos").update({ seo }).eq("id", videoId);
     if (error) throw error;
+    charged = 0;
     return json({ seo });
+    } finally {
+      if (charged) await refund(auth.user.id, charged, "refund_seo");
+    }
   } catch (e) {
     if ((e as Error)?.name === "AbortError") return new Response(null, { status: 499, headers: corsHeaders });
     console.error("generate-seo error", e);

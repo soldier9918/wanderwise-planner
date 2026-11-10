@@ -1,3 +1,4 @@
+import { charge, refund, COSTS } from "../_shared/credits.ts";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient, gatewayError } from "../_shared/common.ts";
 
 const VIDEO_MODEL = "google/gemini-omni-1.1-flash";
@@ -30,6 +31,11 @@ Deno.serve(async (req) => {
 
     if (action === "start") {
       if (!scene.image_path) return json({ error: "Make or upload an image for this scene first." }, 400);
+      if (scene.clip_job_id) return json({ error: "This scene is already being animated." }, 409);
+      const denied = await charge(auth.user.id, COSTS.animate, "animate_scene");
+      if (denied) return denied;
+      let charged: number = COSTS.animate;
+      try {
       const { data: file, error: dlErr } = await admin.storage.from("video-assets").download(scene.image_path);
       if (dlErr || !file) return json({ error: "Couldn't read this scene's image." }, 500);
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -52,8 +58,13 @@ Deno.serve(async (req) => {
       });
       if (!res.ok) return gatewayError(res);
       const job = await res.json();
+      if (!job?.id) return json({ error: "The animation could not start. Please try again." }, 502);
       await auth.client.from("video_scenes").update({ clip_job_id: job.id }).eq("id", scene.id);
+      charged = 0;
       return json({ jobId: job.id, status: job.status ?? "queued" });
+      } finally {
+        if (charged) await refund(auth.user.id, charged, "refund_animate");
+      }
     }
 
     // status
@@ -62,7 +73,9 @@ Deno.serve(async (req) => {
     if (!res.ok) return gatewayError(res);
     const job = await res.json();
     if (job.status === "failed") {
-      await auth.client.from("video_scenes").update({ clip_job_id: null }).eq("id", scene.id);
+      // Refund once: only the poll that clears the job id gives credits back.
+      const { data: cleared } = await auth.client.from("video_scenes").update({ clip_job_id: null }).eq("id", scene.id).eq("clip_job_id", scene.clip_job_id).select("id");
+      if (cleared?.length) await refund(auth.user.id, COSTS.animate, "refund_animate");
       const blocked = job.error?.code === "moderation_blocked" || job.error?.code === "invalid_request";
       return json({ status: "failed", error: blocked ? "The animation was blocked — this image may be the cause. Try a different image." : (job.error?.message ?? "Animation failed.") });
     }

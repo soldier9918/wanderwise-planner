@@ -1,3 +1,4 @@
+import { charge, refund, COSTS } from "../_shared/credits.ts";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient, gatewayError } from "../_shared/common.ts";
 import { toneOf } from "../_shared/tones.ts";
 
@@ -38,6 +39,11 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
+    const COST = kind === "image" ? COSTS.image : COSTS.voice;
+    const denied = await charge(auth.user.id, COST, kind === "image" ? "scene_image" : "scene_voice");
+    if (denied) return denied;
+    let charged = COST;
+    try {
 
     let bytes: Uint8Array;
     let contentType: string;
@@ -93,7 +99,11 @@ Deno.serve(async (req) => {
     const { error: updErr } = await auth.client.from("video_scenes").update(kind === "image" ? { image_path: path, clip_path: null, clip_credit: null } : { audio_path: path }).eq("id", scene.id);
     if (updErr) throw updErr;
 
+    charged = 0;
     return json({ path });
+    } finally {
+      if (charged) await refund(auth.user.id, charged, "refund_scene_asset");
+    }
   } catch (e) {
     console.error("scene-asset error", e);
     return json({ error: "Something went wrong creating this scene." }, 500);

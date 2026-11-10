@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/lib/queryClient";
 
 export const STYLES = [
   "Documentary",
@@ -100,6 +101,8 @@ export type Scene = {
 
 async function invoke<T>(name: string, body: unknown): Promise<T> {
   const { data, error } = await supabase.functions.invoke(name, { body });
+  // AI actions spend credits server-side; refresh the balance shown in the header.
+  queryClient.invalidateQueries({ queryKey: ["account"] });
   if (error) {
     let message = error.message;
     try {
