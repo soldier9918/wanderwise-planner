@@ -1067,7 +1067,7 @@ export default function VideoEditor() {
               <li key={s.id} className={`rounded-xl border bg-card p-4 ${playing === i ? "border-primary" : "border-border"}`}>
                 <div className="flex gap-3">
                   <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-md bg-muted">
-                    {s.clip_path && urls[s.clip_path] ? <video src={urls[s.clip_path]} autoPlay loop muted playsInline className="h-full w-full object-cover" />
+                    {s.clip_path && urls[s.clip_path] ? <video src={urls[s.clip_path]} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                       : s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
                       : <div className={`h-full w-full ${working[`${s.id}-image`] ? "animate-pulse bg-secondary" : ""}`} />}
                     <span className="absolute bottom-1 right-1 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">{formatSeconds(secOf(s))}</span>
