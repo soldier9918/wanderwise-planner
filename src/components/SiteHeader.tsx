@@ -4,6 +4,7 @@ import { Coins, LogOut, Menu, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "@/lib/account";
+import { scrollToSection } from "@/components/ScrollToTop";
 
 export function Logo() {
   return (
@@ -28,6 +29,13 @@ export default function SiteHeader() {
   const balancePill = "inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 text-sm font-semibold tabular-nums";
   const close = () => setOpen(false);
   const doSignOut = async () => { close(); await signOut(); navigate("/"); };
+
+  // From Billing itself the hash link would be a no-op, so scroll by hand.
+  const onTopUpClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname !== "/billing") return;
+    e.preventDefault();
+    scrollToSection("top-ups", "smooth");
+  };
 
   const mobileLink = "block rounded-md px-3 py-3 text-base font-medium hover:bg-muted";
 
@@ -54,7 +62,7 @@ export default function SiteHeader() {
                   <Coins className="h-4 w-4 text-primary" />
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
-                <Link to="/billing#top-ups" aria-label="Top up credits" title="Top up credits" className="ml-1 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Link to="/billing#top-ups" onClick={onTopUpClick} aria-label="Top up credits" title="Top up credits" className="ml-1 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                   <Plus className="h-4 w-4" />
                 </Link>
               </div>
@@ -98,7 +106,7 @@ export default function SiteHeader() {
                   <Coins className="h-4 w-4 text-primary" />
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
-                <Link to="/billing#top-ups" onClick={close} className="mb-2 flex items-center justify-center gap-2 rounded-md border border-primary/60 px-3 py-2 font-semibold text-primary"><Plus className="h-4 w-4" />Top up credits</Link>
+                <Link to="/billing#top-ups" onClick={(e) => { close(); onTopUpClick(e); }} className="mb-2 flex items-center justify-center gap-2 rounded-md border border-primary/60 px-3 py-2 font-semibold text-primary"><Plus className="h-4 w-4" />Top up credits</Link>
                 <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Billing</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
                   <LogOut className="h-4 w-4" />Sign out
