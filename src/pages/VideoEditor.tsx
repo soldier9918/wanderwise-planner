@@ -744,7 +744,7 @@ export default function VideoEditor() {
               <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
               </Button>
-              {account?.watermark && <p className="w-full text-xs text-muted-foreground">Free plan: downloads include a small "Made with Vydora" badge. <Link to="/billing" className="text-primary underline">Subscribe</Link> to remove it.</p>}
+              {account?.watermark && <p className="w-full text-xs text-muted-foreground">Free plan: downloads include a small "Made with Vydora" badge. <Link to="/billing" className="text-primary underline">Top up</Link> to remove it.</p>}
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || done === scenes.length}>
                 Generate missing assets
               </Button>
