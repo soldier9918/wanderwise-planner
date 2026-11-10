@@ -6,14 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "@/lib/account";
 import { scrollToSection } from "@/components/ScrollToTop";
 import ProfileMenu, { planLabel } from "@/components/ProfileMenu";
+import logoAsset from "@/assets/vydora-logo.png.asset.json";
 
 export function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2 font-display text-xl font-extrabold">
-      <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
-        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current"><path d="M8 5v14l11-7z" /></svg>
-      </span>
-      Vydora
+      <img src={logoAsset.url} alt="" aria-hidden className="h-8 w-8 shrink-0 object-contain" />
+      VYDORA.AI
     </Link>
   );
 }
