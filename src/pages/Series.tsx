@@ -137,6 +137,19 @@ export default function Series() {
             </div>
           </section>
         )}
+
+        <section className="mt-6 rounded-xl border border-border bg-card p-6 text-sm">
+          <h2 className="font-display text-lg font-bold">Troubleshooting</h2>
+          <ul className="mt-3 grid list-disc gap-2 pl-5 text-muted-foreground">
+            <li>Planning the outline costs nothing. Credits are only used when you press "Create this episode" or "Create all episodes".</li>
+            <li>If "Plan series" doesn't return an outline, try a shorter or broader topic — "The Cold War" works better than a single narrow event.</li>
+            <li>Check the estimate above the button first. "Create all episodes" spends credits for every episode, so create one episode at a time if you're running low.</li>
+            <li>Fix episode titles and summaries before creating them. Once created, each episode is a normal video you edit in its own editor.</li>
+            <li>If creating stops halfway, the episodes already made are saved in My videos — press "Create this episode" on the rest.</li>
+            <li>Narrators marked (Pro) and longer series need a plan. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock them.</li>
+            <li>Still stuck? Email <a href="mailto:contact@vydora.ai" className="text-primary underline">contact@vydora.ai</a> with the topic you used.</li>
+          </ul>
+        </section>
       </main>
       <SiteFooter />
     </div>
