@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Crown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useAccount, STARTER_CREDITS } from "@/lib/account";
@@ -32,6 +32,20 @@ export default function SubscriptionPlans() {
   const sub = acct?.subscription;
   const active = sub && (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due") ? sub : null;
   const current = active ? (active.plan_tier === "pro" ? "Pro" : "Creator") : "Free";
+  // Scheduled plan changes are read live from Stripe's subscription schedule.
+  const { data: status } = useQuery({
+    queryKey: ["subscription-status", active?.plan_tier, active?.current_period_end],
+    enabled: !!active,
+    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("subscription-status", { body: {} });
+      if (error) throw error;
+      return data as { pending: { tier: string; effective_at: string } | null };
+    },
+  });
+  const pending = active ? status?.pending ?? null : null;
+  const pendingName = pending ? (pending.tier === "pro" ? "Pro" : "Creator") : null;
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -52,7 +66,7 @@ export default function SubscriptionPlans() {
 
   // Reset spinners when the browser restores this page from cache (e.g. Back from Stripe).
   useEffect(() => {
-    const reset = (e: PageTransitionEvent) => { if (e.persisted) { setBusy(null); qc.invalidateQueries({ queryKey: ["account"] }); } };
+    const reset = (e: PageTransitionEvent) => { if (e.persisted) { setBusy(null); qc.invalidateQueries({ queryKey: ["account"] }); qc.invalidateQueries({ queryKey: ["subscription-status"] }); } };
     const onVisible = () => { if (document.visibilityState === "visible") setBusy(null); };
     window.addEventListener("pageshow", reset);
     document.addEventListener("visibilitychange", onVisible);
@@ -75,6 +89,9 @@ export default function SubscriptionPlans() {
       <p className="mt-2 text-sm text-muted-foreground">Current plan: <span className="font-semibold text-foreground">{current}</span>
         {active?.current_period_end && <> · {active.cancel_at_period_end ? "ends" : "renews"} {new Date(active.current_period_end).toLocaleDateString()}</>}
         {active?.status === "past_due" && <span className="text-primary"> · payment overdue</span>}</p>
+      {pending && <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium">
+        Scheduled downgrade: {current} → {pendingName} on {fmtDate(pending.effective_at)}.
+        <span className="block font-normal text-muted-foreground">You keep {current} features and all your credits until then.</span></p>}
       {active && <Button className="mt-4" variant="outline" disabled={!!busy} onClick={() => go("customer-portal", "portal")}>{busy === "portal" && <Loader2 className="h-4 w-4 animate-spin" />}Manage subscription & invoices</Button>}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {PLANS.map((p) => (
@@ -89,6 +106,7 @@ export default function SubscriptionPlans() {
               <Button className="mt-auto w-full" variant="outline" disabled>{active ? "Free tier" : "Current plan"}</Button>
             ) : (
               current === p.name ? <Button className="mt-auto w-full" variant="outline" disabled>Current plan</Button>
+              : pendingName === p.name ? <Button className="mt-auto w-full" variant="outline" disabled>Downgrade scheduled</Button>
               : <Button className="mt-auto w-full" variant={p.featured ? "default" : "outline"} disabled={!!busy}
                   onClick={() => active ? go("customer-portal", "portal") : go("create-checkout", p.tier!, { plan: p.tier })}>
                   {busy === p.tier && <Loader2 className="h-4 w-4 animate-spin" />}{active ? `Switch to ${p.name}` : `Subscribe to ${p.name}`}</Button>
