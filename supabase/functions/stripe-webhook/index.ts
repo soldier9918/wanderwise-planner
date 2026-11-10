@@ -113,6 +113,13 @@ Deno.serve(async (req) => {
       case "invoice.paid":
         await grantInvoiceCredits(event.data.object as Stripe.Invoice);
         break;
+      case "invoice.payment_failed": {
+        // Never grants credits: just re-sync the subscription so Vydora shows "payment overdue".
+        const inv = event.data.object as any;
+        const subId = inv.subscription ?? inv.parent?.subscription_details?.subscription;
+        if (subId) await syncSubscription(await stripe.subscriptions.retrieve(String(typeof subId === "string" ? subId : subId.id)));
+        break;
+      }
     }
   } catch (e) {
     console.error("stripe-webhook", event.type, e);
