@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { autoTopUpSchema, gbpAmount, TOP_UP_AMOUNTS } from "./topups";
+import { autoTopUpSchema, creditsFor, CREDITS_PER_GBP, gbpAmount, TOP_UP_AMOUNTS } from "./topups";
 
 describe("pay-as-you-go top-ups", () => {
   it("offers the six requested GBP amounts", () => {
     expect(TOP_UP_AMOUNTS).toEqual([5, 10, 50, 100, 1000, 5000]);
+  });
+  it("buys 25 credits per £1", () => {
+    expect(CREDITS_PER_GBP).toBe(25);
+    expect(creditsFor(5)).toBe(125);
+    expect(creditsFor(10)).toBe(250);
+    expect(creditsFor(100)).toBe(2500);
+    expect(creditsFor(7.5)).toBe(187);
   });
   it("requires a minimum £5 custom purchase", () => {
     expect(gbpAmount.safeParse(4.99).success).toBe(false);

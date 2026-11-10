@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import SiteHeader from "@/components/SiteHeader";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -37,6 +38,7 @@ export default function Admin() {
   const [q, setQ] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [adjust, setAdjust] = useState<Record<string, string>>({});
+  const [coupon, setCoupon] = useState({ code: "", credits: "100", uses: "1", expires: "" });
 
   const allowed = user?.email?.toLowerCase() === ADMIN_EMAIL;
   const role = useQuery({
@@ -52,10 +54,13 @@ export default function Admin() {
     const { data, error } = await supabase.rpc("admin_videos", { _limit: 200 }); if (error) throw error; return data ?? []; } });
   const ledger = useQuery({ queryKey: ["admin-ledger"], enabled: ok, queryFn: async () => {
     const { data, error } = await supabase.rpc("admin_ledger", { _limit: 300 }); if (error) throw error; return data ?? []; } });
+  const coupons = useQuery({ queryKey: ["admin-coupons"], enabled: ok, queryFn: async () => {
+    const { data, error } = await supabase.rpc("admin_coupons"); if (error) throw error; return data ?? []; } });
 
   const filtered = useMemo(() => (users.data ?? []).filter((u) =>
     (!q || u.email?.toLowerCase().includes(q.toLowerCase()) || u.user_id.includes(q) || u.referral_code?.includes(q.toUpperCase())) &&
     (planFilter === "all" || (planFilter === "paid" ? u.paid_total > 0 : u.paid_total === 0))), [users.data, q, planFilter]);
+  const paidRows = useMemo(() => (ledger.data ?? []).filter((l) => ["purchase", "topup", "subscription"].includes(l.reason) && l.amount > 0), [ledger.data]);
 
   if (!allowed) return <Navigate to="/" replace />;
   if (role.isLoading) return <div className="min-h-screen bg-background" />;
@@ -73,6 +78,26 @@ export default function Admin() {
     toast.success(`${amt > 0 ? "Added" : "Removed"} ${Math.abs(amt)} credits`);
     setAdjust((a) => ({ ...a, [id]: "" }));
     qc.invalidateQueries({ queryKey: ["admin-users"] }); qc.invalidateQueries({ queryKey: ["admin-ledger"] }); qc.invalidateQueries({ queryKey: ["admin-overview"] });
+  };
+  const doCoupon = async () => {
+    const code = coupon.code.trim();
+    if (!code) return toast.error("Enter a code");
+    const { error } = await supabase.rpc("admin_create_coupon", {
+      _code: code,
+      _credits: parseInt(coupon.credits, 10) || 0,
+      _max_uses: parseInt(coupon.uses, 10) || 0,
+      _expires_at: coupon.expires ? new Date(`${coupon.expires}T23:59:00`).toISOString() : null,
+    });
+    if (error) return toast.error(error.message.replace(/\s+/g, " ").trim());
+    toast.success(`${code} created`);
+    setCoupon((c) => ({ ...c, code: "" }));
+    qc.invalidateQueries({ queryKey: ["admin-coupons"] });
+  };
+  const toggleCoupon = async (code: string, active: boolean) => {
+    const { error } = await supabase.rpc("admin_set_coupon_active", { _code: code, _active: active });
+    if (error) return toast.error(error.message.replace(/\s+/g, " ").trim());
+    toast.success(`${code} ${active ? "turned on" : "turned off"}`);
+    qc.invalidateQueries({ queryKey: ["admin-coupons"] });
   };
   const download = (name: string, rows: Record<string, unknown>[]) => {
     const a = document.createElement("a");
@@ -120,6 +145,7 @@ export default function Admin() {
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="ledger">Credit activity</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="coupons">Coupons</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -207,8 +233,56 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
-              No payments yet. Once Stripe is connected, every purchase, package and invoice will show here and in the Users tab.
+            <p className="mb-3 text-sm text-muted-foreground">Paid credit activity — subscriptions and top-ups. £1 = 25 credits · Creator £19/mo = 600 credits · Pro £49/mo = 2,000 credits.</p>
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                  <tr>{["When", "User", "Type", "Credits"].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {paidRows.map((l) => (
+                    <tr key={l.id} className="border-t border-border">
+                      <td className="px-3 py-2 whitespace-nowrap">{fmt(l.created_at)}</td><td className="px-3 py-2">{l.email}</td>
+                      <td className="px-3 py-2 capitalize">{l.reason.replace(/_/g, " ")}</td>
+                      <td className="px-3 py-2 font-semibold text-accent">+{l.amount}</td>
+                    </tr>
+                  ))}
+                  {!paidRows.length && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">No paid credit activity yet.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="coupons">
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="text-sm font-semibold">Create a coupon code</p>
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <div className="grid gap-1"><Label htmlFor="cp-code">Code</Label><Input id="cp-code" className="w-40" placeholder="LAUNCH25" value={coupon.code} onChange={(e) => setCoupon((c) => ({ ...c, code: e.target.value.toUpperCase() }))} /></div>
+                <div className="grid gap-1"><Label htmlFor="cp-credits">Credits</Label><Input id="cp-credits" type="number" min={1} className="w-28" value={coupon.credits} onChange={(e) => setCoupon((c) => ({ ...c, credits: e.target.value }))} /></div>
+                <div className="grid gap-1"><Label htmlFor="cp-uses">Max uses</Label><Input id="cp-uses" type="number" min={1} className="w-28" value={coupon.uses} onChange={(e) => setCoupon((c) => ({ ...c, uses: e.target.value }))} /></div>
+                <div className="grid gap-1"><Label htmlFor="cp-exp">Expires (optional)</Label><Input id="cp-exp" type="date" className="w-44" value={coupon.expires} onChange={(e) => setCoupon((c) => ({ ...c, expires: e.target.value }))} /></div>
+                <Button onClick={doCoupon}>Create code</Button>
+              </div>
+            </div>
+            <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                  <tr>{["Code", "Credits", "Used", "Expires", "Status", ""].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {(coupons.data ?? []).map((c) => (
+                    <tr key={c.code} className="border-t border-border">
+                      <td className="px-3 py-2 font-semibold">{c.code}</td>
+                      <td className="px-3 py-2">{c.credits}</td>
+                      <td className="px-3 py-2">{c.used_count} / {c.max_uses}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{c.expires_at ? fmt(c.expires_at) : "Never"}</td>
+                      <td className="px-3 py-2">{c.active ? <span className="text-accent">Active</span> : <span className="text-muted-foreground">Off</span>}</td>
+                      <td className="px-3 py-2 text-right"><Button size="sm" variant="outline" onClick={() => toggleCoupon(c.code, !c.active)}>{c.active ? "Turn off" : "Turn on"}</Button></td>
+                    </tr>
+                  ))}
+                  {!coupons.isLoading && !(coupons.data ?? []).length && <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">No coupon codes yet.</td></tr>}
+                </tbody>
+              </table>
             </div>
           </TabsContent>
         </Tabs>

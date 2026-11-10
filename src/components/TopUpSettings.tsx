@@ -1,23 +1,29 @@
 import { useEffect, useState } from "react";
-import { CreditCard, Save, Ticket, Wallet } from "lucide-react";
+import { CreditCard, Loader2, Save, Ticket, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { TOP_UP_AMOUNTS, autoTopUpSchema, gbpAmount } from "@/lib/topups";
+import { TOP_UP_AMOUNTS, autoTopUpSchema, creditsFor, gbpAmount } from "@/lib/topups";
 
 const initial = { enabled: false, threshold: "20", amount: "10", limitEnabled: false, monthlyLimit: "50" };
 const money = (value: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 2 }).format(value);
 
 export default function TopUpSettings() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const storageKey = `vydora:topup-draft:${user?.id ?? "guest"}`;
   const [selected, setSelected] = useState("5");
   const [custom, setCustom] = useState("");
   const [draft, setDraft] = useState(initial);
   const [error, setError] = useState("");
+  const [paying, setPaying] = useState(false);
+  const [coupon, setCoupon] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
   const purchase = gbpAmount.safeParse(selected === "custom" ? custom : selected);
 
   useEffect(() => {
@@ -40,13 +46,51 @@ export default function TopUpSettings() {
     } catch { setError("Couldn't save on this device. Please try again."); }
   };
 
+  const pay = async () => {
+    if (!purchase.success || paying) return;
+    setPaying(true);
+    const res = await supabase.functions.invoke("create-checkout", { body: { amount_gbp: purchase.data } });
+    const message = (res.data as { error?: string } | null)?.error ?? res.error?.message ?? "Couldn't start the payment. Please try again.";
+    if (res.error || !(res.data as { url?: string } | null)?.url) {
+      setPaying(false);
+      toast.error(message);
+      return;
+    }
+    window.location.href = (res.data as { url: string }).url;
+  };
+
+  const redeem = async () => {
+    const code = coupon.trim();
+    if (!code || redeeming) return;
+    setRedeeming(true);
+    const { data, error: rpcError } = await supabase.rpc("redeem_coupon", { _code: code });
+    setRedeeming(false);
+    if (rpcError) return toast.error("Couldn't check that code. Please try again.");
+    if (data === "ok") {
+      setCoupon("");
+      toast.success("Coupon applied — your balance has been updated.");
+      qc.invalidateQueries({ queryKey: ["account"] });
+      return;
+    }
+    toast.error({
+      not_found: "That code isn't valid.",
+      already_redeemed: "You've already used this code.",
+      used_up: "This code has been used up.",
+      expired: "This code has expired.",
+      inactive: "This code is no longer active.",
+      signed_out: "Please sign in first.",
+    }[String(data)] ?? "That code isn't valid.");
+  };
+
+  const credits = purchase.success ? creditsFor(purchase.data) : 0;
+
   return (
     <section id="top-ups" className="mt-12 scroll-mt-24 border-t border-border pt-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-2xl font-bold"><Wallet className="h-6 w-6 text-primary" />Top up</h2>
         <span className="text-sm font-semibold text-accent">No subscription required</span>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">Payments are not connected yet. Credit amounts per £ will be confirmed before purchases become available.</p>
+      <p className="mt-3 text-sm text-muted-foreground">25 credits per £1 · Minimum £5 · Credits land on your account as soon as the payment completes.</p>
       <div className="mt-6 grid gap-8">
         <div>
           <h3 className="text-xl font-bold">One-time top-up</h3>
@@ -64,7 +108,11 @@ export default function TopUpSettings() {
             {!purchase.success && <p role="alert" className="text-sm text-destructive">{purchase.error.issues[0]?.message}</p>}
           </div>}
           <div className="mt-5 flex items-center justify-between border-t border-border pt-4"><span>Top-up total</span><strong className="text-xl text-primary">{purchase.success ? money(purchase.data) : "—"}</strong></div>
-          <Button disabled className="mt-4 w-full"><CreditCard className="h-4 w-4" />Top up — available after Stripe setup</Button>
+          <div className="mt-1 flex items-center justify-between text-sm text-muted-foreground"><span>Credits you'll get</span><strong>{purchase.success ? credits : "—"}</strong></div>
+          <Button className="mt-4 w-full" disabled={!purchase.success || paying} onClick={pay}>
+            {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+            {paying ? "Opening secure payment…" : purchase.success ? `Pay ${money(purchase.data).replace(".00", "")} for ${credits} credits` : "Top up"}
+          </Button>
         </div>
         <form onSubmit={save} className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
@@ -73,10 +121,10 @@ export default function TopUpSettings() {
           </div>
           <p className="mt-2 text-sm text-muted-foreground">Draft only · No card saved · No automatic charges</p>
           <div className="mt-5 grid gap-4">
-            <div className="grid gap-2"><Label htmlFor="topup-threshold">When credit balance goes below (credits)</Label><Input id="topup-threshold" type="number" min={1} step={1} disabled={!draft.enabled} value={draft.threshold} onChange={(e) => setDraft({ ...draft, threshold: e.target.value })} /></div>
-            <div className="grid gap-2"><Label htmlFor="auto-amount">Automatically top up (£) — minimum £5</Label><Input id="auto-amount" type="number" min={5} step="0.01" disabled={!draft.enabled} value={draft.amount} onChange={(e) => setDraft({ ...draft, amount: e.target.value })} /></div>
+            <div className="grid gap-2"><Label htmlFor="topup-threshold">When credit balance goes below (credits)</Label><Input id="topup-threshold" type="number" min={1} step={1} disabled={!draft.enabled} value={draft.threshold} onChange={(e) => setDraft({ ...draft, threshold: String(e.target.value) })} /></div>
+            <div className="grid gap-2"><Label htmlFor="auto-amount">Automatically top up (£) — minimum £5</Label><Input id="auto-amount" type="number" min={5} step="0.01" disabled={!draft.enabled} value={draft.amount} onChange={(e) => setDraft({ ...draft, amount: String(e.target.value) })} /></div>
             <div className="flex items-center justify-between gap-3"><Label htmlFor="monthly-limit-toggle">Set a monthly auto top-up limit</Label><Switch id="monthly-limit-toggle" disabled={!draft.enabled} checked={draft.limitEnabled} onCheckedChange={(limitEnabled) => setDraft({ ...draft, limitEnabled })} /></div>
-            {draft.limitEnabled && <div className="grid gap-2"><Label htmlFor="monthly-limit">Monthly spending limit (£)</Label><Input id="monthly-limit" type="number" min={5} step="0.01" disabled={!draft.enabled} value={draft.monthlyLimit} onChange={(e) => setDraft({ ...draft, monthlyLimit: e.target.value })} /></div>}
+            {draft.limitEnabled && <div className="grid gap-2"><Label htmlFor="monthly-limit">Monthly spending limit (£)</Label><Input id="monthly-limit" type="number" min={5} step="0.01" disabled={!draft.enabled} value={draft.monthlyLimit} onChange={(e) => setDraft({ ...draft, monthlyLimit: String(e.target.value) })} /></div>}
           </div>
           {draft.enabled && <p className="mt-4 text-sm text-muted-foreground">Planned: £{draft.amount || "—"} when balance falls below {draft.threshold || "—"} credits{draft.limitEnabled ? `, capped at £${draft.monthlyLimit || "—"} per month` : ""}.</p>}
           {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
@@ -85,12 +133,12 @@ export default function TopUpSettings() {
       </div>
       <div className="mt-8 border-t border-border pt-6">
         <h3 className="flex items-center gap-2 text-xl font-bold"><Ticket className="h-5 w-5 text-primary" />Redeem coupon</h3>
-        <p id="coupon-status" className="mt-2 text-sm text-muted-foreground">Coupon redemption is coming soon. No credits will be added until coupon rewards are configured.</p>
+        <p id="coupon-status" className="mt-2 text-sm text-muted-foreground">Enter a code from Vydora to add its credits to your balance. Each code works once per account.</p>
         <div className="mt-4 grid max-w-xl gap-2">
           <Label htmlFor="coupon-code">Coupon code</Label>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Input id="coupon-code" placeholder="Enter coupon code" maxLength={100} autoComplete="off" autoCapitalize="characters" spellCheck={false} aria-describedby="coupon-status" className="min-w-0 flex-1" />
-            <Button type="button" disabled><Ticket className="h-4 w-4" />Redeem</Button>
+            <Input id="coupon-code" placeholder="Enter coupon code" maxLength={100} autoComplete="off" autoCapitalize="characters" spellCheck={false} aria-describedby="coupon-status" className="min-w-0 flex-1" value={coupon} onChange={(e) => setCoupon(e.target.value)} />
+            <Button type="button" disabled={!coupon.trim() || redeeming} onClick={redeem}>{redeeming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />}Redeem</Button>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ describe("account rules", () => {
   it("referrals give 50 credits", () => expect(REFERRAL_BONUS).toBe(50));
   it("free accounts get the watermark", () => expect(needsWatermark([r(30, "starter"), r(50, "referral_joined")])).toBe(true));
   it("paid accounts export without watermark", () => expect(needsWatermark([r(30, "starter"), r(500, "topup")])).toBe(false));
+  it("a coupon code is not a purchase, so the watermark stays", () => expect(needsWatermark([r(30, "starter"), r(100, "coupon")])).toBe(true));
   it("balance sums the ledger", () => expect(balanceOf([r(30, "starter"), r(-12, "video")])).toBe(18));
   it("a top-up alone does not unlock Pro", () => expect(hasSubscription([r(30, "starter"), r(500, "topup")])).toBe(false));
   it("a subscription unlocks Pro", () => expect(hasSubscription([r(30, "starter"), r(600, "subscription")])).toBe(true));

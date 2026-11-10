@@ -162,6 +162,13 @@
       "when": 1794315672422,
       "tag": "0022_spend_credits",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794317221323,
+      "tag": "0023_coupon_codes",
+      "breakpoints": true
     }
   ]
 }

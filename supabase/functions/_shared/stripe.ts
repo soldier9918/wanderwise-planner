@@ -13,6 +13,9 @@ export const TIER_PRICE: Record<string, string> = {
   pro: "price_1UaDWp9wksHmZlqMSo0QbIH6",
 };
 
+/** One-time top-ups: credits granted per £1 paid. */
+export const TOPUP_CREDITS_PER_GBP = 25;
+
 const ALLOWED = ["https://vydora.ai", "https://www.vydora.ai", "https://story-scene-voice-maker.lovable.app", "http://localhost:8080"];
 export function returnOrigin(req: Request) {
   const o = req.headers.get("Origin") ?? "";

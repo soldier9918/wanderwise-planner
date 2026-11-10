@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupon_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          credits: number
+          expires_at: string | null
+          max_uses: number
+          used_count: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          credits: number
+          expires_at?: string | null
+          max_uses?: number
+          used_count?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          credits?: number
+          expires_at?: string | null
+          max_uses?: number
+          used_count?: number
+        }
+        Relationships: []
+      }
+      coupon_redemptions: {
+        Row: {
+          code: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       credit_accounts: {
         Row: {
           created_at: string
@@ -382,6 +438,27 @@ export type Database = {
         Args: { _amount: number; _note: string; _user: string }
         Returns: undefined
       }
+      admin_coupons: {
+        Args: never
+        Returns: {
+          active: boolean
+          code: string
+          created_at: string
+          credits: number
+          expires_at: string
+          max_uses: number
+          used_count: number
+        }[]
+      }
+      admin_create_coupon: {
+        Args: {
+          _code: string
+          _credits: number
+          _expires_at: string
+          _max_uses: number
+        }
+        Returns: undefined
+      }
       admin_ledger: {
         Args: { _limit?: number }
         Returns: {
@@ -393,6 +470,10 @@ export type Database = {
         }[]
       }
       admin_overview: { Args: never; Returns: Json }
+      admin_set_coupon_active: {
+        Args: { _active: boolean; _code: string }
+        Returns: undefined
+      }
       admin_users: {
         Args: never
         Returns: {
@@ -436,6 +517,7 @@ export type Database = {
         Returns: boolean
       }
       new_referral_code: { Args: never; Returns: string }
+      redeem_coupon: { Args: { _code: string }; Returns: string }
       refund_credits: {
         Args: { _amount: number; _reason: string; _user: string }
         Returns: undefined

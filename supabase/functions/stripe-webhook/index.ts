@@ -40,6 +40,17 @@ async function grantInvoiceCredits(inv: Stripe.Invoice) {
   if (error && error.code !== "23505") throw error;
 }
 
+/** One-time top-up: credits are granted from the amount recorded in the session metadata. */
+async function grantTopUp(s: Stripe.Checkout.Session) {
+  const credits = parseInt(String(s.metadata?.credits ?? ""), 10);
+  const userId = s.client_reference_id ?? (s.metadata?.app === "vydora" ? s.metadata?.user_id : undefined);
+  if (!userId || !Number.isFinite(credits) || credits <= 0) throw new Error(`Bad top-up session ${s.id}`);
+  const invoiceId = typeof s.invoice === "string" ? s.invoice : s.invoice?.id ?? s.id;
+  // Unique index on stripe_invoice_id means each payment credits at most once.
+  const { error } = await db.from("credit_ledger").insert({ user_id: userId, amount: credits, reason: "topup", stripe_invoice_id: invoiceId });
+  if (error && error.code !== "23505") throw error;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
   const sig = req.headers.get("stripe-signature");
@@ -62,6 +73,8 @@ Deno.serve(async (req) => {
         const s = event.data.object as Stripe.Checkout.Session;
         if (s.metadata?.app === "vydora" && s.subscription) {
           await syncSubscription(await stripe.subscriptions.retrieve(String(s.subscription)));
+        } else if (s.metadata?.app === "vydora" && s.mode === "payment" && s.metadata?.kind === "topup") {
+          await grantTopUp(s);
         }
         break;
       }
