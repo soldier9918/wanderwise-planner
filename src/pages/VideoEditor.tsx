@@ -62,6 +62,7 @@ export default function VideoEditor() {
   const qc = useQueryClient();
   const { data: account } = useAccount();
   const [working, setWorking] = useState<Record<string, boolean>>({});
+  const [assetErr, setAssetErr] = useState<Record<string, string>>({});
   const [playing, setPlaying] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [exportPct, setExportPct] = useState<number | null>(null);
@@ -229,11 +230,13 @@ export default function VideoEditor() {
   const runAsset = useCallback(async (scene: Scene, kind: "image" | "audio") => {
     const key = `${scene.id}-${kind}`;
     setWorking((w) => ({ ...w, [key]: true }));
+    setAssetErr((m) => { const n = { ...m }; delete n[key]; return n; });
     try {
       await generateSceneAsset(scene.id, kind);
       await qc.invalidateQueries({ queryKey: ["video", id] });
     } catch (e) {
       toast.error(`Scene ${scene.position + 1}: ${(e as Error).message}`);
+      setAssetErr((m) => ({ ...m, [key]: (e as Error).message }));
       throw e;
     } finally {
       setWorking((w) => ({ ...w, [key]: false }));
@@ -1110,6 +1113,12 @@ export default function VideoEditor() {
                   </div>
                 </div>
                 <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
+                {!s.image_path && assetErr[`${s.id}-image`] && (
+                  <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">Picture failed: {assetErr[`${s.id}-image`]}</p>
+                )}
+                {!s.audio_path && assetErr[`${s.id}-audio`] && (
+                  <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">Voiceover failed: {assetErr[`${s.id}-audio`]}</p>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-image`]} onClick={() => runAsset(s, "image").catch(() => {})}>
                     {working[`${s.id}-image`] ? "Painting…" : s.image_path ? "New image" : "Make image"}

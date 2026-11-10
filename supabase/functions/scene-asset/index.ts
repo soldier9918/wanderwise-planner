@@ -59,19 +59,13 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model: IMAGE_MODEL, prompt, size, quality: "low" }),
       });
-      let res = await gen(scene.visual_prompt);
-      // War/history scenes can trip the image safety filter: retry once with a calm, non-graphic version.
+      const res = await gen(scene.visual_prompt);
       if (!res.ok && res.status === 400) {
         const text = await res.text();
         if (/safety|violation|moderation|content policy/i.test(text)) {
-          const soft = `A calm, non-graphic, documentary-style illustration inspired by this scene, with no violence, weapons in use, injuries or gore — focus on setting, atmosphere, landscapes, maps, objects or people in peaceful poses: ${scene.visual_prompt}`;
-          res = await gen(soft);
-          if (!res.ok && res.status === 400) {
-            return json({ error: "This scene's picture was blocked by the image safety filter. Try editing the scene's picture description to be less graphic, or upload your own image. No credits were charged." }, 422);
-          }
-        } else {
-          return json({ error: "The image service rejected this scene. Please try again." }, 400);
+          return json({ error: "The image safety filter blocked this scene's picture. Please use Upload image to add your own picture for this scene. No credits were used." }, 422);
         }
+        return json({ error: "The image service rejected this scene. Please try again." }, 400);
       }
       if (!res.ok) return gatewayError(res);
       const body = await res.json();
