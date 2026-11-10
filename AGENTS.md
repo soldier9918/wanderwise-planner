@@ -26,4 +26,4 @@
 
 - Billing history is fetched live from Stripe by the `billing-history` edge function (invoices + paid top-up checkout receipts) using only the server-stored customer id, and each record carries `ledger_keys` so credit lines can be matched to the money actually paid. Why: invoices stay authoritative and users can't request another customer's records.
 - Plan changes use a Vydora-only portal config (`customer-portal`, metadata app=vydora): upgrades immediate (always_invoice, grant new minus old credits); downgrades scheduled at period end, no credits until renewal. Why: each cycle totals the allowance once.
-- Scheduled plan changes are read live from Stripe (subscription schedule) by the read-only `subscription-status` edge function, never stored or hardcoded. Why: the notice must follow cancellations/changes made in the portal.
+- Scheduled plan changes are read live from Stripe by read-only `subscription-status`, never stored. Why: follows portal changes.
