@@ -70,6 +70,7 @@ export default function VideoEditor() {
   const [sceneBusy, setSceneBusy] = useState(false);
   // Measured length of each voiceover clip, keyed by scene id.
   const [audioSecs, setAudioSecs] = useState<Record<string, number>>({});
+  const [loadedImgs, setLoadedImgs] = useState<Record<string, boolean>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekRef = useRef(0);
   // When set, playback stops at the end of this one scene instead of continuing.
@@ -118,6 +119,12 @@ export default function VideoEditor() {
     refetchOnWindowFocus: false,
   });
   // Latest data for the playback loop, so refreshes don't restart the current scene.
+  useEffect(() => {
+    if (!data) return;
+    const list = data.scenes.map((s) => s.image_path && data.urls[s.image_path]).filter((u): u is string => !!u && !loadedImgs[u]);
+    list.forEach((u) => { const im = new Image(); im.onload = im.onerror = () => setLoadedImgs((m) => ({ ...m, [u]: true })); im.src = u; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
   const dataRef = useRef(data);
   dataRef.current = data;
   const hasData = !!data;
@@ -543,6 +550,11 @@ export default function VideoEditor() {
   };
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
+  // Preview only unlocks once every scene's picture, voiceover (and clip) is generated and downloaded.
+  const previewReady = scenes.length > 0 && !busyAny && scenes.every((s) =>
+    !!s.image_path && !!urls[s.image_path] && loadedImgs[urls[s.image_path]] &&
+    !!s.audio_path && !!urls[s.audio_path] && audioSecs[s.id] !== undefined &&
+    (!s.clip_path || !!urls[s.clip_path]));
   const current = playing !== null ? scenes[playing] : scenes[0];
   const currentImg = current?.image_path ? urls[current.image_path] : null;
   const currentClip = current?.clip_path ? urls[current.clip_path] : null;
@@ -652,7 +664,15 @@ export default function VideoEditor() {
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground">Scenes will appear here</div>
               )}
-              {playing === null && currentImg && (
+              {playing === null && scenes.length > 0 && !previewReady && (
+                <div role="status" aria-label="Preview loading" className="absolute inset-0 grid place-items-center bg-background/60">
+                  <div className="flex flex-col items-center gap-3 text-sm font-semibold text-foreground">
+                    <span className="h-12 w-12 animate-spin rounded-full border-4 border-muted-foreground/30 border-t-primary" />
+                    Preparing preview… {done}/{scenes.length} scenes ready
+                  </div>
+                </div>
+              )}
+              {playing === null && currentImg && previewReady && (
                 <button type="button" aria-label="Play preview"
                   onClick={() => { soloRef.current = false; setPaused(false); setPlaying(0); }}
                   className="absolute inset-0 grid place-items-center bg-background/20 transition hover:bg-background/40">
@@ -720,7 +740,7 @@ export default function VideoEditor() {
             {full && (
               <div className="mt-3 flex justify-center gap-3">
                 {playing === null ? (
-                  <Button onClick={() => { soloRef.current = false; setPlaying(0); }}>▶ Preview</Button>
+                  <Button onClick={() => { soloRef.current = false; setPlaying(0); }} disabled={!previewReady}>{previewReady ? "▶ Preview" : "Loading…"}</Button>
                 ) : (
                   <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
                 )}
@@ -730,7 +750,7 @@ export default function VideoEditor() {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {playing === null ? (
-                <Button onClick={() => { soloRef.current = false; setPlaying(0); }} disabled={!scenes.length}>▶ Preview</Button>
+                <Button onClick={() => { soloRef.current = false; setPlaying(0); }} disabled={!previewReady}>{previewReady ? "▶ Preview" : "Loading…"}</Button>
               ) : (
                 <>
                   <Button onClick={togglePause}>{paused ? "▶ Resume" : "❚❚ Pause"}</Button>
