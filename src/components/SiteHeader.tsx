@@ -55,6 +55,9 @@ export default function SiteHeader() {
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
               </Button>
+              <Link to="/billing#top-ups" aria-label="Top up credits" title="Top up credits" className="-ml-0.5 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="h-4 w-4" />
+              </Link>
               <Button variant="outline" className={navBtn} onClick={doSignOut}>Sign out</Button>
             </>
           ) : (
@@ -95,6 +98,7 @@ export default function SiteHeader() {
                   <Coins className="h-4 w-4 text-primary" />
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
+                <Link to="/billing#top-ups" onClick={close} className="mb-2 flex items-center justify-center gap-2 rounded-md border border-primary/60 px-3 py-2 font-semibold text-primary"><Plus className="h-4 w-4" />Top up credits</Link>
                 <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Billing</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
                   <LogOut className="h-4 w-4" />Sign out
