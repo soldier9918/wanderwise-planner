@@ -34,6 +34,13 @@ Deno.serve(async (req) => {
       const ch = pi && typeof pi === "object" ? pi.latest_charge : undefined;
       const credits = s.metadata?.credits;
       const sessionInvoice = typeof s.invoice === "string" ? s.invoice : s.invoice?.id;
+      // Top-ups with an invoice are shown once, as the invoice (PDF available).
+      const invRec = sessionInvoice && records.find((r) => r.id === sessionInvoice);
+      if (invRec) {
+        invRec.description = `Credit top-up${credits ? ` · ${credits} credits` : ""}`;
+        (invRec.ledger_keys as string[]).push(s.id);
+        continue;
+      }
       records.push({
         id: s.id, kind: "receipt", number: ch?.receipt_number ?? null, created: s.created,
         description: `Credit top-up${credits ? ` · ${credits} credits` : ""}`,

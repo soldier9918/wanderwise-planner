@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
           },
         }],
         metadata: { app: "vydora", user_id: userId, kind: "topup", credits: String(credits) },
+        invoice_creation: { enabled: true, invoice_data: { description: `Vydora credit top-up · ${credits} credits`, metadata: { app: "vydora", kind: "topup" } } },
         ...urls,
       });
       return json({ url: session.url, credits });
