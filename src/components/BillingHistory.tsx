@@ -3,7 +3,7 @@ import { ChevronDown, ReceiptText, Wallet, Activity } from "lucide-react";
 import InvoiceTable from "@/components/InvoiceTable";
 import { REASON_LABEL, used30d, useAccount } from "@/lib/account";
 import { gbp, gbpValueOf } from "@/lib/topups";
-import { paidByLedgerKey, useBillingRecords } from "@/lib/billingRecords";
+import { moneyOfLedgerRow, paidByLedgerKey, useBillingRecords } from "@/lib/billingRecords";
 
 const money = (a: number, c: string) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: (c || "gbp").toUpperCase() }).format(a / 100);
@@ -45,14 +45,14 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
             <tr><th scope="col" className="px-4 py-3 font-semibold">Activity / Date</th><th scope="col" className="px-4 py-3 text-right font-semibold">Credits in / out</th><th scope="col" className="px-4 py-3 text-right font-semibold">Money</th><th scope="col" className="px-4 py-3 text-right font-semibold">Balance</th></tr>
           </thead>
           <tbody>{recent.length ? recent.map((l, i) => {
-            const paid = l.stripe_invoice_id ? paidMap.get(l.stripe_invoice_id) : undefined;
+            const m = moneyOfLedgerRow(l, paidMap);
             return (
-              <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td><td className={`px-4 py-3 text-right ${paid ? "text-accent" : l.amount < 0 ? "" : "text-muted-foreground"}`}>{paid ? `+${money(paid.amount, paid.currency)}` : l.amount < 0 ? gbp(gbpValueOf(l.amount)) : "—"}</td><td className="px-4 py-3 text-right text-muted-foreground">{after[i]}</td></tr>
+              <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td><td className={`px-4 py-3 text-right ${m ? (m.sign > 0 ? "text-accent" : "") : "text-muted-foreground"}`}>{m ? `${m.sign > 0 ? "+" : "-"}${money(m.pence, m.currency)}` : "—"}</td><td className="px-4 py-3 text-right text-muted-foreground">{after[i]}</td></tr>
             );
           }) : <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">No credit activity in the last 30 days.</td></tr>}</tbody>
         </table>
       </div>}
-      {open && <p className="mt-2 text-xs text-muted-foreground">Money lines marked with + are payments you actually made. Credit lines are valued at £1 = 25 credits (the top-up rate). Free credits have no money value, shown as —.</p>}
+      {open && <p className="mt-2 text-xs text-muted-foreground">Money lines show + for payments you made and - for credits spent. Credit lines are valued at £1 = 25 credits (the top-up rate). Free credits have no money value, shown as —.</p>}
       </> : <>
       <h2 id="billing-history-title" className="mt-8 flex items-center gap-2 text-2xl font-bold">
         <ReceiptText className="h-6 w-6 text-primary" />Billing history
