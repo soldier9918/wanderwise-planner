@@ -114,7 +114,13 @@ export default function VideoEditor() {
       const urls = await signedUrls(paths);
       return { video, scenes: (scenes ?? []) as Scene[], urls };
     },
+    // Coming back to the tab must not reload the preview mid-play.
+    refetchOnWindowFocus: false,
   });
+  // Latest data for the playback loop, so refreshes don't restart the current scene.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const hasData = !!data;
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["video", id] });
 
@@ -339,6 +345,7 @@ export default function VideoEditor() {
 
   // Sequential preview playback
   useEffect(() => {
+    const data = dataRef.current;
     if (playing === null || !data) return;
     const scene = data.scenes[playing];
     const audio = audioRef.current;
@@ -361,7 +368,7 @@ export default function VideoEditor() {
     };
     raf = requestAnimationFrame(tick);
     const cleanupRaf = () => cancelAnimationFrame(raf);
-    const next = () => setPlaying((p) => (!soloRef.current && p !== null && p + 1 < data.scenes.length ? p + 1 : null));
+    const next = () => setPlaying((p) => (!soloRef.current && p !== null && p + 1 < (dataRef.current?.scenes.length ?? 0) ? p + 1 : null));
     const url = scene.audio_path ? data.urls[scene.audio_path] : null;
     if (url) {
       audio.src = url;
@@ -373,7 +380,9 @@ export default function VideoEditor() {
     }
     const t = setTimeout(next, 4000 * (1 - startFrac));
     return () => { clearTimeout(t); cleanupRaf(); };
-  }, [playing, data]);
+    // Only restart when the scene changes — not when data refreshes in the background.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, hasData]);
 
   const saveNarration = async (scene: Scene, narration: string) => {
     if (narration === scene.narration) return;
