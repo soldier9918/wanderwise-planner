@@ -50,6 +50,15 @@ export default function SubscriptionPlans() {
     if (q === "cancelled") toast("Checkout cancelled — you weren't charged.");
   }, [qc]);
 
+  // Reset spinners when the browser restores this page from cache (e.g. Back from Stripe).
+  useEffect(() => {
+    const reset = (e: PageTransitionEvent) => { if (e.persisted) { setBusy(null); qc.invalidateQueries({ queryKey: ["account"] }); } };
+    const onVisible = () => { if (document.visibilityState === "visible") setBusy(null); };
+    window.addEventListener("pageshow", reset);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { window.removeEventListener("pageshow", reset); document.removeEventListener("visibilitychange", onVisible); };
+  }, [qc]);
+
   const go = async (fn: "create-checkout" | "customer-portal", key: string, body?: object) => {
     setBusy(key);
     const { data, error } = await supabase.functions.invoke(fn, { body: body ?? {} });
