@@ -54,11 +54,25 @@ Deno.serve(async (req) => {
       // deno-lint-ignore no-explicit-any
       const ratio = (scene as any).videos?.aspect_ratio ?? "16:9";
       const size = ({ "16:9": "1536x1024", "21:9": "1536x1024", "9:16": "1024x1536", "4:5": "1024x1536", "1:1": "1024x1024" } as Record<string, string>)[ratio] ?? "1536x1024";
-      const res = await fetch(`${GATEWAY_URL}/v1/images/generations`, {
+      const gen = (prompt: string) => fetch(`${GATEWAY_URL}/v1/images/generations`, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: IMAGE_MODEL, prompt: scene.visual_prompt, size, quality: "low" }),
+        body: JSON.stringify({ model: IMAGE_MODEL, prompt, size, quality: "low" }),
       });
+      let res = await gen(scene.visual_prompt);
+      // War/history scenes can trip the image safety filter: retry once with a calm, non-graphic version.
+      if (!res.ok && res.status === 400) {
+        const text = await res.text();
+        if (/safety|violation|moderation|content policy/i.test(text)) {
+          const soft = `A calm, non-graphic, documentary-style illustration inspired by this scene, with no violence, weapons in use, injuries or gore — focus on setting, atmosphere, landscapes, maps, objects or people in peaceful poses: ${scene.visual_prompt}`;
+          res = await gen(soft);
+          if (!res.ok && res.status === 400) {
+            return json({ error: "This scene's picture was blocked by the image safety filter. Try editing the scene's picture description to be less graphic, or upload your own image. No credits were charged." }, 422);
+          }
+        } else {
+          return json({ error: "The image service rejected this scene. Please try again." }, 400);
+        }
+      }
       if (!res.ok) return gatewayError(res);
       const body = await res.json();
       const b64 = body?.data?.[0]?.b64_json;
