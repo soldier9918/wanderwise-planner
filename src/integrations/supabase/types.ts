@@ -101,6 +101,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_brand_cards: {
+        Row: {
+          cards: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cards?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cards?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

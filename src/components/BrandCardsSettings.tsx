@@ -6,14 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { CARD_MAX_SECS, CARD_MIN_SECS, loadCards, saveCards, type BrandCard, type BrandCards } from "@/lib/brandCards";
+import { CARD_MAX_SECS, CARD_MIN_SECS, loadCards, fetchCards, storeCards, type BrandCard, type BrandCards } from "@/lib/brandCards";
 
 export default function BrandCardsSettings({ clips }: { clips: { name: string; path: string }[] }) {
   const { user } = useAuth();
   const [cards, setCards] = useState<BrandCards>(() => loadCards(user?.id));
-  useEffect(() => setCards(loadCards(user?.id)), [user?.id]);
+  useEffect(() => { let on = true; fetchCards(user?.id).then((c) => on && setCards(c)); return () => { on = false; }; }, [user?.id]);
   const set = (k: keyof BrandCards, patch: Partial<BrandCard>) => setCards((c) => ({ ...c, [k]: { ...c[k], ...patch } }));
-  const save = () => { if (!user) return; saveCards(user.id, cards); toast.success("Intro & outro saved — they'll attach to every export"); };
+  const save = async () => { if (!user) return; try { await storeCards(user.id, cards); toast.success("Intro & outro saved to your account — they'll attach to every export"); } catch { toast.error("Couldn't save to your account. Please try again."); } };
 
   const editor = (k: keyof BrandCards, label: string) => {
     const c = cards[k];

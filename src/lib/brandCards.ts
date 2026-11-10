@@ -1,4 +1,5 @@
-/** Saved intro/outro cards that attach to every export. Stored per user on this device. */
+import { supabase } from "@/integrations/supabase/client";
+/** Saved intro/outro cards that attach to every export. Saved on the user's account (local copy kept as a cache). */
 export type BrandCard = { enabled: boolean; mode: "card" | "clip"; title: string; subtitle: string; clipPath: string | null; seconds: number };
 export type BrandCards = { intro: BrandCard; outro: BrandCard };
 
@@ -31,4 +32,24 @@ export function saveCards(userId: string, cards: BrandCards) {
 export function isActive(c: BrandCard) {
   if (!c.enabled) return false;
   return c.mode === "clip" ? !!c.clipPath : !!(c.title.trim() || c.subtitle.trim());
+}
+
+const merge = (raw: any): BrandCards => ({ intro: { ...DEFAULT_CARDS.intro, ...(raw?.intro ?? {}) }, outro: { ...DEFAULT_CARDS.outro, ...(raw?.outro ?? {}) } });
+
+/** Load from the user's account; migrates any old device-only settings up once. */
+export async function fetchCards(userId: string | undefined): Promise<BrandCards> {
+  if (!userId) return DEFAULT_CARDS;
+  const { data, error } = await supabase.from("user_brand_cards").select("cards").eq("user_id", userId).maybeSingle();
+  if (error) return loadCards(userId);
+  if (data) { const c = merge(data.cards); saveCards(userId, c); return c; }
+  const local = typeof localStorage !== "undefined" ? localStorage.getItem(key(userId)) : null;
+  if (local) { const c = loadCards(userId); await storeCards(userId, c); return c; }
+  return DEFAULT_CARDS;
+}
+
+export async function storeCards(userId: string, cards: BrandCards) {
+  saveCards(userId, cards);
+  const c = loadCards(userId);
+  const { error } = await supabase.from("user_brand_cards").upsert({ user_id: userId, cards: c as any, updated_at: new Date().toISOString() });
+  if (error) throw error;
 }

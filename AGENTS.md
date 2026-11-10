@@ -19,4 +19,4 @@
 - Admin access uses the `user_roles` table + `has_role()`; admin data comes only from SECURITY DEFINER `admin_*` RPCs that check the role. Admins skip the export watermark. Why: never trust client-side checks for privileges.
 - Free vs Pro: free tier locks premium narrators, >6 scenes, >2 min and 1080p; enforced in generate-script; Pro = subscription ledger row or admin (top-ups alone do not unlock Pro). Why: drives upgrades, server is the source of truth.
 - Series generator (`/series`) plans episodes via the `generate-series` edge function (free), then creates each episode through the normal `generate-script` pipeline with a brief that carries the shared visual motif. Why: one script/credit pipeline.
-- Intro/outro cards are device-local, per-user settings (title card or a My Library clip) that `exportVideo` draws before/after scenes. Why: browser-only export, no table needed.
+- Intro/outro cards are saved per account in `user_brand_cards` (jsonb, owner-only RLS; localStorage is just a cache) and drawn by `exportVideo` before/after scenes. Why: settings follow the user across devices.
