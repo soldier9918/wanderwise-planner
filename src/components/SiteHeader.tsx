@@ -24,7 +24,7 @@ export default function SiteHeader() {
   const { pathname } = useLocation();
   const on = (to: string) => (pathname === to || (to === "/dashboard" && pathname === "/my-videos") ? "text-primary" : "");
   const [open, setOpen] = useState(false);
-  const navBtn = "h-9 px-4 text-sm";
+  const navBtn = "h-9 px-4 text-sm whitespace-nowrap";
   const low = acct ? acct.balance <= 5 : false;
   const balancePill = "inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 text-sm font-semibold tabular-nums";
   const close = () => setOpen(false);
@@ -43,7 +43,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container flex h-16 items-center justify-between gap-2">
         <Logo />
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 min-[1150px]:flex">
           {user ? (
             <>
               <Button asChild className={`${navBtn} ${pathname === "/create" ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}>
@@ -56,7 +56,7 @@ export default function SiteHeader() {
               <Button variant="ghost" asChild className={`${navBtn} ${on("/dashboard")}`}><Link to="/dashboard" aria-current={on("/dashboard") ? "page" : undefined}>My videos</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/library")}`}><Link to="/library" aria-current={on("/library") ? "page" : undefined}>My Library</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/pricing")}`}><Link to="/pricing" aria-current={on("/pricing") ? "page" : undefined}>Pricing</Link></Button>
-              <Button variant="ghost" asChild className={`${navBtn} ${on("/billing")}`}><Link to="/billing" aria-current={on("/billing") ? "page" : undefined}>Billing</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/billing")}`}><Link to="/billing" aria-current={on("/billing") ? "page" : undefined}>Plans &amp; Billing</Link></Button>
               <div className={`${balancePill} pr-1 ${low ? "border-primary/60 text-primary" : ""}`}>
                 <Link to="/billing" aria-label="Credit balance" className="inline-flex items-center gap-1.5 hover:opacity-80">
                   <Coins className="h-4 w-4 text-primary" />
@@ -80,7 +80,7 @@ export default function SiteHeader() {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="min-[1150px]:hidden"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
@@ -90,8 +90,8 @@ export default function SiteHeader() {
       </div>
       {open && (
         <>
-          <div className="fixed inset-0 top-16 z-30 bg-background/60 md:hidden" onClick={close} />
-          <nav className="absolute inset-x-0 top-16 z-40 border-b border-border bg-background p-3 shadow-lg md:hidden">
+          <div className="fixed inset-0 top-16 z-30 bg-background/60 min-[1150px]:hidden" onClick={close} />
+          <nav className="absolute inset-x-0 top-16 z-40 border-b border-border bg-background p-3 shadow-lg min-[1150px]:hidden">
             {user ? (
               <>
                 <Link to="/create" onClick={close} className="mb-2 flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 font-semibold text-primary-foreground">
@@ -107,7 +107,7 @@ export default function SiteHeader() {
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
                 <Link to="/billing#top-ups" onClick={(e) => { close(); onTopUpClick(e); }} className="mb-2 flex items-center justify-center gap-2 rounded-md border border-primary/60 px-3 py-2 font-semibold text-primary"><Plus className="h-4 w-4" />Top up credits</Link>
-                <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Billing</Link>
+                <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Plans &amp; Billing</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
                   <LogOut className="h-4 w-4" />Sign out
                 </button>
