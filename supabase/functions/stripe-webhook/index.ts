@@ -38,14 +38,25 @@ async function grantInvoiceCredits(inv: Stripe.Invoice) {
   if (inv.status !== "paid" || !subId) return;
   // Newer Stripe API versions put the price under pricing.price_details.price.
   const linePrice = (l: any): string | undefined => l.pricing?.price_details?.price ?? l.price?.id ?? l.plan?.id;
-  const priceId = inv.lines.data.map(linePrice).find((id) => id && PLANS[id]);
+  // Proration invoices carry a negative "unused time" line for the old plan and a positive line for the new one.
+  const lines = inv.lines.data as any[];
+  const newLine = lines.find((l) => (l.amount ?? 0) > 0 && PLANS[linePrice(l) ?? ""]) ?? lines.find((l) => PLANS[linePrice(l) ?? ""]);
+  const priceId = newLine ? linePrice(newLine) : undefined;
   if (!priceId) return;
   const plan = PLANS[priceId];
+  let credits = plan.credits;
+  if (anyInv.billing_reason === "subscription_update") {
+    // Mid-cycle plan change: top up to the new plan's allowance (new minus old), only for paid upgrades.
+    const oldLine = lines.find((l) => (l.amount ?? 0) < 0 && PLANS[linePrice(l) ?? ""]);
+    const oldCredits = oldLine ? PLANS[linePrice(oldLine)!].credits : 0;
+    credits = plan.credits - oldCredits;
+    if ((inv.amount_paid ?? 0) <= 0 || credits <= 0) return; // downgrades: no credits until renewal
+  }
   const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer!.id;
   const userId = await userForCustomer(customerId, anyInv.subscription_details?.metadata ?? anyInv.parent?.subscription_details?.metadata ?? inv.lines.data[0]?.metadata);
   if (!userId) throw new Error(`No Vydora user for customer ${customerId}`);
   // Unique index on stripe_invoice_id means each invoice credits at most once.
-  const { error } = await db.from("credit_ledger").insert({ user_id: userId, amount: plan.credits, reason: "subscription", stripe_invoice_id: inv.id });
+  const { error } = await db.from("credit_ledger").insert({ user_id: userId, amount: credits, reason: "subscription", stripe_invoice_id: inv.id });
   if (error && error.code !== "23505") throw error;
 }
 

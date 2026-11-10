@@ -24,3 +24,4 @@
 - Intro/outro cards are saved per account in `user_brand_cards` (jsonb, owner-only RLS; localStorage is just a cache) and drawn by `exportVideo` before/after scenes. Why: settings follow the user across devices.
 
 - Billing history is fetched live from Stripe by the `billing-history` edge function (invoices + paid top-up checkout receipts) using only the server-stored customer id, and each record carries `ledger_keys` so credit lines can be matched to the money actually paid. Why: invoices stay authoritative and users can't request another customer's records.
+- Mid-cycle plan changes go through the Stripe portal (always_invoice prorations, same subscription); a paid `subscription_update` invoice grants new-plan minus old-plan credits, downgrades grant nothing until renewal. Why: each billing cycle totals the plan allowance once.
