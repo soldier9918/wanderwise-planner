@@ -22,8 +22,8 @@ const MENU = [
 
 const PLANS = [
   { name: "Free", price: "£0", credits: "30 credits once", desc: "Enough for one short video to try things out." },
-  { name: "Creator", price: "£19/mo", credits: "600 credits / month", desc: "About 15–18 standard videos, or 3 fully animated." },
-  { name: "Pro", price: "£49/mo", credits: "2,000 credits / month", desc: "About 60 standard videos, or 10–12 fully animated." },
+  { name: "Creator", price: "£19/mo", credits: "600 credits / month", desc: "About 15–18 standard videos, or 3 fully animated.", to: "/billing#subscriptions" },
+  { name: "Pro", price: "£49/mo", credits: "2,000 credits / month", desc: "About 60 standard videos, or 10–12 fully animated.", to: "/billing#subscriptions" },
 ];
 
 export default function Pricing() {
@@ -83,14 +83,33 @@ export default function Pricing() {
         <section className="mt-12">
           <h2 className="text-2xl font-bold">Plans</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {PLANS.map((p) => (
-              <div key={p.name} className="rounded-xl border border-border bg-card p-6">
-                <p className="font-semibold text-muted-foreground">{p.name}</p>
-                <p className="mt-2 font-display text-3xl font-extrabold">{p.price}</p>
-                <p className="mt-1 font-semibold text-primary">{p.credits}</p>
-                <p className="mt-3 text-sm text-muted-foreground">{p.desc}</p>
-              </div>
-            ))}
+            {PLANS.map((p) => {
+              const card = "rounded-xl border border-border bg-card p-6";
+              const body = (
+                <>
+                  <p className="font-semibold text-muted-foreground">{p.name}</p>
+                  <p className="mt-2 font-display text-3xl font-extrabold">{p.price}</p>
+                  <p className="mt-1 font-semibold text-primary">{p.credits}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">{p.desc}</p>
+                  {p.to && (
+                    <p className="mt-4 text-sm font-semibold text-muted-foreground transition-colors group-hover:text-primary">
+                      Choose {p.name} →
+                    </p>
+                  )}
+                </>
+              );
+              return p.to ? (
+                <Link
+                  key={p.name}
+                  to={p.to}
+                  className={`group ${card} transition-colors hover:border-primary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div key={p.name} className={card}>{body}</div>
+              );
+            })}
           </div>
         </section>
 
