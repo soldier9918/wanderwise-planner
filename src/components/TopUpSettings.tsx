@@ -114,22 +114,7 @@ export default function TopUpSettings() {
             {paying ? "Opening secure payment…" : purchase.success ? `Pay ${money(purchase.data).replace(".00", "")} for ${credits} credits` : "Top up"}
           </Button>
         </div>
-        <form onSubmit={save} className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold"><Label htmlFor="auto-topup" className="text-xl font-bold">Auto top-up</Label></h2>
-            <Switch id="auto-topup" checked={draft.enabled} onCheckedChange={(enabled) => setDraft({ ...draft, enabled })} />
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">Draft only · No card saved · No automatic charges</p>
-          <div className="mt-5 grid gap-4">
-            <div className="grid gap-2"><Label htmlFor="topup-threshold">When credit balance goes below (credits)</Label><Input id="topup-threshold" type="number" min={1} step={1} disabled={!draft.enabled} value={draft.threshold} onChange={(e) => setDraft({ ...draft, threshold: String(e.target.value) })} /></div>
-            <div className="grid gap-2"><Label htmlFor="auto-amount">Automatically top up (£) — minimum £5</Label><Input id="auto-amount" type="number" min={5} step="0.01" disabled={!draft.enabled} value={draft.amount} onChange={(e) => setDraft({ ...draft, amount: String(e.target.value) })} /></div>
-            <div className="flex items-center justify-between gap-3"><Label htmlFor="monthly-limit-toggle">Set a monthly auto top-up limit</Label><Switch id="monthly-limit-toggle" disabled={!draft.enabled} checked={draft.limitEnabled} onCheckedChange={(limitEnabled) => setDraft({ ...draft, limitEnabled })} /></div>
-            {draft.limitEnabled && <div className="grid gap-2"><Label htmlFor="monthly-limit">Monthly spending limit (£)</Label><Input id="monthly-limit" type="number" min={5} step="0.01" disabled={!draft.enabled} value={draft.monthlyLimit} onChange={(e) => setDraft({ ...draft, monthlyLimit: String(e.target.value) })} /></div>}
-          </div>
-          {draft.enabled && <p className="mt-4 text-sm text-muted-foreground">Planned: £{draft.amount || "—"} when balance falls below {draft.threshold || "—"} credits{draft.limitEnabled ? `, capped at £${draft.monthlyLimit || "—"} per month` : ""}.</p>}
-          {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
-          <Button type="submit" variant="outline" className="mt-5 w-full"><Save className="h-4 w-4" />Save draft settings</Button>
-        </form>
+        {/* Auto top-up is hidden until automatic billing is implemented. */}
       </div>
       <div className="mt-8 border-t border-border pt-6">
         <h3 className="flex items-center gap-2 text-xl font-bold"><Ticket className="h-5 w-5 text-primary" />Redeem coupon</h3>

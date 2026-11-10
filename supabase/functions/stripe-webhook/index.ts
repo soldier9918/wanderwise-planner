@@ -42,6 +42,7 @@ async function grantInvoiceCredits(inv: Stripe.Invoice) {
 
 /** One-time top-up: credits are granted from the amount recorded in the session metadata. */
 async function grantTopUp(s: Stripe.Checkout.Session) {
+  if (s.payment_status !== "paid") return; // only verified, completed payments earn credits
   const credits = parseInt(String(s.metadata?.credits ?? ""), 10);
   const userId = s.client_reference_id ?? (s.metadata?.app === "vydora" ? s.metadata?.user_id : undefined);
   if (!userId || !Number.isFinite(credits) || credits <= 0) throw new Error(`Bad top-up session ${s.id}`);
@@ -76,6 +77,11 @@ Deno.serve(async (req) => {
         } else if (s.metadata?.app === "vydora" && s.mode === "payment" && s.metadata?.kind === "topup") {
           await grantTopUp(s);
         }
+        break;
+      }
+      case "checkout.session.async_payment_succeeded": {
+        const s = event.data.object as Stripe.Checkout.Session;
+        if (s.metadata?.app === "vydora" && s.mode === "payment" && s.metadata?.kind === "topup") await grantTopUp(s);
         break;
       }
       case "customer.subscription.created":
