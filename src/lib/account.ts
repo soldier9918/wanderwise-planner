@@ -28,6 +28,9 @@ export function useAccount() {
   return useQuery({
     queryKey: ["account", user?.id],
     enabled: !!user,
+    // Plan and balance change from payment webhooks, so always re-read when the tab regains focus.
+    staleTime: 0,
+    refetchOnWindowFocus: "always",
     queryFn: async () => {
       const [{ data: acct }, { data: ledger }, { data: admin }, { data: sub }] = await Promise.all([
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
