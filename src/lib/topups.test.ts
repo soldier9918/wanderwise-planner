@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoTopUpSchema, creditsFor, CREDITS_PER_GBP, gbpAmount, TOP_UP_AMOUNTS } from "./topups";
+import { autoTopUpSchema, creditsFor, CREDITS_PER_GBP, gbp, gbpAmount, gbpValueOf, TOP_UP_AMOUNTS } from "./topups";
 
 describe("pay-as-you-go top-ups", () => {
   it("offers the six requested GBP amounts", () => {
@@ -29,5 +29,18 @@ describe("pay-as-you-go top-ups", () => {
     expect(autoTopUpSchema.safeParse(draft).success).toBe(false);
     expect(autoTopUpSchema.safeParse({ ...draft, monthlyLimit: 10 }).success).toBe(true);
     expect(autoTopUpSchema.safeParse({ ...draft, limitEnabled: false }).success).toBe(true);
+  });
+});
+
+describe("money shown next to credit lines", () => {
+  it("values a credit line at £1 = 25 credits", () => {
+    expect(gbpValueOf(-2)).toBe(0.08);
+    expect(gbpValueOf(3)).toBe(0.12);
+    expect(gbpValueOf(-600)).toBe(24);
+  });
+  it("formats money in pounds with two decimals", () => {
+    expect(gbp(4.8)).toBe("£4.80");
+    expect(gbp(0)).toBe("£0.00");
+    expect(gbp(19)).toBe("£19.00");
   });
 });

@@ -1,31 +1,18 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Download, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { useBillingRecords } from "@/lib/billingRecords";
 
-type BillingRecord = {
-  id: string; kind: "invoice" | "receipt"; number: string | null; created: number; description: string;
-  amount: number; currency: string; status: string; view_url: string | null; pdf_url: string | null;
-};
 const PAGE = 10;
 const money = (a: number, c: string) => new Intl.NumberFormat("en-GB", { style: "currency", currency: (c || "gbp").toUpperCase() }).format(a / 100);
 const STATUS: Record<string, string> = { paid: "Paid", open: "Unpaid", void: "Void", uncollectible: "Failed", refunded: "Refunded", unpaid: "Unpaid" };
 
 export default function InvoiceTable() {
-  const { user } = useAuth();
   const [page, setPage] = useState(0);
   const [portal, setPortal] = useState(false);
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["billing-history", user?.id], enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("billing-history", { body: {} });
-      if (error) throw error;
-      return (data?.records ?? []) as BillingRecord[];
-    },
-  });
+  const { data, isLoading, error } = useBillingRecords();
   const openPortal = async () => {
     setPortal(true);
     const { data, error } = await supabase.functions.invoke("customer-portal", { body: {} });

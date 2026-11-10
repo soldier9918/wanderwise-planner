@@ -7,7 +7,7 @@ export const STARTER_CREDITS = 30;
 export const REFERRAL_BONUS = 50;
 const PAID_REASONS = ["purchase", "topup", "subscription"];
 
-export type LedgerRow = { amount: number; reason: string; created_at: string };
+export type LedgerRow = { amount: number; reason: string; created_at: string; stripe_invoice_id?: string | null };
 
 /** Free accounts (never paid) get the "Made with Vydora" export badge. */
 export const needsWatermark = (ledger: LedgerRow[]) => !ledger.some((l) => PAID_REASONS.includes(l.reason) && l.amount > 0);
@@ -34,7 +34,7 @@ export function useAccount() {
     queryFn: async () => {
       const [{ data: acct }, { data: ledger }, { data: admin }, { data: sub }] = await Promise.all([
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
-        supabase.from("credit_ledger").select("amount, reason, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }),
+        supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id").eq("user_id", user!.id).order("created_at", { ascending: false }),
         supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
         supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).maybeSingle(),
       ]);

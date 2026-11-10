@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
         description: line?.description ?? inv.description ?? "Subscription",
         amount: inv.status === "paid" ? inv.amount_paid : inv.amount_due, currency: inv.currency,
         status: inv.status, view_url: inv.hosted_invoice_url ?? null, pdf_url: inv.invoice_pdf ?? null,
+        ledger_keys: [inv.id],
       });
       if (records.length >= 300) break;
     }
@@ -32,11 +33,14 @@ Deno.serve(async (req) => {
       const pi = s.payment_intent as { latest_charge?: { receipt_url?: string; receipt_number?: string; refunded?: boolean } } | null;
       const ch = pi && typeof pi === "object" ? pi.latest_charge : undefined;
       const credits = s.metadata?.credits;
+      const sessionInvoice = typeof s.invoice === "string" ? s.invoice : s.invoice?.id;
       records.push({
         id: s.id, kind: "receipt", number: ch?.receipt_number ?? null, created: s.created,
         description: `Credit top-up${credits ? ` · ${credits} credits` : ""}`,
         amount: s.amount_total ?? 0, currency: s.currency,
         status: ch?.refunded ? "refunded" : s.payment_status, view_url: ch?.receipt_url ?? null, pdf_url: null,
+        // The ledger stores either the invoice id or, failing that, the session id for a top-up.
+        ledger_keys: [s.id, ...(sessionInvoice ? [sessionInvoice] : [])],
       });
     }
     records.sort((a, b) => (b.created as number) - (a.created as number));
