@@ -41,6 +41,17 @@ export default function Library() {
 
   useEffect(() => { load(); }, [load]);
 
+  const uploadOne = async (file: File): Promise<string | null> => {
+    if (!user) return null;
+    if (file.size > MAX_BYTES) { toast.error(`${file.name} is over 50 MB`); return null; }
+    const safe = file.name.replace(/[^\w.\-]+/g, "_");
+    const path = `${folder}/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type });
+    if (error) { toast.error(`${file.name}: ${error.message}`); return null; }
+    await load();
+    return path;
+  };
+
   const onFiles = async (files: FileList | null) => {
     if (!files?.length || !user) return;
     setUploading(true);
@@ -78,7 +89,7 @@ export default function Library() {
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">Images, video and audio, up to 50 MB each.</p>
-        <BrandCardsSettings clips={items.filter((i) => i.type.startsWith("video/")).map((i) => ({ name: i.name, path: i.path }))} />
+        <BrandCardsSettings clips={items.filter((i) => i.type.startsWith("video/")).map((i) => ({ name: i.name, path: i.path, url: i.url }))} onUpload={uploadOne} />
 
         {loading ? (
           <div className="mt-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>

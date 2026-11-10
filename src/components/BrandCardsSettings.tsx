@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { CARD_MAX_SECS, CARD_MIN_SECS, loadCards, fetchCards, storeCards, type BrandCard, type BrandCards } from "@/lib/brandCards";
 
-export default function BrandCardsSettings({ clips }: { clips: { name: string; path: string }[] }) {
+type Clip = { name: string; path: string; url?: string };
+export default function BrandCardsSettings({ clips, onUpload }: { clips: Clip[]; onUpload?: (f: File) => Promise<string | null> }) {
+  const [busy, setBusy] = useState<keyof BrandCards | null>(null);
+  const introIn = useRef<HTMLInputElement>(null);
+  const outroIn = useRef<HTMLInputElement>(null);
+  const pick = async (k: keyof BrandCards, f?: File) => {
+    if (!f || !onUpload) return;
+    if (!f.type.startsWith("video/")) { toast.error("Please choose a video file (MP4 or WebM)"); return; }
+    setBusy(k);
+    const path = await onUpload(f);
+    setBusy(null);
+    if (path) { set(k, { mode: "clip", clipPath: path, enabled: true }); toast.success(`${k === "intro" ? "Intro" : "Outro"} clip uploaded — press Save cards to keep it`); }
+  };
   const { user } = useAuth();
   const [cards, setCards] = useState<BrandCards>(() => loadCards(user?.id));
   useEffect(() => { let on = true; fetchCards(user?.id).then((c) => on && setCards(c)); return () => { on = false; }; }, [user?.id]);
@@ -31,12 +44,23 @@ export default function BrandCardsSettings({ clips }: { clips: { name: string; p
             <div><Label>Call to action</Label><Input value={c.subtitle} maxLength={80} onChange={(e) => set(k, { subtitle: e.target.value })} /></div>
             <div><Label>Length (seconds)</Label><Input type="number" min={CARD_MIN_SECS} max={CARD_MAX_SECS} value={c.seconds} onChange={(e) => set(k, { seconds: Number(e.target.value) })} /></div>
           </>
-        ) : clips.length ? (
-          <Select value={c.clipPath ?? ""} onValueChange={(v) => set(k, { clipPath: v })}>
-            <SelectTrigger><SelectValue placeholder="Choose a video clip" /></SelectTrigger>
-            <SelectContent>{clips.map((f) => <SelectItem key={f.path} value={f.path}>{f.name}</SelectItem>)}</SelectContent>
-          </Select>
-        ) : <p className="text-sm text-muted-foreground">Upload a video clip to your library first.</p>}
+        ) : (
+          <div className="space-y-3">
+            <input ref={k === "intro" ? introIn : outroIn} type="file" accept="video/*" className="hidden" onChange={(e) => { pick(k, e.target.files?.[0]); e.target.value = ""; }} />
+            <Button type="button" variant="outline" className="w-full" disabled={busy === k} onClick={() => (k === "intro" ? introIn : outroIn).current?.click()}>
+              {busy === k ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}Upload {label.toLowerCase()} video
+            </Button>
+            {clips.length > 0 && (
+              <Select value={c.clipPath ?? ""} onValueChange={(v) => set(k, { clipPath: v })}>
+                <SelectTrigger><SelectValue placeholder="…or choose one already in your library" /></SelectTrigger>
+                <SelectContent>{clips.map((f) => <SelectItem key={f.path} value={f.path}>{f.name}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
+            {(() => { const sel = clips.find((f) => f.path === c.clipPath); return sel?.url
+              ? <div><p className="mb-1 text-xs text-muted-foreground">Current {label.toLowerCase()}: {sel.name}</p><video src={sel.url} controls preload="metadata" className="aspect-video w-full rounded-md bg-muted object-contain" /></div>
+              : <p className="text-xs text-muted-foreground">No {label.toLowerCase()} video chosen yet.</p>; })()}
+          </div>
+        )}
       </div>
     );
   };
