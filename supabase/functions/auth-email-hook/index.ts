@@ -1,6 +1,7 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createAuthEmailHandler } from 'npm:@lovable.dev/email-js@0.5.0'
+import nodemailer from 'npm:nodemailer@6.9.16'
 import { SignupEmail } from '../_shared/email-templates/signup.tsx'
 import { InviteEmail } from '../_shared/email-templates/invite.tsx'
 import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
@@ -120,13 +121,36 @@ async function handlePreview(req: Request): Promise<Response> {
   })
 }
 
+// Hostinger SMTP transport. The SDK still verifies the signed webhook; only the
+// final send call is redirected so mail goes out as noreply@vydora.ai.
+const HOSTINGER_SEND_URL = 'https://hostinger-smtp.internal/send'
+const smtp = nodemailer.createTransport({
+  host: 'smtp.hostinger.com', port: 465, secure: true,
+  auth: { user: 'noreply@vydora.ai', pass: Deno.env.get('HOSTINGER_SMTP_PASSWORD') ?? '' },
+})
+const realFetch = globalThis.fetch
+globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+  if (url !== HOSTINGER_SEND_URL) return realFetch(input as any, init)
+  try {
+    const p = JSON.parse(String(init?.body ?? '{}'))
+    const info = await smtp.sendMail({ from: p.from, to: p.to, subject: p.subject, html: p.html, text: p.text })
+    console.log('[hostinger] sent', p.label, info.response)
+    return Response.json({ id: info.messageId, status: 'sent' })
+  } catch (e) {
+    console.error('[hostinger] send failed', (e as Error).message)
+    return Response.json({ error: (e as Error).message }, { status: 502 })
+  }
+}) as typeof fetch
+
 // The SDK handler owns verification, dispatch, and retry semantics; this file
 // owns only the email decisions: subjects, templates, and per-type props.
 const handler = createAuthEmailHandler({
   apiKey: Deno.env.get('LOVABLE_API_KEY')!,
-  from: `${SITE_NAME} <noreply@${SENDER_DOMAIN}>`,
+  from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
   senderDomain: SENDER_DOMAIN,
-  sendUrl: Deno.env.get('LOVABLE_SEND_URL'),
+  // Sends are routed to Hostinger SMTP (see fetch interceptor below), not Mailgun.
+  sendUrl: HOSTINGER_SEND_URL,
   emails: {
     signup: {
       subject: 'Confirm your Vydora account email',
