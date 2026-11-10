@@ -22,3 +22,5 @@
 - Coupon codes live in `coupon_codes` (service-role only, no user policies) and are redeemed once per account by the SECURITY DEFINER `redeem_coupon` RPC, which logs the use in `coupon_redemptions` and writes the ledger row; admins manage codes from the Coupons tab via `admin_coupons` / `admin_create_coupon` / `admin_set_coupon_active`. Why: codes can't be read, edited or double-redeemed from the client.
 - Series generator (`/series`) plans episodes via the `generate-series` edge function (free), then creates each episode through the normal `generate-script` pipeline with a brief that carries the shared visual motif. Why: one script/credit pipeline.
 - Intro/outro cards are saved per account in `user_brand_cards` (jsonb, owner-only RLS; localStorage is just a cache) and drawn by `exportVideo` before/after scenes. Why: settings follow the user across devices.
+
+- Billing history is fetched live from Stripe by the `billing-history` edge function (invoices + paid top-up checkout receipts) using only the server-stored customer id. Why: invoices stay authoritative and users can't request another customer's records.
