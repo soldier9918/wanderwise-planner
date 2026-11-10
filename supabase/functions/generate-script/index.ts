@@ -25,10 +25,10 @@ Deno.serve(async (req) => {
 
     const { topic: topicIn, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn, sourceUrl, narrationSpeed, accent: accentIn } = await req.json();
     const [{ data: sub }, { data: isAdmin }] = await Promise.all([
-      auth.client.from("credit_ledger").select("id").eq("user_id", auth.user.id).eq("reason", "subscription").gt("amount", 0).limit(1),
+      auth.client.rpc("has_active_subscription", { _user_id: auth.user.id }),
       auth.client.rpc("has_role", { _user_id: auth.user.id, _role: "admin" }),
     ]);
-    const pro = !!isAdmin || (sub?.length ?? 0) > 0;
+    const pro = !!isAdmin || sub === true;
     if (!voiceAllowed(String(voice), pro)) return json({ error: "That narrator is on paid plans. Subscribe to unlock it." }, 403);
     if (!scenesAllowedForTier(Number(sceneCount) || 6, pro)) return json({ error: "Free plan videos can have up to 6 scenes. Subscribe to unlock more." }, 403);
     if (targetSeconds && !lengthAllowedForTier(Number(targetSeconds), pro)) return json({ error: "Free plan videos can be up to 2 minutes. Subscribe to unlock longer videos." }, 403);

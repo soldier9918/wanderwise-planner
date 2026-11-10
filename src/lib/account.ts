@@ -11,6 +11,7 @@ export type LedgerRow = { amount: number; reason: string; created_at: string };
 
 /** Free accounts (never paid) get the "Made with Vydora" export badge. */
 export const needsWatermark = (ledger: LedgerRow[]) => !ledger.some((l) => PAID_REASONS.includes(l.reason) && l.amount > 0);
+export const isActiveStatus = (s?: string | null) => s === "active" || s === "trialing";
 /** Pro features (all narrators, long videos, 1080p) need a subscription, not just a top-up. */
 export const hasSubscription = (ledger: LedgerRow[]) => ledger.some((l) => l.reason === "subscription" && l.amount > 0);
 export const balanceOf = (ledger: LedgerRow[]) => ledger.reduce((n, l) => n + l.amount, 0);
@@ -18,7 +19,7 @@ export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
   ledger.filter((l) => l.amount < 0 && now - new Date(l.created_at).getTime() <= 30 * 864e5).reduce((n, l) => n - l.amount, 0);
 
 export const REASON_LABEL: Record<string, string> = {
-  starter: "Starter credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
+  starter: "Starter credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
 };
 
 export function useAccount() {
@@ -27,13 +28,15 @@ export function useAccount() {
     queryKey: ["account", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: acct }, { data: ledger }, { data: admin }] = await Promise.all([
+      const [{ data: acct }, { data: ledger }, { data: admin }, { data: sub }] = await Promise.all([
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
         supabase.from("credit_ledger").select("amount, reason, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }),
         supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
+        supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).maybeSingle(),
       ]);
+      const subscription = sub && isActiveStatus(sub.status) ? sub : null;
       const rows = (ledger ?? []) as LedgerRow[];
-      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, pro: !!admin || hasSubscription(rows), watermark: !admin && needsWatermark(rows) };
+      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, subscription: sub ?? null, pro: !!admin || !!subscription, watermark: !admin && needsWatermark(rows) };
     },
   });
 }

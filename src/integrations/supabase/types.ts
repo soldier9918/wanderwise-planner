@@ -41,6 +41,7 @@ export type Database = {
           created_at: string
           id: string
           reason: string
+          stripe_invoice_id: string | null
           user_id: string
         }
         Insert: {
@@ -48,6 +49,7 @@ export type Database = {
           created_at?: string
           id?: string
           reason: string
+          stripe_invoice_id?: string | null
           user_id: string
         }
         Update: {
@@ -55,6 +57,7 @@ export type Database = {
           created_at?: string
           id?: string
           reason?: string
+          stripe_invoice_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -101,6 +104,24 @@ export type Database = {
         }
         Relationships: []
       }
+      processed_stripe_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          processed_at?: string
+        }
+        Relationships: []
+      }
       user_brand_cards: {
         Row: {
           cards: Json
@@ -133,6 +154,42 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          current_period_end: string | null
+          plan_tier: string | null
+          price_id: string | null
+          status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          current_period_end?: string | null
+          plan_tier?: string | null
+          price_id?: string | null
+          status?: string
+          stripe_customer_id: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          current_period_end?: string | null
+          plan_tier?: string | null
+          price_id?: string | null
+          status?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -370,6 +427,7 @@ export type Database = {
         }[]
       }
       claim_referral: { Args: { _code: string }; Returns: string }
+      has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

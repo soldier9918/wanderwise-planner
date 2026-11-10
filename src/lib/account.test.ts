@@ -10,3 +10,9 @@ describe("account rules", () => {
   it("a top-up alone does not unlock Pro", () => expect(hasSubscription([r(30, "starter"), r(500, "topup")])).toBe(false));
   it("a subscription unlocks Pro", () => expect(hasSubscription([r(30, "starter"), r(600, "subscription")])).toBe(true));
 });
+
+import { isActiveStatus } from "./account";
+describe("subscription status", () => {
+  it("active and trialing unlock Pro", () => { expect(isActiveStatus("active")).toBe(true); expect(isActiveStatus("trialing")).toBe(true); });
+  it("cancelled or unpaid do not", () => { expect(isActiveStatus("canceled")).toBe(false); expect(isActiveStatus("past_due")).toBe(false); });
+});
