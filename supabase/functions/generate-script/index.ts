@@ -18,6 +18,33 @@ const schema = z.object({
   ),
 });
 
+// Counts words outside link/image-only lines so share bars don't look like content.
+function proseWords(md: string): number {
+  return md.split("\n")
+    .map((l) => l.replace(/!?\[[^\]]*\]\([^)]*\)/g, " ").replace(/[#*>\-_`|]/g, " "))
+    .join(" ").split(/\s+/).filter((w) => /[a-z]{2,}/i.test(w)).length;
+}
+
+// Fallback: fetch the page and pull readable text from the article body.
+async function fetchArticleText(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; VydoraBot/1.0)" }, signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return "";
+    let html = (await res.text()).slice(0, 2_000_000);
+    html = html.replace(/<(script|style|noscript|nav|footer|header|aside|form)[\s\S]*?<\/\1>/gi, " ");
+    const pick = html.match(/<article[\s\S]*?<\/article>/i)?.[0]
+      ?? html.match(/<div[^>]+class="[^"]*(post-body|entry-content|article-body|post-content)[^"]*"[\s\S]*$/i)?.[0]
+      ?? html;
+    const text = pick
+      .replace(/<\/(p|div|h[1-6]|li|br)>/gi, "\n").replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&#39;|&rsquo;|&lsquo;/g, "'").replace(/&quot;|&ldquo;|&rdquo;/g, '"')
+      .split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => l.split(" ").length >= 6)
+      .join("\n\n");
+    return text;
+  } catch { return ""; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -104,16 +131,20 @@ Deno.serve(async (req) => {
         return json({ error: "Couldn't read that page. Check the link is public and try again." }, 502);
       }
       const body = await res.json();
-      const md: string = body?.data?.markdown ?? body?.markdown ?? "";
+      let md: string = body?.data?.markdown ?? body?.markdown ?? "";
       const title: string = body?.data?.metadata?.title ?? body?.metadata?.title ?? srcUrl;
-      if (md.trim().length < 200) return json({ error: "That page doesn't have enough readable text to make a video from." }, 422);
+      if (proseWords(md) < 150) {
+        const direct = await fetchArticleText(srcUrl);
+        if (proseWords(direct) > proseWords(md)) md = direct;
+      }
+      if (proseWords(md) < 40) return json({ error: "That page doesn't have enough readable text to make a video from." }, 422);
       research = `[Article] ${title} (${srcUrl})\n${md.slice(0, 20000)}` + (research ? `\n\n${research}` : "");
       sources = [{ title: title.slice(0, 200), url: srcUrl }, ...(sources ?? [])];
       if (topic.trim().length < 3) topic = `Summarise this article as a video: ${title}`;
     }
 
     const factRules = research
-      ? `${srcUrl ? " ARTICLE MODE: Summarise the provided article into the scenes, keeping its key points in order, in your own words." : ""} FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
+      ? `${srcUrl ? " ARTICLE MODE: Summarise the provided article into the scenes, keeping its key points in order, in your own words. Always write the full number of scenes requested — never return an empty list or ask for more text; if the article is short, expand on its main points and the requested angle without inventing specific facts." : ""} FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
       : "";
 
     const provider = createOpenAI({
