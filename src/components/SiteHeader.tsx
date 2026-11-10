@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Coins, LogOut, Menu, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,8 @@ export default function SiteHeader() {
   const { user, signOut } = useAuth();
   const { data: acct } = useAccount();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const on = (to: string) => (pathname === to || (to === "/dashboard" && pathname === "/my-videos") ? "text-primary" : "");
   const [open, setOpen] = useState(false);
   const navBtn = "h-9 px-4 text-sm";
   const low = acct ? acct.balance <= 5 : false;
@@ -36,17 +38,17 @@ export default function SiteHeader() {
         <nav className="hidden items-center gap-1 md:flex">
           {user ? (
             <>
-              <Button asChild className={navBtn}>
+              <Button asChild className={`${navBtn} ${pathname === "/create" ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}>
                 <Link to="/create" className="inline-flex items-center gap-1.5">
                   <Plus className="h-4 w-4" />Create video
                 </Link>
               </Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/from-url">Article to video</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/series">Series</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/dashboard">My videos</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/library">My Library</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/from-url")}`}><Link to="/from-url" aria-current={on("/from-url") ? "page" : undefined}>Article to video</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/series")}`}><Link to="/series" aria-current={on("/series") ? "page" : undefined}>Series</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/dashboard")}`}><Link to="/dashboard" aria-current={on("/dashboard") ? "page" : undefined}>My videos</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/library")}`}><Link to="/library" aria-current={on("/library") ? "page" : undefined}>My Library</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/pricing")}`}><Link to="/pricing" aria-current={on("/pricing") ? "page" : undefined}>Pricing</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/billing")}`}><Link to="/billing" aria-current={on("/billing") ? "page" : undefined}>Billing</Link></Button>
               <Button variant="outline" asChild className={`${balancePill} ${low ? "border-primary/60 text-primary" : ""}`}>
                 <Link to="/billing" aria-label="Credit balance">
                   <Coins className="h-4 w-4 text-primary" />
@@ -57,9 +59,9 @@ export default function SiteHeader() {
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/pricing">Pricing</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/billing">Billing</Link></Button>
-              <Button variant="ghost" asChild className={navBtn}><Link to="/auth">Sign in</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/pricing")}`}><Link to="/pricing" aria-current={on("/pricing") ? "page" : undefined}>Pricing</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/billing")}`}><Link to="/billing" aria-current={on("/billing") ? "page" : undefined}>Billing</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/auth")}`}><Link to="/auth" aria-current={on("/auth") ? "page" : undefined}>Sign in</Link></Button>
               <Button asChild className={navBtn}><Link to="/auth?mode=signup">Start free</Link></Button>
             </>
           )}
@@ -84,25 +86,25 @@ export default function SiteHeader() {
                 <Link to="/create" onClick={close} className="mb-2 flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 font-semibold text-primary-foreground">
                   <Plus className="h-4 w-4" />Create video
                 </Link>
-                <Link to="/from-url" onClick={close} className={mobileLink}>Article to video</Link>
-                <Link to="/series" onClick={close} className={mobileLink}>Series generator</Link>
-                <Link to="/dashboard" onClick={close} className={mobileLink}>My videos</Link>
-                <Link to="/library" onClick={close} className={mobileLink}>My Library</Link>
-                <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>
+                <Link to="/from-url" onClick={close} className={`${mobileLink} ${on("/from-url")}`}>Article to video</Link>
+                <Link to="/series" onClick={close} className={`${mobileLink} ${on("/series")}`}>Series generator</Link>
+                <Link to="/dashboard" onClick={close} className={`${mobileLink} ${on("/dashboard")}`}>My videos</Link>
+                <Link to="/library" onClick={close} className={`${mobileLink} ${on("/library")}`}>My Library</Link>
+                <Link to="/pricing" onClick={close} className={`${mobileLink} ${on("/pricing")}`}>Pricing</Link>
                 <Link to="/billing" onClick={close} className={`${balancePill} mb-2 w-full justify-center ${low ? "border-primary/60 text-primary" : ""}`}>
                   <Coins className="h-4 w-4 text-primary" />
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
-                <Link to="/billing" onClick={close} className={mobileLink}>Billing</Link>
+                <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Billing</Link>
                 <button onClick={doSignOut} className={`${mobileLink} flex w-full items-center gap-2 text-left text-muted-foreground`}>
                   <LogOut className="h-4 w-4" />Sign out
                 </button>
               </>
             ) : (
               <>
-                <Link to="/pricing" onClick={close} className={mobileLink}>Pricing</Link>
-                <Link to="/billing" onClick={close} className={mobileLink}>Billing</Link>
-                <Link to="/auth" onClick={close} className={mobileLink}>Sign in</Link>
+                <Link to="/pricing" onClick={close} className={`${mobileLink} ${on("/pricing")}`}>Pricing</Link>
+                <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Billing</Link>
+                <Link to="/auth" onClick={close} className={`${mobileLink} ${on("/auth")}`}>Sign in</Link>
                 <Link to="/auth?mode=signup" onClick={close} className="mt-2 block rounded-md bg-primary px-3 py-3 text-center font-semibold text-primary-foreground">Start free</Link>
               </>
             )}
