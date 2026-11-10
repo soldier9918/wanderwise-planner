@@ -221,6 +221,18 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
           {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator, long videos and 1080p.</p>}
           <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
+        {fromUrl && (
+          <section className="mt-6 rounded-xl border border-border bg-card p-6 text-sm">
+            <h2 className="font-display text-lg font-bold">Troubleshooting</h2>
+            <ul className="mt-3 grid list-disc gap-2 pl-5 text-muted-foreground">
+              <li>Use the full link to the article itself, starting with https:// — not a home page, search page or social media post.</li>
+              <li>Pages behind a login or paywall, or ones that are mostly video, can't be read. Try a free, public version of the story.</li>
+              <li>If you see "No scenes were written", the page may have very little text. Try another link or add more detail in "Angle or focus".</li>
+              <li>If the video misses parts of the article, open the article in another tab and compare, then use "Angle or focus" to say what to cover.</li>
+              <li>Still stuck? Email <a href="mailto:contact@vydora.ai" className="text-primary underline">contact@vydora.ai</a> with the link you used.</li>
+            </ul>
+          </section>
+        )}
       </main>
     </div>
   );
