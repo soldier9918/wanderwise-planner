@@ -87,7 +87,7 @@ export default function SubscriptionPlans() {
     <section id="subscriptions" className="mt-10 scroll-mt-24 border-t border-border pt-8">
       <h2 className="flex items-center gap-2 text-2xl font-bold"><Crown className="h-6 w-6 text-primary" />Subscriptions</h2>
       <p className="mt-2 text-sm text-muted-foreground">Current plan: <span className="font-semibold text-foreground">{current}</span>
-        {active?.current_period_end && <> · {active.cancel_at_period_end ? "ends" : "renews"} {new Date(active.current_period_end).toLocaleDateString()}</>}
+        {active?.current_period_end && <> · {active.cancel_at_period_end ? "ends" : "renews"} {fmtDate(active.current_period_end)}</>}
         {active?.status === "past_due" && <span className="text-primary"> · payment overdue</span>}</p>
       {pending && <p className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium">
         Scheduled downgrade: {current} → {pendingName} on {fmtDate(pending.effective_at)}.
