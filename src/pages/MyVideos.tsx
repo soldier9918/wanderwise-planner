@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, ImagePlus, Plus } from "lucide-react";
+import { ChevronDown, Copy, ImagePlus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
@@ -27,6 +27,7 @@ export default function MyVideos() {
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [dupBusy, setDupBusy] = useState<string | null>(null);
   const duplicate = async (videoId: string) => {
     setDupBusy(videoId);
@@ -120,8 +121,13 @@ export default function MyVideos() {
             if (!list.length) return null;
             return (
               <section key={g.kind} className="mt-4 first:mt-0">
-                <h2 className="mb-3 font-display text-xl font-bold">{g.label} <span className="text-sm font-normal text-muted-foreground">({list.length})</span></h2>
-                <div className="grid gap-3">
+                <h2 className="mb-3 font-display text-xl font-bold">
+                  <button type="button" aria-expanded={!collapsed[g.kind]} onClick={() => setCollapsed((c) => ({ ...c, [g.kind]: !c[g.kind] }))} className="inline-flex items-center gap-2 hover:text-primary">
+                    <ChevronDown className={`h-5 w-5 transition-transform ${collapsed[g.kind] ? "-rotate-90" : ""}`} />
+                    {g.label} <span className="text-sm font-normal text-muted-foreground">({list.length})</span>
+                  </button>
+                </h2>
+                <div className={collapsed[g.kind] ? "hidden" : "grid gap-3"}>
           {list.map((v) => (
             <Link key={v.id} to={`/video/${v.id}`} className="group flex gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary">
               {v.thumb ? (
