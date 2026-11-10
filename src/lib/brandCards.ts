@@ -53,3 +53,9 @@ export async function storeCards(userId: string, cards: BrandCards) {
   const { error } = await supabase.from("user_brand_cards").upsert({ user_id: userId, cards: c as any, updated_at: new Date().toISOString() });
   if (error) throw error;
 }
+
+/** Save one card only — the other one keeps whatever is already stored. */
+export async function storeCard(userId: string, which: keyof BrandCards, card: BrandCard) {
+  const current = await fetchCards(userId);
+  await storeCards(userId, { ...current, [which]: card });
+}
