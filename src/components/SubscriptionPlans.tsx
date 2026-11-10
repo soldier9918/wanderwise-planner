@@ -64,18 +64,18 @@ export default function SubscriptionPlans() {
       {active && <Button className="mt-4" variant="outline" disabled={!!busy} onClick={() => go("customer-portal", "portal")}>{busy === "portal" && <Loader2 className="h-4 w-4 animate-spin" />}Manage subscription & invoices</Button>}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {PLANS.map((p) => (
-          <div key={p.name} className={`rounded-xl border bg-card p-6 ${p.featured ? "border-primary" : "border-border"}`}>
+          <div key={p.name} className={`flex flex-col rounded-xl border bg-card p-6 ${p.featured ? "border-primary" : "border-border"}`}>
             <p className="font-semibold text-muted-foreground">{p.name}</p>
             <p className="mt-2 font-display text-3xl font-extrabold">{p.price}<span className="text-base font-semibold text-muted-foreground">{p.name === "Free" ? "" : "/mo"}</span></p>
             <p className="mt-1 font-semibold text-primary">{p.credits}</p>
-            <ul className="mt-4 grid gap-2 text-sm">
+            <ul className="mt-4 mb-5 grid flex-1 content-start gap-2 text-sm">
               {p.perks.map((k) => <li key={k} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{k}</li>)}
             </ul>
             {p.name === "Free" ? (
-              <Button className="mt-5 w-full" variant="outline" disabled>{active ? "Free tier" : "Current plan"}</Button>
+              <Button className="mt-auto w-full" variant="outline" disabled>{active ? "Free tier" : "Current plan"}</Button>
             ) : (
-              current === p.name ? <Button className="mt-5 w-full" variant="outline" disabled>Current plan</Button>
-              : <Button className="mt-5 w-full" variant={p.featured ? "default" : "outline"} disabled={!!busy}
+              current === p.name ? <Button className="mt-auto w-full" variant="outline" disabled>Current plan</Button>
+              : <Button className="mt-auto w-full" variant={p.featured ? "default" : "outline"} disabled={!!busy}
                   onClick={() => active ? go("customer-portal", "portal") : go("create-checkout", p.tier!, { plan: p.tier })}>
                   {busy === p.tier && <Loader2 className="h-4 w-4 animate-spin" />}{active ? `Switch to ${p.name}` : `Subscribe to ${p.name}`}</Button>
             )}
