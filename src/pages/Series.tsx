@@ -120,7 +120,7 @@ export default function Series() {
                   <Textarea value={ep.synopsis} onChange={(e) => editEp(i, "synopsis", e.target.value)} className="mt-2" rows={3} />
                   <div className="mt-3 flex justify-end">
                     {made[i] ? (
-                      <Button variant="outline" asChild><Link to={`/video/${made[i]}`}><ExternalLink className="h-4 w-4" />Open in editor</Link></Button>
+                      <Button variant="outline" asChild><Link to={`/video/${made[i]}?autogen=1`}><ExternalLink className="h-4 w-4" />Open in editor</Link></Button>
                     ) : (
                       <Button variant="secondary" onClick={() => createEpisode(i).catch(() => {})} disabled={creating !== null}>
                         {creating === i && <Loader2 className="h-4 w-4 animate-spin" />}Create this episode

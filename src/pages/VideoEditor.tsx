@@ -336,9 +336,12 @@ export default function VideoEditor() {
   }, [runAsset]);
 
   useEffect(() => {
-    if (data && params.get("autogen") && !autoStarted.current) {
+    if (!data || autoStarted.current) return;
+    // Videos created elsewhere (e.g. the Series page) arrive with no media yet — start them too.
+    const untouched = data.scenes.length > 0 && data.scenes.every((s) => !s.image_path && !s.audio_path && !s.clip_path);
+    if (params.get("autogen") || untouched) {
       autoStarted.current = true;
-      setParams({}, { replace: true });
+      if (params.get("autogen")) setParams({}, { replace: true });
       generateMissing(data.scenes);
     }
   }, [data, params, setParams, generateMissing]);
