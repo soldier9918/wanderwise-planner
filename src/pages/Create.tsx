@@ -233,6 +233,20 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             </ul>
           </section>
         )}
+        {!fromUrl && (
+          <section className="mt-6 rounded-xl border border-border bg-card p-6 text-sm">
+            <h2 className="font-display text-lg font-bold">Troubleshooting</h2>
+            <ul className="mt-3 grid list-disc gap-2 pl-5 text-muted-foreground">
+              <li>The <span className="text-foreground">Generate video</span> button stays greyed out if a narrator, scene count, length or quality marked 🔒 PRO is selected. Pick one without the lock, or <Link to="/billing" className="text-primary underline">subscribe to a plan</Link>.</li>
+              <li>If it says "That length doesn't fit this many scenes", choose a longer length or fewer scenes so each scene has time to breathe.</li>
+              <li>The script is written in a few seconds, then the editor opens and the pictures and voiceovers are made — that can take a few minutes for a longer video. Leave the page open while it works.</li>
+              <li>If a scene is missing its picture or voiceover, open the video again from <Link to="/dashboard" className="text-primary underline">My videos</Link> — anything missing is made automatically.</li>
+              <li>Check the credit estimate above before you press <span className="text-foreground">Generate video</span>. If your balance is too low, add credits on <Link to="/billing" className="text-primary underline">Plans &amp; Billing</Link>.</li>
+              <li>Turn on <span className="text-foreground">Use real facts</span> for real events, people or news — Vydora searches the web first and writes only from what it finds, so it takes a little longer.</li>
+              <li>Still stuck? Email <a href="mailto:contact@vydora.ai" className="text-primary underline">contact@vydora.ai</a> with what you typed and what you saw.</li>
+            </ul>
+          </section>
+        )}
       </main>
     </div>
   );
