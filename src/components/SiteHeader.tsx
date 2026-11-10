@@ -49,15 +49,15 @@ export default function SiteHeader() {
               <Button variant="ghost" asChild className={`${navBtn} ${on("/library")}`}><Link to="/library" aria-current={on("/library") ? "page" : undefined}>My Library</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/pricing")}`}><Link to="/pricing" aria-current={on("/pricing") ? "page" : undefined}>Pricing</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/billing")}`}><Link to="/billing" aria-current={on("/billing") ? "page" : undefined}>Billing</Link></Button>
-              <Button variant="outline" asChild className={`${balancePill} ${low ? "border-primary/60 text-primary" : ""}`}>
-                <Link to="/billing" aria-label="Credit balance">
+              <div className={`${balancePill} pr-1 ${low ? "border-primary/60 text-primary" : ""}`}>
+                <Link to="/billing" aria-label="Credit balance" className="inline-flex items-center gap-1.5 hover:opacity-80">
                   <Coins className="h-4 w-4 text-primary" />
                   {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
-              </Button>
-              <Link to="/billing#top-ups" aria-label="Top up credits" title="Top up credits" className="-ml-0.5 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Plus className="h-4 w-4" />
-              </Link>
+                <Link to="/billing#top-ups" aria-label="Top up credits" title="Top up credits" className="ml-1 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Plus className="h-4 w-4" />
+                </Link>
+              </div>
               <Button variant="outline" className={navBtn} onClick={doSignOut}>Sign out</Button>
             </>
           ) : (
