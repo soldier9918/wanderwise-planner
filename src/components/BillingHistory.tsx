@@ -7,6 +7,9 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
   const { data: acct } = useAccount();
   const [open, setOpen] = useState(false);
   const recent = (acct?.ledger ?? []).filter((l) => Date.now() - new Date(l.created_at).getTime() <= 30 * 864e5);
+  // Bank-statement style: balance after each entry (ledger is newest first).
+  const after: number[] = [];
+  recent.reduce((bal, l) => { after.push(bal); return bal - l.amount; }, acct?.balance ?? 0);
   return (
     <section id={part === "summary" ? "current-billing" : "billing-history"} className="mt-10 scroll-mt-24 border-t border-border pt-8">
       {part === "summary" ? <>
@@ -30,11 +33,11 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
       {open && <div className="mt-3 overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-card text-muted-foreground">
-            <tr><th scope="col" className="px-4 py-3 font-semibold">Activity / Date</th><th scope="col" className="px-4 py-3 text-right font-semibold">Credits used</th></tr>
+            <tr><th scope="col" className="px-4 py-3 font-semibold">Activity / Date</th><th scope="col" className="px-4 py-3 text-right font-semibold">Credits in / out</th><th scope="col" className="px-4 py-3 text-right font-semibold">Balance</th></tr>
           </thead>
           <tbody>{recent.length ? recent.map((l, i) => (
-            <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td></tr>
-          )) : <tr><td colSpan={2} className="px-4 py-6 text-center text-muted-foreground">No credit activity in the last 30 days.</td></tr>}</tbody>
+            <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td><td className="px-4 py-3 text-right text-muted-foreground">{after[i]}</td></tr>
+          )) : <tr><td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">No credit activity in the last 30 days.</td></tr>}</tbody>
         </table>
       </div>}
       </> : <>
