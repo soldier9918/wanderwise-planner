@@ -34,7 +34,13 @@ export default function SubscriptionPlans() {
   const current = active ? (active.plan_tier === "pro" ? "Pro" : "Creator") : "Free";
 
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("checkout");
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("checkout");
+    if (q) {
+      params.delete("checkout");
+      const rest = params.toString();
+      window.history.replaceState(window.history.state, "", window.location.pathname + (rest ? `?${rest}` : "") + window.location.hash);
+    }
     if (q === "success") {
       toast.success("Payment received. Your plan and credits will appear in a moment.");
       const t = setInterval(() => qc.invalidateQueries({ queryKey: ["account"] }), 3000);
