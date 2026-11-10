@@ -59,8 +59,7 @@ export default function SubscriptionPlans() {
       <h2 className="flex items-center gap-2 text-2xl font-bold"><Crown className="h-6 w-6 text-primary" />Subscriptions</h2>
       <p className="mt-2 text-sm text-muted-foreground">Current plan: <span className="font-semibold text-foreground">{current}</span>
         {active?.current_period_end && <> · {active.cancel_at_period_end ? "ends" : "renews"} {new Date(active.current_period_end).toLocaleDateString()}</>}
-        {active?.status === "past_due" && <span className="text-primary"> · payment overdue</span>}
-        <span className="block text-xs">Test mode: use Stripe test card 4242 4242 4242 4242. No real money is charged.</span></p>
+        {active?.status === "past_due" && <span className="text-primary"> · payment overdue</span>}</p>
       {active && <Button className="mt-4" variant="outline" disabled={!!busy} onClick={() => go("customer-portal", "portal")}>{busy === "portal" && <Loader2 className="h-4 w-4 animate-spin" />}Manage subscription & invoices</Button>}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {PLANS.map((p) => (

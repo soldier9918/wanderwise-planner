@@ -36,7 +36,7 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
       <h2 id="billing-history-title" className="mt-8 flex items-center gap-2 text-2xl font-bold">
         <ReceiptText className="h-6 w-6 text-primary" />Billing history
       </h2>
-      <p className="mt-3 text-sm text-muted-foreground">Payments are not connected yet. Your purchases and invoices will appear here after Stripe setup.</p>
+      <p className="mt-3 text-sm text-muted-foreground">Your purchases and invoices will appear here.</p>
       <div className="mt-5 overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-card text-muted-foreground">

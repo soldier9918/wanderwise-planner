@@ -81,7 +81,7 @@ export default function Pricing() {
 
 
         <section className="mt-12">
-          <h2 className="text-2xl font-bold">Plans <span className="ml-2 rounded-full border border-border px-2 py-0.5 align-middle text-xs font-semibold text-muted-foreground">Coming soon</span></h2>
+          <h2 className="text-2xl font-bold">Plans</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {PLANS.map((p) => (
               <div key={p.name} className="rounded-xl border border-border bg-card p-6">
@@ -98,7 +98,7 @@ export default function Pricing() {
           {[
             ["Why does animating cost more?", "Each animated scene is a short AI-made video clip, which takes far more computing power than a still picture."],
             ["Do redos cost credits?", "Yes — redoing an image, voiceover, script, thumbnail or SEO costs the same as making it the first time."],
-            ["What happens if I run out?", "AI steps pause until you top up. Your videos, edits and downloads stay available."],
+            ["What happens if I run out?", "AI steps pause until you subscribe or your monthly credits renew. Your videos, edits and downloads stay available."],
             ["Are estimates exact?", "They're close guides based on your settings. Redos and extra scenes add to the total."],
           ].map(([q, a]) => (
             <div key={q} className="rounded-xl border border-border bg-card p-5"><p className="font-semibold">{q}</p><p className="mt-2 text-sm text-muted-foreground">{a}</p></div>
