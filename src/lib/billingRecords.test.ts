@@ -55,3 +55,13 @@ describe("money line for each credit line", () => {
     }
   });
 });
+
+import { paidCreditsPerRow as pcr } from "./billingRecords";
+describe("paidCreditsPerRow", () => {
+  it("spends from 30 starter credits cost no money", () => {
+    expect(pcr([{ amount: -2, reason: "script" }, { amount: 30, reason: "starter" }])).toEqual([0, 0]);
+  });
+  it("spends beyond free credits count as paid", () => {
+    expect(pcr([{ amount: -5, reason: "thumbnail" }, { amount: 125, reason: "topup" }, { amount: -28, reason: "script" }, { amount: 30, reason: "starter" }])).toEqual([3, 0, 0, 0]);
+  });
+});

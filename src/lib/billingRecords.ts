@@ -62,3 +62,24 @@ export function moneyOfLedgerRow(
   }
   return null;
 }
+
+const PAID_REASONS = new Set(["topup", "subscription", "purchase"]);
+
+/**
+ * How many credits of each spend came from paid credits. Free credits (starter, referral,
+ * coupon, admin) are used first, so spending them costs the customer no money.
+ * Takes the ledger newest first; returns paid credits per row, same order.
+ */
+export function paidCreditsPerRow(ledger: { amount: number; reason: string }[]): number[] {
+  const out = new Array(ledger.length).fill(0);
+  let free = 0, paid = 0;
+  for (let i = ledger.length - 1; i >= 0; i--) {
+    const r = ledger[i];
+    if (r.amount > 0) { if (PAID_REASONS.has(r.reason)) paid += r.amount; else free += r.amount; continue; }
+    let need = -r.amount;
+    const fromFree = Math.min(free, need); free -= fromFree; need -= fromFree;
+    const fromPaid = Math.min(paid, need); paid -= fromPaid;
+    out[i] = fromPaid;
+  }
+  return out;
+}

@@ -3,7 +3,7 @@ import { ChevronDown, ReceiptText, Wallet, Activity } from "lucide-react";
 import InvoiceTable from "@/components/InvoiceTable";
 import { REASON_LABEL, used30d, useAccount } from "@/lib/account";
 import { gbp, gbpValueOf } from "@/lib/topups";
-import { moneyOfLedgerRow, paidByLedgerKey, useBillingRecords } from "@/lib/billingRecords";
+import { moneyOfLedgerRow, paidByLedgerKey, paidCreditsPerRow, useBillingRecords } from "@/lib/billingRecords";
 
 const money = (a: number, c: string) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: (c || "gbp").toUpperCase() }).format(a / 100);
@@ -18,7 +18,9 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
   recent.reduce((bal, l) => { after.push(bal); return bal - l.amount; }, acct?.balance ?? 0);
   // Money actually paid, matched to ledger rows by Stripe id.
   const paidMap = paidByLedgerKey(records ?? []);
-  const spentGBP = recent.reduce((n, l) => n + (l.amount < 0 ? gbpValueOf(l.amount) : 0), 0);
+  // Spends covered by free credits cost no money; only the paid part is valued.
+  const paidCredits = paidCreditsPerRow(acct?.ledger ?? []);
+  const spentGBP = recent.reduce((n, l, i) => n + (l.amount < 0 ? gbpValueOf(paidCredits[i]) : 0), 0);
   return (
     <section id={part === "summary" ? "current-billing" : "billing-history"} className="mt-10 scroll-mt-24 border-t border-border pt-8">
       {part === "summary" ? <>
@@ -45,14 +47,16 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
             <tr><th scope="col" className="px-4 py-3 font-semibold">Activity / Date</th><th scope="col" className="px-4 py-3 text-right font-semibold">Credits in / out</th><th scope="col" className="px-4 py-3 text-right font-semibold">Money</th><th scope="col" className="px-4 py-3 text-right font-semibold">Balance</th></tr>
           </thead>
           <tbody>{recent.length ? recent.map((l, i) => {
-            const m = moneyOfLedgerRow(l, paidMap);
+            const m = l.amount < 0
+              ? (paidCredits[i] > 0 ? moneyOfLedgerRow({ ...l, amount: -paidCredits[i] }, paidMap) : null)
+              : moneyOfLedgerRow(l, paidMap);
             return (
               <tr key={i} className="border-b border-border last:border-0"><td className="px-4 py-3">{REASON_LABEL[l.reason] ?? l.reason.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}<span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></td><td className={`px-4 py-3 text-right font-semibold ${l.amount > 0 ? "text-accent" : ""}`}>{l.amount > 0 ? `+${l.amount}` : l.amount}</td><td className={`px-4 py-3 text-right ${m ? (m.sign > 0 ? "text-accent" : "") : "text-muted-foreground"}`}>{m ? `${m.sign > 0 ? "+" : "-"}${money(m.pence, m.currency)}` : "—"}</td><td className="px-4 py-3 text-right text-muted-foreground">{after[i]}</td></tr>
             );
           }) : <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">No credit activity in the last 30 days.</td></tr>}</tbody>
         </table>
       </div>}
-      {open && <p className="mt-2 text-xs text-muted-foreground">Money lines show + for payments you made and - for credits spent. Credit lines are valued at £1 = 25 credits (the top-up rate). Free credits have no money value, shown as —.</p>}
+      {open && <p className="mt-2 text-xs text-muted-foreground">Money lines show + for payments you made and - for credits spent. Credit lines are valued at £1 = 25 credits (the top-up rate). Free credits, and anything spent from them, have no money value, shown as —.</p>}
       </> : <>
       <h2 id="billing-history-title" className="mt-8 flex items-center gap-2 text-2xl font-bold">
         <ReceiptText className="h-6 w-6 text-primary" />Billing history
