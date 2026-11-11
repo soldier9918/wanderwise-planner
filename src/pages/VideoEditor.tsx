@@ -567,6 +567,15 @@ export default function VideoEditor() {
   if (!data?.video) return <div className="grid min-h-screen place-items-center">Video not found. <Link to="/dashboard" className="text-primary">Back</Link></div>;
 
   const { video, scenes, urls } = data;
+  const rerecordCost = scenes.length * CREDIT_COSTS.voice;
+  const confirmRerecord = (what: string) => {
+    if (!scenes.length) return true;
+    if (account && !account.isAdmin && account.balance < rerecordCost) {
+      toast.error(`Changing the ${what} re-records all ${scenes.length} scenes for ${rerecordCost} credits. You don't have enough credits.`);
+      return false;
+    }
+    return confirm(`Changing the ${what} will re-record all ${scenes.length} voiceovers for ${rerecordCost} credits (${CREDIT_COSTS.voice} per scene). Continue?`);
+  };
   const captionStyle = (video.caption_style ?? "typewriter") as CaptionStyle;
   const ratio = ratioOf(video.aspect_ratio);
   const capPx = sizePx(video.caption_size);
@@ -827,17 +836,18 @@ export default function VideoEditor() {
               </label>
               <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.tier === "pro" || q.value !== "1080p" || video.quality === "1080p")} onChange={(v) => saveLook({ quality: v })} />
               <LookSelect
-                label="Scenes"
+                label={`Scenes · ${formatSeconds(totalSecs)} total`}
                 value={String(scenes.length)}
                 disabled={sceneBusy || busyAny}
                 options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: n > scenes.length ? `${n} scenes · ${CREDIT_COSTS.script + (n - scenes.length) * (CREDIT_COSTS.image + CREDIT_COSTS.voice)} cr` : `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
               <LookSelect
-                label="Narrator"
+                label={`Narrator · ${rerecordCost} cr`}
                 value={video.voice ?? "Kore"}
                 options={VOICES.filter((v) => v.id === (video.voice ?? "Kore") || voiceAllowed(v.id, account?.pro ?? false)).map((v) => ({ value: v.id, label: v.label }))}
                 onChange={async (v) => {
+                  if (!confirmRerecord("narrator")) return;
                   await saveLook({ voice: v });
                   toast.info("Narrator changed — re-recording every voiceover with the new voice…");
                   for (let i = 0; i < scenes.length; i += 3) {
@@ -848,10 +858,11 @@ export default function VideoEditor() {
                 }}
               />
               <LookSelect
-                label="Tone & emotion"
+                label={`Tone & emotion · ${rerecordCost} cr`}
                 value={video.tone ?? "engaging"}
                 options={TONES.map((v) => ({ value: v.id, label: v.label }))}
                 onChange={async (v) => {
+                  if (!confirmRerecord("tone")) return;
                   await saveLook({ tone: v });
                   toast.info("Tone changed — re-recording every voiceover…");
                   for (let i = 0; i < scenes.length; i += 3) {
@@ -874,10 +885,11 @@ export default function VideoEditor() {
                 <span className="font-normal">Speeds up the voice without changing its pitch. Free.</span>
               </div>
               <LookSelect
-                label="Accent"
+                label={`Accent · ${rerecordCost} cr`}
                 value={video.accent ?? "none"}
                 options={ACCENTS}
                 onChange={async (v) => {
+                  if (!confirmRerecord("accent")) return;
                   await saveLook({ accent: v });
                   toast.info("Accent changed — re-recording every voiceover…");
                   for (let i = 0; i < scenes.length; i += 3) {
