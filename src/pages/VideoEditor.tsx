@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { TRANSITION_SECS, TRANSITION_TYPES, layerCss, transitionAt } from "@/lib/transition";
 import { MOTION_TYPES, motionAt, motionCss, type Fx } from "@/lib/motion";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -558,7 +559,7 @@ export default function VideoEditor() {
   };
 
   const remove = async () => {
-    if (!confirm("Delete this video?")) return;
+    if (!(await confirmDialog({ title: "Delete this video?", message: "This can't be undone.", confirmText: "Delete", destructive: true }))) return;
     await supabase.from("videos").delete().eq("id", id!);
     navigate("/dashboard");
   };
@@ -568,13 +569,13 @@ export default function VideoEditor() {
 
   const { video, scenes, urls } = data;
   const rerecordCost = scenes.length * CREDIT_COSTS.voice;
-  const confirmRerecord = (what: string) => {
+  const confirmRerecord = async (what: string) => {
     if (!scenes.length) return true;
     if (account && !account.isAdmin && account.balance < rerecordCost) {
       toast.error(`Changing the ${what} re-records all ${scenes.length} scenes for ${rerecordCost} credits. You don't have enough credits.`);
       return false;
     }
-    return confirm(`Changing the ${what} will re-record all ${scenes.length} voiceovers for ${rerecordCost} credits (${CREDIT_COSTS.voice} per scene). Continue?`);
+    return confirmDialog({ title: `Change the ${what}?`, message: `This re-records all ${scenes.length} voiceovers for ${rerecordCost} credits (${CREDIT_COSTS.voice} per scene).`, confirmText: `Re-record · ${rerecordCost} cr` });
   };
   const captionStyle = (video.caption_style ?? "typewriter") as CaptionStyle;
   const ratio = ratioOf(video.aspect_ratio);
@@ -847,7 +848,7 @@ export default function VideoEditor() {
                 value={video.voice ?? "Kore"}
                 options={VOICES.filter((v) => v.id === (video.voice ?? "Kore") || voiceAllowed(v.id, account?.pro ?? false)).map((v) => ({ value: v.id, label: v.label }))}
                 onChange={async (v) => {
-                  if (!confirmRerecord("narrator")) return;
+                  if (!await confirmRerecord("narrator")) return;
                   await saveLook({ voice: v });
                   toast.info("Narrator changed — re-recording every voiceover with the new voice…");
                   for (let i = 0; i < scenes.length; i += 3) {
@@ -862,7 +863,7 @@ export default function VideoEditor() {
                 value={video.tone ?? "engaging"}
                 options={TONES.map((v) => ({ value: v.id, label: v.label }))}
                 onChange={async (v) => {
-                  if (!confirmRerecord("tone")) return;
+                  if (!await confirmRerecord("tone")) return;
                   await saveLook({ tone: v });
                   toast.info("Tone changed — re-recording every voiceover…");
                   for (let i = 0; i < scenes.length; i += 3) {
@@ -889,7 +890,7 @@ export default function VideoEditor() {
                 value={video.accent ?? "none"}
                 options={ACCENTS}
                 onChange={async (v) => {
-                  if (!confirmRerecord("accent")) return;
+                  if (!await confirmRerecord("accent")) return;
                   await saveLook({ accent: v });
                   toast.info("Accent changed — re-recording every voiceover…");
                   for (let i = 0; i < scenes.length; i += 3) {

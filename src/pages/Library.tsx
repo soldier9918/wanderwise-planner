@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, FileIcon, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -68,7 +69,7 @@ export default function Library() {
   };
 
   const remove = async (item: Item) => {
-    if (!confirm(`Delete ${item.name}?`)) return;
+    if (!(await confirmDialog({ title: "Delete file?", message: `${item.name} will be removed from your library.`, confirmText: "Delete", destructive: true }))) return;
     const { error } = await supabase.storage.from(BUCKET).remove([item.path]);
     if (error) return toast.error(error.message);
     setItems((s) => s.filter((i) => i.path !== item.path));
