@@ -8,6 +8,8 @@ export const CREDIT_COSTS = {
   thumbnail: 5,
   seo: 1,
   fullHd: 10,
+  export720: 2,
+  export1080: 5,
 } as const;
 
 export type EstimateInput = {
