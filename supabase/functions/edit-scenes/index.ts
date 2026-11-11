@@ -1,6 +1,7 @@
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
+import { resolvePaidTier, sceneChangeAllowed, FREE_MAX_SCENES } from "../_shared/tiers.ts";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
 
 const MIN_SCENES = 4;
@@ -43,6 +44,18 @@ Deno.serve(async (req) => {
     if (sErr) throw sErr;
     const scenes = sceneRows ?? [];
     const current = scenes.length;
+
+    // Tier comes only from server-side lookups for the signed-in user; request fields are ignored.
+    if (target > current) {
+      const [{ data: sub, error: subErr }, { data: isAdmin, error: roleErr }] = await Promise.all([
+        client.rpc("has_active_subscription", { _user_id: user.id }),
+        client.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+      ]);
+      if (subErr || roleErr) throw subErr ?? roleErr;
+      if (!sceneChangeAllowed(current, target, resolvePaidTier(sub, isAdmin))) {
+        return json({ error: `Free plan videos can have up to ${FREE_MAX_SCENES} scenes. Subscribe to unlock more.` }, 403);
+      }
+    }
 
     // Nothing to do.
     if (target === current) return json({ count: current, added: 0, removed: 0 });
