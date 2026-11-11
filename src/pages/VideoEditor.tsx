@@ -407,7 +407,9 @@ export default function VideoEditor() {
 
   const { data: exportInfo } = useQuery({
     queryKey: ["export-check", id, exportFormat, data?.video?.updated_at, data?.scenes?.map((s) => `${s.id}:${s.position}:${s.image_path}:${s.audio_path}:${s.clip_path}:${s.narration}`).join("|"), account?.balance],
-    queryFn: () => checkExport(id!, exportFormat),
+    // Scenes can still be painting on the server; treat a failed check as "not ready yet".
+    queryFn: () => checkExport(id!, exportFormat).catch(() => null),
+    retry: false,
     enabled: !!id && !!data?.scenes?.length && data.scenes.every((s) => !!s.image_path),
     staleTime: 30_000,
   });
