@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { generateThumbnail, signedUrls } from "@/lib/videoApi";
+import { CREDIT_COSTS } from "@/lib/credits";
 import { estimateCredits } from "@/lib/credits";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 
@@ -150,7 +151,7 @@ export default function MyVideos() {
                   onClick={(e) => { e.preventDefault(); makeThumbnail(v.id); }}
                 >
                   <ImagePlus className="h-4 w-4" />
-                  {thumbBusy === v.id ? "Creating…" : v.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"}
+                  {thumbBusy === v.id ? "Creating…" : v.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"} · {CREDIT_COSTS.thumbnail} cr
                 </Button>
                 <Button type="button" variant="outline" size="sm" className="ml-2 mt-3" disabled={dupBusy === v.id || readOnly}
                   onClick={(e) => { e.preventDefault(); duplicate(v.id); }}>

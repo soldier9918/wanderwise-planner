@@ -811,7 +811,7 @@ export default function VideoEditor() {
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
-                Generate missing assets
+                Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
               </Button>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
@@ -828,7 +828,7 @@ export default function VideoEditor() {
                 label="Scenes"
                 value={String(scenes.length)}
                 disabled={sceneBusy || busyAny}
-                options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: `${n} scenes` }))}
+                options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: n > scenes.length ? `${n} scenes · ${CREDIT_COSTS.script + (n - scenes.length) * (CREDIT_COSTS.image + CREDIT_COSTS.voice)} cr` : `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
               <LookSelect
@@ -1067,7 +1067,7 @@ export default function VideoEditor() {
                   {thumbBusy ? "Creating…" : video.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"} · {CREDIT_COSTS.thumbnail} cr
                 </Button>
                 {video.thumbnail_path && (
-                  <Button size="sm" variant="outline" onClick={() => makeThumbnail({ mode: "text", textSize: thumbSize })} disabled={thumbBusy}>Redo text</Button>
+                  <Button size="sm" variant="outline" onClick={() => makeThumbnail({ mode: "text", textSize: thumbSize })} disabled={thumbBusy}>Redo text · {CREDIT_COSTS.thumbnail} cr</Button>
                 )}
                 {video.thumbnail_path && urls[video.thumbnail_path] && (
                   <Button size="sm" variant="secondary" onClick={downloadThumbnail}>Download thumbnail</Button>
@@ -1083,7 +1083,7 @@ export default function VideoEditor() {
               {video.thumbnail_path && (
                 <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const t = thumbText.trim(); if (t) makeThumbnail({ mode: "text", text: t, textSize: thumbSize }); }}>
                   <Input value={thumbText} onChange={(e) => setThumbText(e.target.value)} maxLength={80} placeholder="Your own thumbnail text" className="h-9" />
-                  <Button size="sm" type="submit" disabled={thumbBusy || !thumbText.trim()}>Add text</Button>
+                  <Button size="sm" type="submit" disabled={thumbBusy || !thumbText.trim()}>Add text · {CREDIT_COSTS.thumbnail} cr</Button>
                 </form>
               )}
             </div>
@@ -1183,7 +1183,7 @@ export default function VideoEditor() {
                     <Button size="sm" variant="ghost" onClick={() => removeClip(s)}>Use still image</Button>
                   )}
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-script`] || working[`${s.id}-audio`]} onClick={() => redoScript(s)}>
-                    {working[`${s.id}-script`] ? "Rewriting…" : "Redo script"} · {CREDIT_COSTS.script} cr
+                    {working[`${s.id}-script`] ? "Rewriting…" : "Redo script & voiceover"} · {CREDIT_COSTS.script + CREDIT_COSTS.voice} cr
                   </Button>
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-audio`]} onClick={() => runAsset(s, "audio").catch(() => {})}>
                     {working[`${s.id}-audio`] ? "Recording…" : s.audio_path ? "Redo voiceover" : "Make voiceover"} · {CREDIT_COSTS.voice} cr

@@ -123,7 +123,7 @@ export default function Series() {
                       <Button variant="outline" asChild><Link to={`/video/${made[i]}?autogen=1`}><ExternalLink className="h-4 w-4" />Open in editor</Link></Button>
                     ) : (
                       <Button variant="secondary" onClick={() => createEpisode(i).catch(() => {})} disabled={creating !== null}>
-                        {creating === i && <Loader2 className="h-4 w-4 animate-spin" />}Create this episode
+                        {creating === i && <Loader2 className="h-4 w-4 animate-spin" />}Create this episode · {perEpisode} cr
                       </Button>
                     )}
                   </div>
@@ -132,7 +132,7 @@ export default function Series() {
             </div>
             <div className="mt-6 flex justify-end">
               <Button onClick={createAll} disabled={creating !== null || Object.keys(made).length === plan.episodes.length}>
-                {creating !== null && <Loader2 className="h-4 w-4 animate-spin" />}Create all episodes
+                {creating !== null && <Loader2 className="h-4 w-4 animate-spin" />}Create all episodes · {perEpisode * (plan.episodes.length - Object.keys(made).length)} cr
               </Button>
             </div>
           </section>
