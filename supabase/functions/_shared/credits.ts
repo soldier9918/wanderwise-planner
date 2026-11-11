@@ -1,7 +1,7 @@
 import { adminClient, json } from "./common.ts";
 
 // Must match src/lib/credits.ts CREDIT_COSTS.
-export const COSTS = { script: 2, facts: 2, image: 3, voice: 2, animate: 25, thumbnail: 5, seo: 1, fullHd: 10, export720: 2, export1080: 5 } as const;
+export const COSTS = { script: 2, facts: 2, image: 3, voice: 2, animate: 25, thumbnail: 5, seo: 1, export720: 2, export1080: 5 } as const;
 
 /** Atomically deducts credits (admins are free). Returns an error Response if the balance is too low. */
 export async function charge(userId: string, amount: number, reason: string): Promise<Response | null> {

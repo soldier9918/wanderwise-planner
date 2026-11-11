@@ -1,5 +1,5 @@
 import { charge, refund, COSTS } from "../_shared/credits.ts";
-import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, qualityAllowedForTier } from "../_shared/tiers.ts";
+import { voiceAllowed, scenesAllowedForTier, planTierOf, lengthAllowedForPlan, qualityAllowedForPlan } from "../_shared/tiers.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
@@ -52,16 +52,18 @@ Deno.serve(async (req) => {
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
     const { topic: topicIn, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn, sourceUrl, narrationSpeed, accent: accentIn } = await req.json();
-    const [{ data: sub }, { data: isAdmin }] = await Promise.all([
+    const [{ data: sub }, { data: isAdmin }, { data: subRow }] = await Promise.all([
       auth.client.rpc("has_active_subscription", { _user_id: auth.user.id }),
       auth.client.rpc("has_role", { _user_id: auth.user.id, _role: "admin" }),
+      adminClient().from("user_subscriptions").select("plan_tier").eq("user_id", auth.user.id).maybeSingle(),
     ]);
     const pro = !!isAdmin || sub === true;
+    const tier = planTierOf(isAdmin, sub, subRow?.plan_tier);
     if (!voiceAllowed(String(voice), pro)) return json({ error: "That narrator is on paid plans. Subscribe to unlock it." }, 403);
     if (!scenesAllowedForTier(Number(sceneCount) || 6, pro)) return json({ error: "Free plan videos can have up to 6 scenes. Subscribe to unlock more." }, 403);
-    if (targetSeconds && !lengthAllowedForTier(Number(targetSeconds), pro)) return json({ error: "Free plan videos can be up to 2 minutes. Subscribe to unlock longer videos." }, 403);
+    if (targetSeconds && !lengthAllowedForPlan(Number(targetSeconds), tier)) return json({ error: tier === "free" ? "Free plan videos can be up to 2 minutes. Subscribe to unlock longer videos." : "Creator videos can be up to 20 minutes. Upgrade to Pro for up to 60 minutes." }, 403);
     const tone = typeof toneIn === "string" && TONES[toneIn] ? toneIn : "engaging";
-    if (!qualityAllowedForTier(String(quality), pro)) return json({ error: "1080p Full HD is on paid plans. Upgrade to unlock it." }, 403);
+    if (!qualityAllowedForPlan(String(quality), tier)) return json({ error: "1080p Full HD is a Pro feature. Upgrade to Pro to unlock it." }, 403);
     const qual = ["720p", "1080p"].includes(quality) ? quality : "720p";
     const caption = ["typewriter", "pop", "sentence", "full", "none"].includes(captionStyle) ? captionStyle : "typewriter";
     const ratio = ["16:9", "9:16", "1:1", "4:5", "21:9"].includes(aspectRatio) ? aspectRatio : "16:9";
@@ -85,7 +87,7 @@ Deno.serve(async (req) => {
     let topic = typeof topicIn === "string" ? topicIn : "";
     if (!srcUrl && topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(50, Math.max(3, Number(sceneCount) || 6));
-    const cost = COSTS.script + (useFacts || srcUrl ? COSTS.facts : 0) + (qual === "1080p" ? COSTS.fullHd : 0);
+    const cost = COSTS.script + (useFacts || srcUrl ? COSTS.facts : 0);
     const denied = await charge(auth.user.id, cost, "video_script");
     if (denied) return denied;
     let charged = cost;

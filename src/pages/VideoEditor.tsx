@@ -825,7 +825,7 @@ export default function VideoEditor() {
                 Format
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
-              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.pro || q.value !== "1080p" || video.quality === "1080p")} onChange={(v) => saveLook({ quality: v })} />
+              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.tier === "pro" || q.value !== "1080p" || video.quality === "1080p")} onChange={(v) => saveLook({ quality: v })} />
               <LookSelect
                 label="Scenes"
                 value={String(scenes.length)}

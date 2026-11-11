@@ -1,5 +1,6 @@
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
 import { charge, refund } from "../_shared/credits.ts";
+import { planTierOf } from "../_shared/tiers.ts";
 import { effectiveQuality, exportFormat, exportCost, maxExportBytes, versionHash, exportDecision, RENDER_TIMEOUT_MS } from "../_shared/exports.ts";
 
 // Secure export flow: check → start (charge + signed upload) → browser renders & uploads → complete | fail (refund once).
@@ -68,9 +69,11 @@ Deno.serve(async (req) => {
       db.from("credit_ledger").select("amount").eq("user_id", uid),
       db.from("credit_ledger").select("id").eq("user_id", uid).in("reason", PAID_REASONS).gt("amount", 0).limit(1),
     ]);
+    const { data: subRow } = await db.from("user_subscriptions").select("plan_tier").eq("user_id", uid).maybeSingle();
     if (!scenes?.length || scenes.some((s) => !s.image_path)) return json({ error: "Every scene needs an image before exporting." }, 400);
     const admin = isAdmin === true, paid = admin || sub === true;
-    const quality = effectiveQuality(video.quality, paid);
+    // 1080p exports are Pro (or admin) only; Free and Creator always render 720p.
+    const quality = effectiveQuality(video.quality, planTierOf(admin, sub, subRow?.plan_tier) === "pro");
     const format = exportFormat(body.format);
     const watermark = !admin && !(paidRow?.length);
     const hash = await versionHash(video, scenes, cardRow?.cards ?? null, { quality, format, watermark });

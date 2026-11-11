@@ -19,3 +19,11 @@ export const sceneChangeAllowed = (current: number, target: number, paid: boolea
 export const canMutateProject = (isAdmin: unknown, hasActiveSub: unknown, balance: number) =>
   resolvePaidTier(hasActiveSub, isAdmin) || balance > 0;
 export const READ_ONLY_MESSAGE = "This project is read-only because you have 0 credits. Top up or subscribe to edit it.";
+
+/** Plan tiers: Free (2 min, 720p), Creator (20 min, 720p), Pro (60 min, 720p/1080p). Admins count as Pro. */
+export type PlanTier = "free" | "creator" | "pro";
+export const MAX_SECONDS_BY_TIER: Record<PlanTier, number> = { free: 120, creator: 1200, pro: 3600 };
+export const planTierOf = (isAdmin: unknown, hasActiveSub: unknown, planTier: unknown): PlanTier =>
+  isAdmin === true ? "pro" : hasActiveSub === true ? (planTier === "pro" ? "pro" : "creator") : "free";
+export const lengthAllowedForPlan = (seconds: number, tier: PlanTier) => seconds <= MAX_SECONDS_BY_TIER[tier];
+export const qualityAllowedForPlan = (quality: string, tier: PlanTier) => quality !== "1080p" || tier === "pro";

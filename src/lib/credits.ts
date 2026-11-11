@@ -1,4 +1,4 @@
-// Credit prices for each AI action. Browser-only features are free; 1080p export carries a flat premium.
+// Credit prices for each AI action. Browser-only features are free; exports cost 2 (720p) or 5 (1080p, Pro only).
 export const CREDIT_COSTS = {
   script: 2,
   facts: 2,
@@ -7,7 +7,6 @@ export const CREDIT_COSTS = {
   animate: 25,
   thumbnail: 5,
   seo: 1,
-  fullHd: 10,
   export720: 2,
   export1080: 5,
 } as const;
@@ -32,7 +31,6 @@ export function costBreakdown(i: EstimateInput): CostLine[] {
   if (i.animated) lines.push({ label: `${i.animated} animated scenes`, credits: i.animated * c.animate });
   if (i.thumbnail) lines.push({ label: "Thumbnail", credits: c.thumbnail });
   if (i.seo) lines.push({ label: "SEO titles & tags", credits: c.seo });
-  if (i.quality === "1080p") lines.push({ label: "1080p Full HD export", credits: c.fullHd });
   return lines;
 }
 

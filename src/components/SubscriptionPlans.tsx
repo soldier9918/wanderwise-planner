@@ -21,8 +21,8 @@ const PLANS = [
       '“Made with Vydora” badge on downloads',
     ],
   },
-  { name: "Creator", tier: "creator", price: "£19", credits: "600 credits / month", perks: ["All narrators unlocked", "Videos up to 60 minutes", "No watermark", "1080p Full HD"] },
-  { name: "Pro", tier: "pro", price: "£49", credits: "2,000 credits / month", perks: ["Everything in Creator", "3× more credits", "Best for daily uploads"], featured: true },
+  { name: "Creator", tier: "creator", price: "£19", credits: "600 credits / month", perks: ["All narrators unlocked", "Videos up to 20 minutes · 720p HD", "Up to 50 scenes", "No watermark"] },
+  { name: "Pro", tier: "pro", price: "£49", credits: "2,000 credits / month", perks: ["Everything in Creator", "Videos up to 60 minutes", "1080p Full HD exports", "3× more credits"], featured: true },
 ];
 
 export default function SubscriptionPlans() {

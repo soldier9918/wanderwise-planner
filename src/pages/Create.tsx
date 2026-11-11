@@ -20,7 +20,7 @@ import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
 import { estimateCredits } from "@/lib/credits";
 import { useAccount } from "@/lib/account";
-import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, qualityAllowedForTier, FREE_MAX_SCENES } from "@/lib/tiers";
+import { voiceAllowed, scenesAllowedForTier, lengthAllowedForPlan, qualityAllowedForPlan, FREE_MAX_SCENES } from "@/lib/tiers";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene } from "@/lib/durations";
 
 export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
@@ -37,6 +37,9 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
   const [length, setLength] = useState("60");
   const { data: account } = useAccount();
   const pro = account?.pro ?? false;
+  const tier = account?.tier ?? "free";
+  const lengthAllowedForTier = (sec: number, _p: boolean) => lengthAllowedForPlan(sec, tier);
+  const qualityAllowedForTier = (q: string, _p: boolean) => qualityAllowedForPlan(q, tier);
   const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForTier(Number(scenes), pro) && qualityAllowedForTier(quality, pro);
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [useFacts, setUseFacts] = useState(false);
@@ -218,7 +221,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
             <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
           </p>
-          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator, long videos and 1080p.</p>}
+          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator and longer videos (Creator: 20 min, Pro: 60 min + 1080p).</p>}
           <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
         {fromUrl && (

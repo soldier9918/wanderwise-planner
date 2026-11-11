@@ -1,3 +1,4 @@
+import { planTierOf } from "@/lib/tiers";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,7 +43,7 @@ export function useAccount() {
       ]);
       const subscription = sub && isActiveStatus(sub.status) ? sub : null;
       const rows = (ledger ?? []) as LedgerRow[];
-      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, subscription: sub ?? null, pro: !!admin || !!subscription, watermark: !admin && needsWatermark(rows) };
+      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, subscription: sub ?? null, pro: !!admin || !!subscription, tier: planTierOf(!!admin, !!subscription, subscription?.plan_tier), watermark: !admin && needsWatermark(rows) };
     },
   });
 }

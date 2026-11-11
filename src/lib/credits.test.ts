@@ -7,7 +7,7 @@ describe("credit estimates", () => {
   it("thumbnail + SEO adds 6", () => expect(estimateCredits({ scenes: 6, thumbnail: true, seo: true })).toBe(38));
 });
 
-describe("1080p surcharge", () => {
+describe("no 1080p creation fee", () => {
   it("720p adds nothing", () => expect(estimateCredits({ scenes: 6, quality: "720p" })).toBe(32));
-  it("1080p adds 10 credits", () => expect(estimateCredits({ scenes: 6, quality: "1080p" })).toBe(42));
+  it("1080p costs the same as 720p at creation", () => expect(estimateCredits({ scenes: 6, quality: "1080p" })).toBe(32));
 });
