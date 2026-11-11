@@ -16,7 +16,9 @@ const MENU = [
   { label: "✨ Animate scene", credits: CREDIT_COSTS.animate, note: "Per scene — AI video is costly to make" },
   { label: "Thumbnail", credits: CREDIT_COSTS.thumbnail, note: "Per thumbnail or text redo" },
   { label: "SEO titles, description & tags", credits: CREDIT_COSTS.seo, note: "Per generation" },
-  { label: "1080p Full HD export", credits: CREDIT_COSTS.fullHd, note: "Once per video — 720p HD is free" },
+  { label: "1080p Full HD video setting", credits: CREDIT_COSTS.fullHd, note: "Once per video" },
+  { label: "Export a new 720p video", credits: CREDIT_COSTS.export720, note: "Per new version — re-downloading an unchanged export is free" },
+  { label: "Export a new 1080p video", credits: CREDIT_COSTS.export1080, note: "Per new version — re-downloading an unchanged export is free" },
   { label: "Music, sound effects, camera motion, transitions, captions, 720p download", credits: 0, note: "Always free" },
 ];
 

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, animateScene, generateSeo, type Scene, type Seo } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, animateScene, generateSeo, checkExport, startExport, completeExport, failExport, type Scene, type Seo } from "@/lib/videoApi";
 import { Input } from "@/components/ui/input";
 import { exportVideo, canRecordMp4 } from "@/lib/exportVideo";
 import { fetchCards, isActive, type BrandCard } from "@/lib/brandCards";
@@ -405,13 +405,30 @@ export default function VideoEditor() {
     refresh();
   };
 
+  const { data: exportInfo } = useQuery({
+    queryKey: ["export-check", id, exportFormat, data?.video?.updated_at, data?.scenes?.map((s) => `${s.id}:${s.position}:${s.image_path}:${s.audio_path}:${s.clip_path}:${s.narration}`).join("|"), account?.balance],
+    queryFn: () => checkExport(id!, exportFormat),
+    enabled: !!id && !!data?.scenes?.length && data.scenes.every((s) => !!s.image_path),
+    staleTime: 30_000,
+  });
+
   const download = async () => {
     if (!data) return;
     const missing = data.scenes.some((s) => !s.image_path);
     if (missing) return toast.error("Every scene needs an image before exporting.");
     setPlaying(null);
     setExportPct(0);
+    const name = `${(data.video?.title ?? "video").replace(/[^\w\s-]/g, "").trim() || "video"}`;
+    let job: Extract<Awaited<ReturnType<typeof startExport>>, { decision: "render" }> | null = null;
     try {
+      // Server decides: identical stored export = free download; otherwise it charges and reserves an upload slot.
+      const start = await startExport(id!, exportFormat);
+      if (start.decision === "download") {
+        const a = document.createElement("a"); a.href = start.url; a.download = name; a.click();
+        toast.success("Downloaded your saved export — no credits used.");
+        return;
+      }
+      job = start;
       const cards = await fetchCards(data.video?.user_id);
       const cardPaths = [cards.intro, cards.outro].filter((c) => isActive(c) && c.mode === "clip" && c.clipPath).map((c) => c.clipPath!);
       const cardUrls = cardPaths.length ? await signedUrls(cardPaths) : {};
@@ -422,7 +439,7 @@ export default function VideoEditor() {
         ((data.video?.caption_style ?? "typewriter") as CaptionStyle),
         { font: data.video?.caption_font, color: data.video?.caption_color, size: data.video?.caption_size },
         data.video?.aspect_ratio ?? "16:9",
-        account?.pro ? (data.video?.quality ?? "720p") : "720p",
+        job.quality,
         {
           mood: data.video?.music_mood ?? "none",
           enabled: data.video?.music_enabled ?? true,
@@ -438,21 +455,28 @@ export default function VideoEditor() {
           logoUrl: data.video?.logo_path ? data.urls[data.video.logo_path] : null,
           logoPosition: data.video?.logo_position,
           logoOpacity: data.video?.logo_opacity,
-          format: exportFormat,
-          watermark: account?.watermark ?? true,
+          format: job.format as "mp4" | "webm",
+          watermark: job.watermark,
           intro: toCard(cards.intro),
           outro: toCard(cards.outro),
         },
       );
       const ext = blob.type.startsWith("video/mp4") ? "mp4" : "webm";
       if (exportFormat === "mp4" && ext === "webm") toast.info("This browser can't record MP4, so you got WebM. Try Safari or an up-to-date Chrome/Edge for MP4.");
+      if (blob.size > job.maxBytes) throw new Error("This video is too large to save. Try 720p or fewer scenes.");
+      const { error: upErr } = await supabase.storage.from("video-assets").uploadToSignedUrl(job.path, job.token, blob, { contentType: blob.type });
+      if (upErr) throw upErr;
+      await completeExport(job.exportId);
+      job = null;
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${(data.video?.title ?? "video").replace(/[^\w\s-]/g, "").trim() || "video"}.${ext}`;
+      a.download = `${name}.${ext}`;
       a.click();
-      toast.success("Video downloaded");
+      toast.success("Video downloaded and saved — downloading it again is free until you change it.");
+      qc.invalidateQueries({ queryKey: ["export-check", id] });
     } catch (e) {
-      toast.error(`Export failed: ${(e as Error).message}`);
+      if (job) { await failExport(job.exportId).catch(() => {}); toast.error(`Export failed: ${(e as Error).message}. Your credits were refunded.`); }
+      else toast.error(`Export failed: ${(e as Error).message}`);
     } finally {
       setExportPct(null);
     }
@@ -783,9 +807,10 @@ export default function VideoEditor() {
                 <option value="mp4">MP4{canRecordMp4() ? "" : " (not in this browser)"}</option>
                 <option value="webm">WebM</option>
               </select>
-              <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny}>
-                {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
+              <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny || exportInfo?.decision === "insufficient" || exportInfo?.decision === "busy"}>
+                {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "download" ? "Download video · free" : exportInfo?.decision === "busy" ? "Export in progress…" : exportInfo ? `Download video · ${exportInfo.cost} cr` : "Download video"}
               </Button>
+              {exportInfo?.decision === "insufficient" && <p className="w-full text-xs text-muted-foreground">A new export needs {exportInfo.cost} credits. <Link to="/billing#top-ups" className="text-primary underline">Top up</Link> to export this version.</p>}
               {account?.watermark && <p className="w-full text-xs text-muted-foreground">Free plan: downloads include a small "Made with Vydora" badge. <Link to="/billing" className="text-primary underline">Top up</Link> to remove it.</p>}
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets
