@@ -103,3 +103,14 @@ describe("scene animation length", () => {
   it("stretches a 10s clip over a 20s scene at half speed", () => expect(clipRate(10, 20)).toBe(0.5));
   it("plays a 5s clip at normal speed in a 5s scene", () => expect(clipRate(5, 5)).toBe(1));
 });
+
+import { minScenesForSeconds, maxScenesForSeconds } from "./durations";
+describe("scenes needed per length", () => {
+  it("20 min needs 14 scenes, 60 min needs 40", () => {
+    expect(minScenesForSeconds(1200)).toBe(14);
+    expect(minScenesForSeconds(3600)).toBe(40);
+  });
+  it("30 seconds holds at most 6 scenes", () => {
+    expect(maxScenesForSeconds(30)).toBe(6);
+  });
+});

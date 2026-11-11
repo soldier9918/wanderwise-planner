@@ -62,6 +62,16 @@ export function isLengthAllowed(totalSeconds: number, scenes: number) {
   return per >= MIN_SCENE_SECONDS && per <= MAX_SCENE_SECONDS;
 }
 
+/** Fewest scenes a length needs (each scene can last at most 90s). */
+export function minScenesForSeconds(totalSeconds: number) {
+  return Math.ceil(totalSeconds / MAX_SCENE_SECONDS);
+}
+
+/** Most scenes a length can hold (each scene needs at least 5s). */
+export function maxScenesForSeconds(totalSeconds: number) {
+  return Math.floor(totalSeconds / MIN_SCENE_SECONDS);
+}
+
 /** Turns a point on the whole-video timeline into the scene it falls in and how far through it (0..1). */
 export function locateTime(sceneSecs: number[], seconds: number) {
   if (!sceneSecs.length) return { index: 0, progress: 0 };
