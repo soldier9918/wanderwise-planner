@@ -536,6 +536,15 @@ export default function VideoEditor() {
     const before = data.scenes;
     const plan = planSceneChange(before.length, target);
     if (plan.add === 0 && plan.remove === 0) return;
+    const cost = plan.add ? CREDIT_COSTS.script + plan.add * (CREDIT_COSTS.image + CREDIT_COSTS.voice) : 0;
+    if (plan.add && account && !account.isAdmin && account.balance < cost) {
+      toast.error(`Adding ${plan.add} scene${plan.add > 1 ? "s" : ""} costs ${cost} credits. You don't have enough credits.`);
+      return;
+    }
+    const ok = await confirmDialog(plan.add
+      ? { title: `Change to ${plan.target} scenes?`, message: `This writes ${plan.add} new scene${plan.add > 1 ? "s" : ""} with pictures and voiceovers for ${cost} credits.`, confirmText: `Add scenes · ${cost} cr` }
+      : { title: `Change to ${plan.target} scenes?`, message: `This removes the last ${plan.remove} scene${plan.remove > 1 ? "s" : ""} from your video. This can't be undone.`, confirmText: "Remove scenes", destructive: true });
+    if (!ok) return;
     setPlaying(null);
     setSceneBusy(true);
     const ids = new Set(before.map((s) => s.id));
