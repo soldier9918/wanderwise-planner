@@ -250,6 +250,65 @@ export type Database = {
         }
         Relationships: []
       }
+      video_exports: {
+        Row: {
+          completed_at: string | null
+          content_type: string | null
+          created_at: string
+          credits_charged: number
+          format: string
+          id: string
+          path: string | null
+          quality: string
+          refunded: boolean
+          size_bytes: number | null
+          status: string
+          user_id: string
+          version_hash: string
+          video_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          content_type?: string | null
+          created_at?: string
+          credits_charged?: number
+          format: string
+          id?: string
+          path?: string | null
+          quality: string
+          refunded?: boolean
+          size_bytes?: number | null
+          status?: string
+          user_id: string
+          version_hash: string
+          video_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          content_type?: string | null
+          created_at?: string
+          credits_charged?: number
+          format?: string
+          id?: string
+          path?: string | null
+          quality?: string
+          refunded?: boolean
+          size_bytes?: number | null
+          status?: string
+          user_id?: string
+          version_hash?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_exports_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_scenes: {
         Row: {
           audio_path: string | null
