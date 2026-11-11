@@ -42,7 +42,8 @@ export function formatSeconds(total: number) {
 
 /** Video lengths offered on the New video screen, in seconds. */
 export const VIDEO_LENGTHS = [30, 60, 120, 180, 240, 300, 420, 600, 900, 1200, 1800, 2700, 3600] as const;
-export const MIN_SCENE_SECONDS = 5;
+/** A scene shorter than this feels rushed (1 min video = at most 8 scenes). */
+export const MIN_SCENE_SECONDS = 7;
 export const MAX_SCENE_SECONDS = 90;
 
 /** Average seconds each scene should last to hit the chosen total. */
@@ -67,7 +68,7 @@ export function minScenesForSeconds(totalSeconds: number) {
   return Math.ceil(totalSeconds / MAX_SCENE_SECONDS);
 }
 
-/** Most scenes a length can hold (each scene needs at least 5s). */
+/** Most scenes a length can hold (each scene needs at least 7s). */
 export function maxScenesForSeconds(totalSeconds: number) {
   return Math.floor(totalSeconds / MIN_SCENE_SECONDS);
 }

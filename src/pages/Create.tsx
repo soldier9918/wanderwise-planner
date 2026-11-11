@@ -180,7 +180,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Label>Scenes</Label>
               <Select value={scenes} onValueChange={setScenes}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n} disabled={!scenesAllowedForTier(Number(n), pro)}>{scenesAllowedForTier(Number(n), pro) ? `${n} scenes` : `🔒 ${n} scenes · PRO`}</SelectItem>)}</SelectContent>
+                <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n} disabled={!scenesAllowedForTier(Number(n), pro) || !isLengthAllowed(Number(length), Number(n))}>{!scenesAllowedForTier(Number(n), pro) ? `🔒 ${n} scenes · PRO` : !isLengthAllowed(Number(length), Number(n)) ? `${n} scenes · ${Number(n) > maxScenesForSeconds(Number(length)) ? "too many" : "too few"} for ${formatSeconds(Number(length))}` : `${n} scenes`}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
@@ -215,7 +215,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             </div>
           </div>
           <p className="-mt-2 text-sm text-muted-foreground">
-            {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : Number(scenes) < minScenesForSeconds(Number(length)) ? `A ${formatSeconds(Number(length))} video needs at least ${minScenesForSeconds(Number(length))} scenes (each scene can last up to 90s). Pick more scenes or a shorter length.` : `A ${formatSeconds(Number(length))} video fits at most ${maxScenesForSeconds(Number(length))} scenes (each scene needs at least 5s). Pick fewer scenes or a longer length.`}
+            {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : Number(scenes) < minScenesForSeconds(Number(length)) ? `A ${formatSeconds(Number(length))} video needs at least ${minScenesForSeconds(Number(length))} scenes (each scene can last up to 90s). Pick more scenes or a shorter length.` : `A ${formatSeconds(Number(length))} video fits at most ${maxScenesForSeconds(Number(length))} scenes (each scene needs at least 7s). Pick fewer scenes or a longer length.`}
           </p>
           <p className="-mt-3 text-xs text-muted-foreground">
             Longer videos need more scenes — greyed-out lengths show how many scenes they need.

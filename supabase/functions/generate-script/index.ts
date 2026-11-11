@@ -87,6 +87,11 @@ Deno.serve(async (req) => {
     let topic = typeof topicIn === "string" ? topicIn : "";
     if (!srcUrl && topic.trim().length < 3) return json({ error: "Please describe your video idea." }, 400);
     const count = Math.min(50, Math.max(3, Number(sceneCount) || 6));
+    {
+      const t = Math.round(Number(targetSeconds)) || 0;
+      // Sensible pacing: every scene must last 7–90 seconds (e.g. no 50 scenes in a 1-minute video).
+      if (t && (t / count < 7 || t / count > 90)) return json({ error: `A ${t}s video needs between ${Math.ceil(t / 90)} and ${Math.floor(t / 7)} scenes.` }, 400);
+    }
     const cost = COSTS.script + (useFacts || srcUrl ? COSTS.facts : 0);
     const denied = await charge(auth.user.id, cost, "video_script");
     if (denied) return denied;

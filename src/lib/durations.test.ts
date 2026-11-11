@@ -110,7 +110,19 @@ describe("scenes needed per length", () => {
     expect(minScenesForSeconds(1200)).toBe(14);
     expect(minScenesForSeconds(3600)).toBe(40);
   });
-  it("30 seconds holds at most 6 scenes", () => {
-    expect(maxScenesForSeconds(30)).toBe(6);
+  it("30 seconds holds at most 4 scenes", () => {
+    expect(maxScenesForSeconds(30)).toBe(4);
+  });
+});
+
+describe("sensible scene pacing", () => {
+  it("a 1-minute video takes at most 8 scenes", () => {
+    expect(maxScenesForSeconds(60)).toBe(8);
+    expect(isLengthAllowed(60, 50)).toBe(false);
+    expect(isLengthAllowed(60, 8)).toBe(true);
+  });
+  it("50 scenes needs at least ~6 minutes", () => {
+    expect(isLengthAllowed(300, 50)).toBe(false);
+    expect(isLengthAllowed(420, 50)).toBe(true);
   });
 });
