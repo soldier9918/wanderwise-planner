@@ -1,16 +1,26 @@
 import Stripe from "npm:stripe@17.7.0";
 
-// TEST mode only: uses the restricted test key. Live keys are not wired up yet.
-export const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { apiVersion: "2024-11-20.acacia" });
+// Live mode turns on only once STRIPE_LIVE_SECRET_KEY is saved; until then everything stays in TEST mode.
+const LIVE_KEY = Deno.env.get("STRIPE_LIVE_SECRET_KEY");
+export const LIVE = !!LIVE_KEY;
+export const stripe = new Stripe((LIVE_KEY ?? Deno.env.get("STRIPE_TEST_SECRET_KEY"))!, { apiVersion: "2024-11-20.acacia" });
+export const WEBHOOK_SECRET = LIVE ? Deno.env.get("STRIPE_LIVE_WEBHOOK_SECRET") : Deno.env.get("STRIPE_WEBHOOK_SECRET");
+
+const TEST_CREATOR = "price_1UaDVw9wksHmZlqMObItDTFY";
+const TEST_PRO = "price_1UaDWp9wksHmZlqMSo0QbIH6";
+const LIVE_CREATOR = Deno.env.get("STRIPE_LIVE_PRICE_CREATOR");
+const LIVE_PRO = Deno.env.get("STRIPE_LIVE_PRICE_PRO");
 
 /** Vydora's own Stripe prices -> plan tier and monthly credits. Anything else is ignored. */
 export const PLANS: Record<string, { tier: "creator" | "pro"; credits: number }> = {
-  price_1UaDVw9wksHmZlqMObItDTFY: { tier: "creator", credits: 600 },
-  price_1UaDWp9wksHmZlqMSo0QbIH6: { tier: "pro", credits: 2000 },
+  [TEST_CREATOR]: { tier: "creator", credits: 600 },
+  [TEST_PRO]: { tier: "pro", credits: 2000 },
+  ...(LIVE_CREATOR ? { [LIVE_CREATOR]: { tier: "creator" as const, credits: 600 } } : {}),
+  ...(LIVE_PRO ? { [LIVE_PRO]: { tier: "pro" as const, credits: 2000 } } : {}),
 };
 export const TIER_PRICE: Record<string, string> = {
-  creator: "price_1UaDVw9wksHmZlqMObItDTFY",
-  pro: "price_1UaDWp9wksHmZlqMSo0QbIH6",
+  creator: LIVE ? LIVE_CREATOR! : TEST_CREATOR,
+  pro: LIVE ? LIVE_PRO! : TEST_PRO,
 };
 
 /** One-time top-ups: credits granted per £1 paid. */

@@ -1,6 +1,6 @@
 import type Stripe from "npm:stripe@17.7.0";
 import { adminClient } from "../_shared/common.ts";
-import { stripe, PLANS } from "../_shared/stripe.ts";
+import { stripe, PLANS, LIVE, WEBHOOK_SECRET } from "../_shared/stripe.ts";
 
 const db = adminClient();
 const ok = (msg = "ok") => new Response(msg, { status: 200 });
@@ -75,7 +75,7 @@ async function grantTopUp(s: Stripe.Checkout.Session) {
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
   const sig = req.headers.get("stripe-signature");
-  const secret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const secret = WEBHOOK_SECRET;
   if (!sig || !secret) return new Response("Missing signature", { status: 400 });
   let event: Stripe.Event;
   try {
@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
   } catch {
     return new Response("Invalid signature", { status: 400 });
   }
-  if (event.livemode) return ok("live events ignored");
+  // Only process events from the mode this app is running in (test events are ignored once live, and vice versa).
+  if (event.livemode !== LIVE) return ok("other mode ignored");
 
   const { data: seen } = await db.from("processed_stripe_events").select("event_id").eq("event_id", event.id).maybeSingle();
   if (seen) return ok("duplicate");
