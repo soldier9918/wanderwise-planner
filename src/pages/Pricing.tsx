@@ -16,9 +16,7 @@ const MENU = [
   { label: "✨ Animate scene", credits: CREDIT_COSTS.animate, note: "Per scene — AI video is costly to make" },
   { label: "Thumbnail", credits: CREDIT_COSTS.thumbnail, note: "Per thumbnail or text redo" },
   { label: "SEO titles, description & tags", credits: CREDIT_COSTS.seo, note: "Per generation" },
-  { label: "Export a new 720p video", credits: CREDIT_COSTS.export720, note: "Per new version — re-downloading an unchanged export is free" },
-  { label: "Export a new 1080p video", credits: CREDIT_COSTS.export1080, note: "Per new version — re-downloading an unchanged export is free" },
-  { label: "Music, sound effects, camera motion, transitions, captions, 720p download", credits: 0, note: "Always free" },
+  { label: "Music, sound effects, camera motion, transitions, captions, video exports & downloads (720p and 1080p)", credits: 0, note: "Always free — no watermark on any plan" },
 ];
 
 const PLANS = [
@@ -118,7 +116,7 @@ export default function Pricing() {
           {[
             ["Why does animating cost more?", "Each animated scene is a short AI-made video clip, which takes far more computing power than a still picture."],
             ["Do redos cost credits?", "Yes — redoing an image, voiceover, script, thumbnail or SEO costs the same as making it the first time."],
-            ["What happens if I run out?", "AI steps pause until you top up. Your videos, edits and downloads stay available."],
+            ["What happens if I run out?", "AI steps pause until you top up. You can still view and download your videos for free."],
             ["Are estimates exact?", "They're close guides based on your settings. Redos and extra scenes add to the total."],
           ].map(([q, a]) => (
             <div key={q} className="rounded-xl border border-border bg-card p-5"><p className="font-semibold">{q}</p><p className="mt-2 text-sm text-muted-foreground">{a}</p></div>

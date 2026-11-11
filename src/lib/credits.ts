@@ -1,4 +1,4 @@
-// Credit prices for each AI action. Browser-only features are free; exports cost 2 (720p) or 5 (1080p, Pro only).
+// Credit prices for each AI action. Browser-only features are free; video exports and downloads are free.
 export const CREDIT_COSTS = {
   script: 2,
   facts: 2,
@@ -7,8 +7,6 @@ export const CREDIT_COSTS = {
   animate: 25,
   thumbnail: 5,
   seo: 1,
-  export720: 2,
-  export1080: 5,
 } as const;
 
 export type EstimateInput = {

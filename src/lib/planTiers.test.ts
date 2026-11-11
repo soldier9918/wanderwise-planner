@@ -29,8 +29,8 @@ describe("plan tiers", () => {
   });
   it("admin counts as pro", () => expect(planTierOf(true, false, null)).toBe("pro"));
   it("exports: creator renders 720p for 2, pro 1080p for 5", () => {
-    expect(exportCost(effectiveQuality("1080p", false))).toBe(2);
-    expect(exportCost(effectiveQuality("1080p", true))).toBe(5);
+    expect(exportCost(effectiveQuality("1080p", false))).toBe(0);
+    expect(exportCost(effectiveQuality("1080p", true))).toBe(0);
   });
   it("no 10-credit Full HD fee at creation", () => {
     expect("fullHd" in CREDIT_COSTS).toBe(false);

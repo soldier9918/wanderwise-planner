@@ -113,7 +113,7 @@ export default function Admin() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Admin</p>
             <h1 className="font-display text-3xl font-bold">Vydora control room</h1>
-            <p className="text-sm text-muted-foreground">Signed in as {user?.email}. Your account has no watermark or limits.</p>
+            <p className="text-sm text-muted-foreground">Signed in as {user?.email}. Your account has no limits.</p>
           </div>
           <Button variant="outline" onClick={refresh}>Refresh</Button>
         </div>

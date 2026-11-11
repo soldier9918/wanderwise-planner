@@ -18,10 +18,10 @@ const PLANS = [
       `${FREE_VOICES.length} narrators`,
       `Videos up to ${FREE_MINUTES} min · ${FREE_MAX_SCENES} scenes`,
       "720p HD · music, SFX & captions free",
-      '“Made with Vydora” badge on downloads',
+      "Free downloads · no watermark",
     ],
   },
-  { name: "Creator", tier: "creator", price: "£19", credits: "600 credits / month", perks: ["All narrators unlocked", "Videos up to 20 minutes · 720p HD", "Up to 50 scenes", "No watermark"] },
+  { name: "Creator", tier: "creator", price: "£19", credits: "600 credits / month", perks: ["All narrators unlocked", "Videos up to 20 minutes · 720p HD", "Up to 50 scenes", "Free downloads · no watermark"] },
   { name: "Pro", tier: "pro", price: "£49", credits: "2,000 credits / month", perks: ["Everything in Creator", "Videos up to 60 minutes", "1080p Full HD exports", "3× more credits"], featured: true },
 ];
 

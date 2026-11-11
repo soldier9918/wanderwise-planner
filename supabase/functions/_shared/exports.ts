@@ -1,5 +1,6 @@
 // Pure export rules shared by the `video-export` function and tests.
-export const EXPORT_COSTS = { "720p": 2, "1080p": 5 } as const;
+/** Exports and downloads are always free; credits pay only for AI generation. */
+export const EXPORT_COSTS = { "720p": 0, "1080p": 0 } as const;
 export const MB = 1024 * 1024;
 /** Hard caps per stored export file (Free videos are ≤2 min at 720p). */
 export const MAX_EXPORT_BYTES = { free: 300 * MB, paid: 2048 * MB } as const;
@@ -37,6 +38,6 @@ export function exportDecision(i: { hasCompleted: boolean; rendering: boolean; i
   "download" | "busy" | "render" | "insufficient" {
   if (i.hasCompleted) return "download";
   if (i.rendering) return "busy";
-  if (i.isAdmin || i.balance >= i.cost) return "render";
+  if (i.isAdmin || i.cost <= 0 || i.balance >= i.cost) return "render";
   return "insufficient";
 }

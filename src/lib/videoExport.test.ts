@@ -8,9 +8,11 @@ const scenes = [{ id: "a", position: 0, narration: "Hi", image_path: "u/v/a.png"
 const opts = { quality: "720p" as const, format: "mp4", watermark: true };
 
 describe("video export rules", () => {
-  it("new 720p export costs 2 credits", () => expect(exportCost("720p")).toBe(2));
-  it("new 1080p export costs 5 credits", () => expect(exportCost("1080p")).toBe(5));
-  it("client and server prices match", () => { expect(CREDIT_COSTS.export720).toBe(exportCost("720p")); expect(CREDIT_COSTS.export1080).toBe(exportCost("1080p")); });
+  it("new 720p export is free", () => expect(exportCost("720p")).toBe(0));
+  it("new 1080p export is free", () => expect(exportCost("1080p")).toBe(0));
+  it("no export price exists in the client credit menu", () => { expect("export720" in CREDIT_COSTS).toBe(false); expect("export1080" in CREDIT_COSTS).toBe(false); });
+  it("a 0-credit user can render a first export", () => expect(exportDecision({ hasCompleted: false, rendering: false, isAdmin: false, balance: 0, cost: exportCost("720p") })).toBe("render"));
+  it("a second render of the same video is blocked while one runs", () => expect(exportDecision({ hasCompleted: false, rendering: true, isAdmin: false, balance: 0, cost: 0 })).toBe("busy"));
   it("blocks a new export at 0 credits", () => expect(exportDecision(base)).toBe("insufficient"));
   it("blocks a new 1080p export with 4 credits", () => expect(exportDecision({ ...base, balance: 4, cost: 5 })).toBe("insufficient"));
   it("allows a new export with enough credits", () => expect(exportDecision({ ...base, balance: 2 })).toBe("render"));

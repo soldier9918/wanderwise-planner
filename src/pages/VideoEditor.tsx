@@ -475,7 +475,7 @@ export default function VideoEditor() {
       toast.success("Video downloaded and saved — downloading it again is free until you change it.");
       qc.invalidateQueries({ queryKey: ["export-check", id] });
     } catch (e) {
-      if (job) { await failExport(job.exportId).catch(() => {}); toast.error(`Export failed: ${(e as Error).message}. Your credits were refunded.`); }
+      if (job) { await failExport(job.exportId).catch(() => {}); toast.error(`Export failed: ${(e as Error).message}. Please try again.`); }
       else toast.error(`Export failed: ${(e as Error).message}`);
     } finally {
       setExportPct(null);
@@ -807,11 +807,9 @@ export default function VideoEditor() {
                 <option value="mp4">MP4{canRecordMp4() ? "" : " (not in this browser)"}</option>
                 <option value="webm">WebM</option>
               </select>
-              <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny || exportInfo?.decision === "insufficient" || exportInfo?.decision === "busy"}>
-                {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "download" ? "Download video · free" : exportInfo?.decision === "busy" ? "Export in progress…" : exportInfo ? `Download video · ${exportInfo.cost} cr` : "Download video"}
+              <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny || exportInfo?.decision === "busy"}>
+                {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
-              {exportInfo?.decision === "insufficient" && <p className="w-full text-xs text-muted-foreground">A new export needs {exportInfo.cost} credits. <Link to="/billing#top-ups" className="text-primary underline">Top up</Link> to export this version.</p>}
-              {account?.watermark && <p className="w-full text-xs text-muted-foreground">Free plan: downloads include a small "Made with Vydora" badge. <Link to="/billing" className="text-primary underline">Top up</Link> to remove it.</p>}
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets
               </Button>

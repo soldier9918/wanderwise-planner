@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     // 1080p exports are Pro (or admin) only; Free and Creator always render 720p.
     const quality = effectiveQuality(video.quality, planTierOf(admin, sub, subRow?.plan_tier) === "pro");
     const format = exportFormat(body.format);
-    const watermark = !admin && !(paidRow?.length);
+    const watermark = false; // no forced badge on any plan
     const hash = await versionHash(video, scenes, cardRow?.cards ?? null, { quality, format, watermark });
     const cost = exportCost(quality);
     const balance = (bal ?? []).reduce((n, r) => n + Number(r.amount), 0);

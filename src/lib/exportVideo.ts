@@ -243,7 +243,7 @@ export async function exportVideo(scenes: ExportScene[], onProgress: (p: number)
           ctx.drawImage(logo, b.x, b.y, b.w, b.h);
           ctx.globalAlpha = 1;
         }
-        if (extra.watermark) drawWatermark(ctx, W, H);
+        if (false && extra.watermark) drawWatermark(ctx, W, H);
         if (captionStyle !== "none") {
           ctx.font = fontStr;
           const speak = buffer ? buffer.duration / speed : dur;
