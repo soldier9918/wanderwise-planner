@@ -19,6 +19,33 @@ export default function Auth() {
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [sentKind, setSentKind] = useState<"signup" | "reset">("signup");
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  const resendVerification = async () => {
+    if (!sentTo || resendCooldown > 0) return;
+    setResendBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: sentTo,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Verification email sent again");
+      setResendCooldown(60);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setResendBusy(false);
+    }
+  };
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -67,7 +94,20 @@ export default function Auth() {
             {sentKind === "reset" ? "We sent a password reset link to " : "We sent a confirmation link to "}<span className="font-medium text-foreground">{sentTo}</span>.{sentKind === "reset" ? " Open the link to set a new password." : " Click it to activate your account, then sign in."}
           </p>
           <p className="mt-3 text-xs text-muted-foreground">Can't see it? Check your spam or junk folder.</p>
-          <Button className="mt-6 w-full" variant="outline" onClick={() => { setSentTo(null); setMode("signin"); setPassword(""); }}>
+          {sentKind === "signup" && (
+            <Button
+              className="mt-6 w-full"
+              onClick={resendVerification}
+              disabled={resendBusy || resendCooldown > 0}
+            >
+              {resendBusy
+                ? "Sending…"
+                : resendCooldown > 0
+                  ? `Resend verification email (${resendCooldown}s)`
+                  : "Resend verification email"}
+            </Button>
+          )}
+          <Button className="mt-3 w-full" variant="outline" onClick={() => { setSentTo(null); setMode("signin"); setPassword(""); }}>
             Back to sign in
           </Button>
         </div>
