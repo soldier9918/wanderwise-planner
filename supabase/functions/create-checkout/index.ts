@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
         }],
         metadata: { app: "vydora", user_id: userId, kind: "topup", credits: String(credits) },
         invoice_creation: { enabled: true, invoice_data: { description: `Vydora credit top-up · ${credits} credits`, metadata: { app: "vydora", kind: "topup" } } },
+        allow_promotion_codes: true,
+        customer_update: { address: "auto", name: "auto" },
+        tax_id_collection: { enabled: true },
         ...urls,
       });
       return json({ url: session.url, credits });
@@ -72,6 +75,9 @@ Deno.serve(async (req) => {
       line_items: [{ price: TIER_PRICE[parsed.data.plan], quantity: 1 }],
       metadata: { app: "vydora", user_id: userId },
       subscription_data: { metadata: { app: "vydora", user_id: userId } },
+      allow_promotion_codes: true,
+      customer_update: { address: "auto", name: "auto" },
+      tax_id_collection: { enabled: true },
       ...urls,
     });
     return json({ url: session.url });

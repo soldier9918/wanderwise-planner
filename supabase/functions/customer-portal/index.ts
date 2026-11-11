@@ -2,7 +2,7 @@ import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common
 import { stripe, returnOrigin, TIER_PRICE } from "../_shared/stripe.ts";
 
 // Bump when the settings below change so a fresh Vydora-only portal configuration is created.
-const CONFIG_VERSION = "2";
+const CONFIG_VERSION = "3";
 let cachedConfigId: string | null = null;
 
 /** Vydora's own portal settings (other apps on this Stripe account keep their default portal). */
@@ -22,6 +22,8 @@ async function vydoraPortalConfig(): Promise<string> {
     business_profile: { headline: "Manage your Vydora plan" },
     features: {
       invoice_history: { enabled: true },
+      // Customers can add their name, billing address and VAT/tax ID for invoices.
+      customer_update: { enabled: true, allowed_updates: ["name", "address", "tax_id"] },
       payment_method_update: { enabled: true },
       subscription_cancel: { enabled: true, mode: "at_period_end" },
       subscription_update: {
