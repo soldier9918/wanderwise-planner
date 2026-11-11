@@ -36,7 +36,7 @@ export default function StockFootagePicker({ sceneId, sceneNo, defaultQuery, ori
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o && !results && q.trim().length > 1) search(); }}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" disabled={disabled}><Film className="h-4 w-4" />Stock footage · free</Button>
+        <Button size="sm" variant="outline" disabled title="Coming soon"><Film className="h-4 w-4" />Stock footage · Coming soon</Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
         <DialogHeader>

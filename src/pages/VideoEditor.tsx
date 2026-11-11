@@ -1152,7 +1152,7 @@ export default function VideoEditor() {
                 )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-image`]} onClick={() => runAsset(s, "image").catch(() => {})}>
-                    {working[`${s.id}-image`] ? "Painting…" : s.image_path ? "New image" : "Make image"}
+                    {working[`${s.id}-image`] ? "Painting…" : s.image_path ? "New image" : "Make image"} · {CREDIT_COSTS.image} cr
                   </Button>
                   <Button size="sm" variant="outline" asChild disabled={working[`${s.id}-image`]}>
                     <label className={`cursor-pointer ${working[`${s.id}-image`] ? "pointer-events-none opacity-50" : ""}`}>
@@ -1183,10 +1183,10 @@ export default function VideoEditor() {
                     <Button size="sm" variant="ghost" onClick={() => removeClip(s)}>Use still image</Button>
                   )}
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-script`] || working[`${s.id}-audio`]} onClick={() => redoScript(s)}>
-                    {working[`${s.id}-script`] ? "Rewriting…" : "Redo script"}
+                    {working[`${s.id}-script`] ? "Rewriting…" : "Redo script"} · {CREDIT_COSTS.script} cr
                   </Button>
                   <Button size="sm" variant="outline" disabled={working[`${s.id}-audio`]} onClick={() => runAsset(s, "audio").catch(() => {})}>
-                    {working[`${s.id}-audio`] ? "Recording…" : s.audio_path ? "Redo voiceover" : "Make voiceover"}
+                    {working[`${s.id}-audio`] ? "Recording…" : s.audio_path ? "Redo voiceover" : "Make voiceover"} · {CREDIT_COSTS.voice} cr
                   </Button>
                 </div>
                 <div className="relative mt-3 overflow-hidden rounded-lg border border-border bg-muted" style={{ aspectRatio: ratio.css, maxWidth: ratio.w < ratio.h ? 260 : undefined, marginInline: ratio.w < ratio.h ? "auto" : undefined }}>
