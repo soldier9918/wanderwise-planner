@@ -2,7 +2,7 @@ import { charge, refund, COSTS } from "../_shared/credits.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
-import { corsHeaders, GATEWAY_URL, json, getUserClient } from "../_shared/common.ts";
+import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
 
 const schema = z.object({
   titles: z.array(z.string()),
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       hashtags: out.hashtags.map((h) => "#" + h.replace(/^#+/, "").replace(/\s+/g, "")).slice(0, 10),
       tags: out.tags.map((t) => t.replace(/^#/, "").trim()).filter(Boolean).slice(0, 30),
     };
-    const { error } = await client.from("videos").update({ seo }).eq("id", videoId);
+    const { error } = await adminClient().from("videos").update({ seo }).eq("id", videoId);
     if (error) throw error;
     charged = 0;
     return json({ seo });

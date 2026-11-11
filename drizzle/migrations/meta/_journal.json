@@ -190,6 +190,13 @@
       "when": 1794361669116,
       "tag": "0026_monthly_free_credits_background",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794399820868,
+      "tag": "0027_read_only_zero_credit_projects",
+      "breakpoints": true
     }
   ]
 }

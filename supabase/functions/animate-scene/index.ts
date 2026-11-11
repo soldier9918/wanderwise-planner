@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       if (!res.ok) return gatewayError(res);
       const job = await res.json();
       if (!job?.id) return json({ error: "The animation could not start. Please try again." }, 502);
-      await auth.client.from("video_scenes").update({ clip_job_id: job.id }).eq("id", scene.id);
+      await adminClient().from("video_scenes").update({ clip_job_id: job.id }).eq("id", scene.id);
       charged = 0;
       return json({ jobId: job.id, status: job.status ?? "queued" });
       } finally {
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     const job = await res.json();
     if (job.status === "failed") {
       // Refund once: only the poll that clears the job id gives credits back.
-      const { data: cleared } = await auth.client.from("video_scenes").update({ clip_job_id: null }).eq("id", scene.id).eq("clip_job_id", scene.clip_job_id).select("id");
+      const { data: cleared } = await adminClient().from("video_scenes").update({ clip_job_id: null }).eq("id", scene.id).eq("clip_job_id", scene.clip_job_id).select("id");
       if (cleared?.length) await refund(auth.user.id, COSTS.animate, "refund_animate");
       const blocked = job.error?.code === "moderation_blocked" || job.error?.code === "invalid_request";
       return json({ status: "failed", error: blocked ? "The animation was blocked — this image may be the cause. Try a different image." : (job.error?.message ?? "Animation failed.") });
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     const path = `${auth.user.id}/${scene.video_id}/${scene.id}-clip-${Date.now()}.mp4`;
     const { error: upErr } = await admin.storage.from("video-assets").upload(path, mp4, { contentType: "video/mp4", upsert: true });
     if (upErr) throw upErr;
-    await auth.client.from("video_scenes").update({ clip_path: path, clip_credit: null, clip_job_id: null }).eq("id", scene.id);
+    await adminClient().from("video_scenes").update({ clip_path: path, clip_credit: null, clip_job_id: null }).eq("id", scene.id);
     return json({ status: "completed", path });
   } catch (e) {
     console.error("animate-scene error", e);

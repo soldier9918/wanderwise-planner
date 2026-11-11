@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     const { error: upErr } = await admin.storage.from("video-assets").upload(path, b64ToBytes(b64), { contentType: "image/png", upsert: true });
     if (upErr) throw upErr;
 
-    const { error: updErr } = await auth.client.from("videos").update({ thumbnail_path: path }).eq("id", video.id);
+    const { error: updErr } = await adminClient().from("videos").update({ thumbnail_path: path }).eq("id", video.id);
     if (updErr) throw updErr;
 
     charged = 0;

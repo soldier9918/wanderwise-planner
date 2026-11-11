@@ -28,7 +28,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
-import { duplicateVideo, useAccount } from "@/lib/account";
+import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -553,6 +553,7 @@ export default function VideoEditor() {
   };
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
+  const readOnly = isReadOnlyAccount(account);
   // Preview only unlocks once every scene's picture, voiceover (and clip) is generated and downloaded.
   const previewReady = scenes.length > 0 && !busyAny && scenes.every((s) =>
     !!s.image_path && !!urls[s.image_path] && loadedImgs[urls[s.image_path]] &&
@@ -595,6 +596,12 @@ export default function VideoEditor() {
         <div className="mt-3 max-w-3xl">
           <h1 className="text-3xl font-extrabold md:text-4xl">{video.title}</h1>
           <p className="mt-2 text-muted-foreground">{video.description}</p>
+          {readOnly && (
+            <div role="status" className="mt-4 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
+              <p className="font-semibold">This project is read-only because you have 0 credits.</p>
+              <p className="mt-1 text-muted-foreground">You can still preview, download and delete it. <Link to="/billing#top-ups" className="text-primary underline">Top up or subscribe</Link> to edit scenes, narration or media.</p>
+            </div>
+          )}
           {(() => {
             const est = { scenes: scenes.length, useFacts: Array.isArray(video.sources) && video.sources.length > 0, animated: scenes.filter((s) => s.clip_path && !s.clip_credit).length, thumbnail: !!video.thumbnail_path, seo: !!video.seo, quality: video.quality ?? "720p" };
             return (
@@ -761,13 +768,13 @@ export default function VideoEditor() {
                 </>
               )}
               {ratio.value !== "9:16" && (
-                <Button variant="outline" disabled={busyAny} onClick={async () => {
+                <Button variant="outline" disabled={busyAny || readOnly} onClick={async () => {
                   const t = toast.loading("Making your Shorts cut…");
                   try { const nid = await remixToShorts(id!); toast.success("Shorts cut ready — your original is untouched.", { id: t }); navigate(`/video/${nid}`); }
                   catch (e) { toast.error((e as Error).message, { id: t }); }
                 }}>📱 Remix for Shorts / TikTok</Button>
               )}
-              <Button variant="outline" disabled={busyAny} onClick={async () => {
+              <Button variant="outline" disabled={busyAny || readOnly} onClick={async () => {
                 const t = toast.loading("Duplicating…");
                 try { const nid = await duplicateVideo(id!); toast.success("Copy ready — your original is untouched.", { id: t }); navigate(`/video/${nid}`); }
                 catch (e) { toast.error((e as Error).message, { id: t }); }
@@ -780,7 +787,7 @@ export default function VideoEditor() {
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : "Download video"}
               </Button>
               {account?.watermark && <p className="w-full text-xs text-muted-foreground">Free plan: downloads include a small "Made with Vydora" badge. <Link to="/billing" className="text-primary underline">Top up</Link> to remove it.</p>}
-              <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || done === scenes.length}>
+              <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets
               </Button>
             </div>
@@ -1097,6 +1104,7 @@ export default function VideoEditor() {
             <p className="mt-3 text-sm text-muted-foreground">{done}/{scenes.length} scenes ready{busyAny ? " · generating…" : ""}{sceneBusy ? " · adjusting scenes…" : ""}{scenes.length ? ` · ${formatSeconds(totalSecs)} total` : ""}</p>
           </div>
 
+          <fieldset disabled={readOnly} className="contents">
           <ol className="grid gap-4">
             {scenes.map((s, i) => (
               <li key={s.id} className={`rounded-xl border bg-card p-4 ${playing === i ? "border-primary" : "border-border"}`}>
@@ -1196,6 +1204,7 @@ export default function VideoEditor() {
               </li>
             ))}
           </ol>
+          </fieldset>
         </div>
         <div className="mt-10 flex justify-end border-t border-border pt-6">
           <Button variant="ghost" className="text-destructive" onClick={remove}>Delete video</Button>

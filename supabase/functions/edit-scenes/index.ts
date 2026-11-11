@@ -3,6 +3,7 @@ import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
 import { resolvePaidTier, sceneChangeAllowed, FREE_MAX_SCENES } from "../_shared/tiers.ts";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
+import { charge, refund, requireMutable, COSTS } from "../_shared/credits.ts";
 
 const MIN_SCENES = 4;
 const MAX_SCENES = 50;
@@ -60,6 +61,10 @@ Deno.serve(async (req) => {
     // Nothing to do.
     if (target === current) return json({ count: current, added: 0, removed: 0 });
 
+    // Free accounts with 0 credits can't add or remove scenes.
+    const locked = await requireMutable(user.id);
+    if (locked) return locked;
+
     // Shorter video: drop the last scenes and their files.
     if (target < current) {
       const drop = scenes.slice(target);
@@ -85,6 +90,10 @@ Deno.serve(async (req) => {
       "21:9": "ultra-wide 21:9 cinematic",
     } as Record<string, string>)[video.aspect_ratio ?? "16:9"] ?? "wide 16:9 landscape";
 
+    const denied = await charge(user.id, COSTS.script, "scene_extend");
+    if (denied) return denied;
+    let ok = false;
+    try {
     const provider = createOpenAI({
       baseURL: `${GATEWAY_URL}/v1`,
       apiKey,
@@ -131,7 +140,7 @@ Deno.serve(async (req) => {
     const extra = output.scenes.slice(0, need).filter((s) => s.narration?.trim());
     if (!extra.length) return json({ error: "No new scenes were written. Please try again." }, 502);
 
-    const { error: iErr } = await client.from("video_scenes").insert(
+    const { error: iErr } = await adminClient().from("video_scenes").insert(
       extra.map((s, i) => ({
         video_id: video.id,
         user_id: user.id,
@@ -143,7 +152,11 @@ Deno.serve(async (req) => {
     );
     if (iErr) throw iErr;
 
+    ok = true;
     return json({ count: current + extra.length, added: extra.length, removed: 0 });
+    } finally {
+      if (!ok) await refund(user.id, COSTS.script, "refund_scene_extend");
+    }
   } catch (e) {
     if ((e as Error)?.name === "AbortError") return new Response(null, { status: 499, headers: corsHeaders });
     console.error("edit-scenes error", e);

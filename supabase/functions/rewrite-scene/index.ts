@@ -1,6 +1,7 @@
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText } from "npm:ai@6";
-import { corsHeaders, GATEWAY_URL, json, getUserClient } from "../_shared/common.ts";
+import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
+import { charge, refund, requireMutable, COSTS } from "../_shared/credits.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -18,6 +19,8 @@ Deno.serve(async (req) => {
     if (error) throw error;
     if (!scene) return json({ error: "Scene not found." }, 404);
 
+    const locked = await requireMutable(auth.user.id);
+    if (locked) return locked;
     const { data: video } = await auth.client.from("videos").select("title, topic, target_seconds").eq("id", scene.video_id).maybeSingle();
     const { data: all } = await auth.client.from("video_scenes").select("position, heading, narration").eq("video_id", scene.video_id).order("position");
     const scenes = all ?? [];
@@ -33,6 +36,10 @@ Deno.serve(async (req) => {
       apiKey,
       headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
     });
+    const denied = await charge(auth.user.id, COSTS.script, "scene_rewrite");
+    if (denied) return denied;
+    let ok = false;
+    try {
     let narration = "";
     try {
       const result = streamText({
@@ -51,9 +58,13 @@ Deno.serve(async (req) => {
     }
     if (!narration) return json({ error: "No new script was written. Please try again." }, 502);
 
-    const { error: uErr } = await auth.client.from("video_scenes").update({ narration, audio_path: null }).eq("id", scene.id);
+    const { error: uErr } = await adminClient().from("video_scenes").update({ narration, audio_path: null }).eq("id", scene.id);
     if (uErr) throw uErr;
+    ok = true;
     return json({ narration });
+    } finally {
+      if (!ok) await refund(auth.user.id, COSTS.script, "refund_scene_rewrite");
+    }
   } catch (e) {
     console.error("rewrite-scene error", e);
     return json({ error: "Something went wrong rewriting this scene." }, 500);

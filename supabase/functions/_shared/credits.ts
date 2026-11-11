@@ -18,3 +18,11 @@ export async function refund(userId: string, amount: number, reason: string) {
   const { error } = await adminClient().rpc("refund_credits", { _user: userId, _amount: amount, _reason: reason });
   if (error) console.error("refund_credits", error);
 }
+
+/** Server-side read-only check (DB `can_mutate_project`). Returns a 402 Response when the project is locked. */
+export async function requireMutable(userId: string): Promise<Response | null> {
+  const { data, error } = await adminClient().rpc("can_mutate_project", { _user_id: userId });
+  if (error) { console.error("can_mutate_project", error); return json({ error: "Couldn't check your account. Please try again." }, 500); }
+  if (data !== true) return json({ error: "This project is read-only because you have 0 credits. Top up or subscribe to edit it.", code: "read_only" }, 402);
+  return null;
+}

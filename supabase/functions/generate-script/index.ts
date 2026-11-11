@@ -3,7 +3,7 @@ import { voiceAllowed, lengthAllowedForTier, scenesAllowedForTier, qualityAllowe
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
-import { corsHeaders, GATEWAY_URL, json, getUserClient } from "../_shared/common.ts";
+import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
 import { TONES, toneOf } from "../_shared/tones.ts";
 
 const schema = z.object({
@@ -188,14 +188,14 @@ Deno.serve(async (req) => {
     if (!scenes.length) return json({ error: "No scenes were written. Please try again." }, 502);
 
     const { client, user } = auth;
-    const { data: video, error: vErr } = await client
+    const { data: video, error: vErr } = await adminClient()
       .from("videos")
       .insert({ user_id: user.id, title: output.title.slice(0, 120), description: output.description, topic: topic.trim(), style, voice, tone, caption_style: caption, aspect_ratio: ratio, quality: qual, target_seconds: total, sources, source_url: srcUrl, narration_speed: speed, accent })
       .select("id")
       .single();
     if (vErr) throw vErr;
 
-    const { error: sErr } = await client.from("video_scenes").insert(
+    const { error: sErr } = await adminClient().from("video_scenes").insert(
       scenes.map((s, i) => ({
         video_id: video.id,
         user_id: user.id,

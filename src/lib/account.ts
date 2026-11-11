@@ -84,3 +84,6 @@ export async function duplicateVideo(videoId: string): Promise<string> {
   }
   return copy.id;
 }
+
+/** Free accounts with 0 credits have read-only projects (mirrors DB `can_mutate_project`). */
+export const isReadOnlyAccount = (a?: { pro: boolean; balance: number } | null) => !!a && !a.pro && a.balance <= 0;

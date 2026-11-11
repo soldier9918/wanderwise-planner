@@ -1,4 +1,5 @@
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
+import { requireMutable } from "../_shared/credits.ts";
 
 // Free stock footage from Pixabay (royalty-free). Searches are cached to stay well under the API rate limit.
 type PxFile = { url: string; width: number; height: number; size: number; thumbnail?: string };
@@ -49,6 +50,8 @@ Deno.serve(async (req) => {
       const { data: scene, error } = await auth.client.from("video_scenes").select("id, video_id").eq("id", sceneId).maybeSingle();
       if (error) throw error;
       if (!scene) return json({ error: "Scene not found." }, 404);
+      const locked = await requireMutable(auth.user.id);
+      if (locked) return locked;
       const res = await fetch(`${base}&id=${id}`);
       if (!res.ok) return json({ error: "That clip is no longer available." }, 502);
       const v = ((await res.json()).hits ?? [])[0] as PxVideo | undefined;
@@ -62,7 +65,7 @@ Deno.serve(async (req) => {
       const { error: upErr } = await adminClient().storage.from("video-assets").upload(path, bytes, { contentType: "video/mp4", upsert: true });
       if (upErr) throw upErr;
       const credit = `Video by ${v.user || "Pixabay"} on Pixabay`;
-      const { error: uErr } = await auth.client.from("video_scenes").update({ clip_path: path, clip_credit: credit, clip_job_id: null }).eq("id", scene.id);
+      const { error: uErr } = await adminClient().from("video_scenes").update({ clip_path: path, clip_credit: credit, clip_job_id: null }).eq("id", scene.id);
       if (uErr) throw uErr;
       return json({ path, credit });
     }

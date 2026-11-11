@@ -15,3 +15,7 @@ export const resolvePaidTier = (hasActiveSub: unknown, isAdmin: unknown) => isAd
 /** Adding scenes must respect the tier cap; shrinking is always allowed. */
 export const sceneChangeAllowed = (current: number, target: number, paid: boolean) =>
   target <= current || scenesAllowedForTier(target, paid);
+/** Mirrors DB `can_mutate_project`: Free accounts with no credits have read-only projects. */
+export const canMutateProject = (isAdmin: unknown, hasActiveSub: unknown, balance: number) =>
+  resolvePaidTier(hasActiveSub, isAdmin) || balance > 0;
+export const READ_ONLY_MESSAGE = "This project is read-only because you have 0 credits. Top up or subscribe to edit it.";
