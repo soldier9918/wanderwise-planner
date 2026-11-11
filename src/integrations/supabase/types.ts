@@ -509,6 +509,7 @@ export type Database = {
       }
       claim_monthly_free_credits: { Args: never; Returns: number }
       claim_referral: { Args: { _code: string }; Returns: string }
+      grant_monthly_free_credits_all: { Args: never; Returns: number }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {

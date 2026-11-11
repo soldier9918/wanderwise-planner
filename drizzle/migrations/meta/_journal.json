@@ -183,6 +183,13 @@
       "when": 1794342675746,
       "tag": "0025_monthly_free_credits",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794361669116,
+      "tag": "0026_monthly_free_credits_background",
+      "breakpoints": true
     }
   ]
 }

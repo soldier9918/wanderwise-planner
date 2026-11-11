@@ -19,7 +19,7 @@ export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
   ledger.filter((l) => l.amount < 0 && now - new Date(l.created_at).getTime() <= 30 * 864e5).reduce((n, l) => n - l.amount, 0);
 
 export const REASON_LABEL: Record<string, string> = {
-  starter: "Starter credits", monthly_free: "Monthly free credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
+  starter: "Free monthly credits", monthly_free: "Monthly free credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
   topup: "Credit top-up", coupon: "Coupon code", thumbnail: "Thumbnail", seo: "SEO title & tags", scene_voice: "Scene voiceover", scene_image: "Scene image", script: "Video script", animate: "Scene animation",
 };
 

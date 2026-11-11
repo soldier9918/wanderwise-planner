@@ -29,7 +29,7 @@ export default function BillingHistory({ part = "history" }: { part?: "summary" 
         <div>
           <dt className="text-sm font-semibold text-muted-foreground">Credits remaining</dt>
           <dd className="mt-2 font-display text-3xl font-bold text-primary">{acct ? acct.balance : "—"}</dd>
-          <dd className="mt-2 text-xs text-muted-foreground">{acct?.ledger.some((l) => l.reason === "starter") ? "🎉 Includes your 30 starter credits" : "Credits on your account"}</dd>
+          <dd className="mt-2 text-xs text-muted-foreground">{acct?.ledger.some((l) => l.reason === "starter" || l.reason === "monthly_free") ? "🎉 Includes your free monthly credits" : "Credits on your account"}</dd>
         </div>
         <div>
           <dt className="flex items-center gap-2 text-sm font-semibold text-muted-foreground"><Activity className="h-4 w-4" />Credits used · Last 30 days</dt>
