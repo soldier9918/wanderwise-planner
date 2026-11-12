@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     if (typeof lim === "number") {
       const edited = scenes.some((s) => s.narration.trim() !== (s.initial_narration ?? s.narration).trim());
       const total = scenes.reduce((n, s) => n + s.narration.length, 0);
-      if (total > (edited ? lim - 230 : lim)) return json({ error: "Your video is longer than your selected duration. Please shorten the narration in one or more scenes to continue." }, 400);
+      if (total > (edited ? lim - 230 : lim)) { const msg = "Your video is longer than your selected duration. Please shorten the narration in one or more scenes to continue."; return action === "check" ? json({ decision: "too_long", error: msg }) : json({ error: msg }, 400); }
     }
     const admin = isAdmin === true, paid = admin || sub === true;
     // 1080p exports are Pro (or admin) only; Free and Creator always render 720p.

@@ -158,7 +158,7 @@ export type SeriesPlan = { title: string; logline: string; visualMotif: string; 
 export const generateSeries = (input: { topic: string; parts: 3 | 5; tone: string; style: string }) =>
   invoke<{ plan: SeriesPlan }>("generate-series", input);
 
-export type ExportCheck = { decision: "download" | "busy" | "render" | "insufficient"; cost: number; quality: string; format: string; watermark: boolean };
+export type ExportCheck = { decision: "download" | "busy" | "render" | "insufficient" | "too_long"; cost: number; quality: string; format: string; watermark: boolean };
 export type ExportStart =
   | { decision: "download"; url: string; contentType?: string }
   | { decision: "render"; exportId: string; path: string; token: string; quality: string; format: string; watermark: boolean; charged: number; maxBytes: number };
