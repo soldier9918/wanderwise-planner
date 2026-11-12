@@ -218,6 +218,13 @@
       "when": 1794443907265,
       "tag": "0030_stripe_live_isolation",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794448000000,
+      "tag": "0031_env_credit_balance",
+      "breakpoints": true
     }
   ]
 }

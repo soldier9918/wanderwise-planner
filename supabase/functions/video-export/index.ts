@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       db.from("user_brand_cards").select("cards").eq("user_id", uid).maybeSingle(),
       db.rpc("has_role", { _user_id: uid, _role: "admin" }),
       db.rpc("has_active_subscription", { _user_id: uid }),
-      db.from("credit_ledger").select("amount").eq("user_id", uid),
+      db.rpc("credit_balance", { _user: uid }),
       db.from("credit_ledger").select("id").eq("user_id", uid).in("reason", PAID_REASONS).gt("amount", 0).limit(1),
     ]);
     const { data: subRow } = await db.from("user_subscriptions").select("plan_tier").eq("user_id", uid).eq("livemode", (await db.rpc("stripe_livemode")).data === true).maybeSingle();
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     const watermark = false; // no forced badge on any plan
     const hash = await versionHash(video, scenes, cardRow?.cards ?? null, { quality, format, watermark });
     const cost = exportCost(quality);
-    const balance = (bal ?? []).reduce((n, r) => n + Number(r.amount), 0);
+    const balance = Number(bal ?? 0);
 
     await expireStale(db, video.id);
     const { data: hit } = await db.from("video_exports").select("id, path, content_type").eq("video_id", video.id).eq("version_hash", hash).eq("quality", quality).eq("format", format).eq("status", "completed").order("completed_at", { ascending: false }).limit(1);

@@ -8,7 +8,9 @@ export const STARTER_CREDITS = 30;
 export const REFERRAL_BONUS = 50;
 const PAID_REASONS = ["purchase", "topup", "subscription"];
 
-export type LedgerRow = { amount: number; reason: string; created_at: string; stripe_invoice_id?: string | null };
+export type LedgerRow = { amount: number; reason: string; created_at: string; stripe_invoice_id?: string | null; livemode?: boolean | null };
+/** Only mode-neutral rows and rows from the running Stripe mode count (Sandbox credits never spend in Live). */
+export const rowsForMode = <T extends { livemode?: boolean | null }>(rows: T[], live: boolean) => rows.filter((r) => r.livemode == null || r.livemode === live);
 
 /** Free accounts (never paid) get the "Made with Vydora" export badge. */
 export const needsWatermark = (ledger: LedgerRow[]) => !ledger.some((l) => PAID_REASONS.includes(l.reason) && l.amount > 0);
@@ -20,7 +22,7 @@ export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
   ledger.filter((l) => l.amount < 0 && now - new Date(l.created_at).getTime() <= 30 * 864e5).reduce((n, l) => n - l.amount, 0);
 
 export const REASON_LABEL: Record<string, string> = {
-  starter: "Free monthly credits", monthly_free: "Monthly free credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
+  starter: "Free monthly credits", monthly_free: "Monthly free credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora", live_opening_adjustment: "Test-mode credits removed at launch",
   topup: "Credit top-up", refund_reversal: "Refunded payment", dispute_reversal: "Disputed payment", dispute_restored: "Dispute resolved", coupon: "Coupon code", thumbnail: "Thumbnail", seo: "SEO title & tags", scene_voice: "Scene voiceover", scene_image: "Scene image", script: "Video script", animate: "Scene animation",
 };
 
@@ -35,14 +37,16 @@ export function useAccount() {
     queryFn: async () => {
       // Free accounts get +30 credits each month; the server decides eligibility.
       await supabase.rpc("claim_monthly_free_credits");
+      const { data: liveFlag } = await supabase.rpc("stripe_livemode");
+      const live = liveFlag === true;
       const [{ data: acct }, { data: ledger }, { data: admin }, { data: sub }] = await Promise.all([
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
-        supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id").eq("user_id", user!.id).order("created_at", { ascending: false }),
+        supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id, livemode").eq("user_id", user!.id).order("created_at", { ascending: false }),
         supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
-        supabase.rpc("stripe_livemode").then(({ data: live }) => supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).eq("livemode", live === true).maybeSingle()),
+        supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).eq("livemode", live).maybeSingle(),
       ]);
       const subscription = sub && isActiveStatus(sub.status) ? sub : null;
-      const rows = (ledger ?? []) as LedgerRow[];
+      const rows = rowsForMode((ledger ?? []) as LedgerRow[], live);
       return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, subscription: sub ?? null, pro: !!admin || !!subscription, tier: planTierOf(!!admin, !!subscription, subscription?.plan_tier), watermark: false };
     },
   });

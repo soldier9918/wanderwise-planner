@@ -89,7 +89,7 @@ async function grantForCharge(ch: Stripe.Charge) {
   }
   if (!keys.length) return null;
   const { data } = await db.from("credit_ledger").select("user_id, amount, stripe_invoice_id")
-    .in("stripe_invoice_id", keys).in("reason", ["subscription", "topup"]).gt("amount", 0).limit(1).maybeSingle();
+    .in("stripe_invoice_id", keys).eq("livemode", LIVE).in("reason", ["subscription", "topup"]).gt("amount", 0).limit(1).maybeSingle();
   return data as { user_id: string; amount: number; stripe_invoice_id: string } | null;
 }
 
@@ -98,8 +98,8 @@ async function sumByPrefix(userId: string, prefix: string) {
   return (data ?? []).reduce((n: number, r: any) => n + r.amount, 0);
 }
 async function balanceOf(userId: string) {
-  const { data } = await db.from("credit_ledger").select("amount").eq("user_id", userId);
-  return (data ?? []).reduce((n: number, r: any) => n + r.amount, 0);
+  const { data } = await db.rpc("credit_balance", { _user: userId });
+  return Number(data ?? 0);
 }
 
 /** Removes credits in proportion to money returned; capped at the current balance (never negative). */
