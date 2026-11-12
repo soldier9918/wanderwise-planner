@@ -23,6 +23,6 @@ export async function refund(userId: string, amount: number, reason: string) {
 export async function requireMutable(userId: string): Promise<Response | null> {
   const { data, error } = await adminClient().rpc("can_mutate_project", { _user_id: userId });
   if (error) { console.error("can_mutate_project", error); return json({ error: "Couldn't check your account. Please try again." }, 500); }
-  if (data !== true) return json({ error: "This project is read-only because you have 0 credits. Top up or subscribe to edit it.", code: "read_only" }, 402);
+  if (data !== true) return json({ error: "You've used all your credits, but your video is still available to preview and download. Add credits to unlock editing and continue creating.", code: "read_only" }, 402);
   return null;
 }

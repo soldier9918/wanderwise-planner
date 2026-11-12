@@ -18,7 +18,7 @@ export const sceneChangeAllowed = (current: number, target: number, paid: boolea
 /** Mirrors DB `can_mutate_project`: Free accounts with no credits have read-only projects. */
 export const canMutateProject = (isAdmin: unknown, hasActiveSub: unknown, balance: number) =>
   resolvePaidTier(hasActiveSub, isAdmin) || balance > 0;
-export const READ_ONLY_MESSAGE = "This project is read-only because you have 0 credits. Top up or subscribe to edit it.";
+export const READ_ONLY_MESSAGE = "You've used all your credits, but your video is still available to preview and download. Add credits to unlock editing and continue creating.";
 
 /** Plan tiers: Free (2 min, 720p), Creator (20 min, 720p), Pro (60 min, 720p/1080p). Admins count as Pro. */
 export type PlanTier = "free" | "creator" | "pro";

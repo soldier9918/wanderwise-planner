@@ -657,8 +657,8 @@ export default function VideoEditor() {
           <p className="mt-2 text-muted-foreground">{video.description}</p>
           {readOnly && (
             <div role="status" className="mt-4 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
-              <p className="font-semibold">This project is read-only because you have 0 credits.</p>
-              <p className="mt-1 text-muted-foreground">You can still preview, download and delete it. <Link to="/billing#top-ups" className="text-primary underline">Top up or subscribe</Link> to edit scenes, narration or media.</p>
+              <p className="font-semibold">You currently have 0 credits.</p>
+              <p className="mt-1 text-muted-foreground">You can still preview, download and delete your videos. <Link to="/billing#top-ups" className="text-primary underline">Top up or subscribe</Link> to unlock editing and continue creating.</p>
             </div>
           )}
           {(() => {
