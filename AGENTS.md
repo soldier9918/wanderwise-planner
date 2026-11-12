@@ -22,7 +22,7 @@
 - Series generator (`/series`) plans episodes via the `generate-series` edge function (free), then creates each episode through the normal `generate-script` pipeline with a brief that carries the shared visual motif. Why: one script/credit pipeline.
 - Intro/outro cards are saved per account in `user_brand_cards` (jsonb, owner-only RLS; localStorage is just a cache) and drawn by `exportVideo` before/after scenes. Why: settings follow the user across devices.
 
-- Billing history is fetched live from Stripe by the `billing-history` edge function (invoices + paid top-up checkout receipts) using only the server-stored customer id, and each record carries `ledger_keys` so credit lines can be matched to the money actually paid. Why: invoices stay authoritative and users can't request another customer's records.
+- Billing history is read live from Stripe (`billing-history`) via the server-stored customer id; records carry `ledger_keys` to match credit lines. Why: invoices stay authoritative, owner-scoped.
 - Plan changes: Vydora-only portal config (`customer-portal`); upgrades immediate (grant new minus old), downgrades at period end. Why: one allowance per cycle.
 - Scheduled plan changes are read live from Stripe by read-only `subscription-status`, never stored. Why: follows portal changes.
 - Free accounts with 0 credits are read-only: DB `can_mutate_project` gates project/scene writes and uploads; edge functions call `requireMutable` first. Why: server enforces credit exhaustion.
