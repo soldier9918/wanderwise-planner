@@ -29,7 +29,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
-import { narrationTotalCharLimit, narrationTotalCharMin, CHARS_PER_SECOND } from "@/lib/tiers";
+import { narrationTotalCharLimit, CHARS_PER_SECOND } from "@/lib/tiers";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -598,11 +598,10 @@ export default function VideoEditor() {
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
   };
   const charLimit = account ? narrationTotalCharLimit((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
-  const charMin = account ? narrationTotalCharMin((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
   const totalChars = scenes.reduce((n, sc) => n + sc.narration.length, 0);
   const tooLong = !!charLimit && totalChars > charLimit;
-  const tooShort = !!charMin && totalChars < charMin;
-  const lengthOk = !tooLong && !tooShort;
+  // Minimum length only applies to AI-written scripts; manual edits may be shorter.
+  const lengthOk = !tooLong;
   const targetLabel = charLimit ? formatSeconds(Math.round(charLimit / CHARS_PER_SECOND) - 20) : "";
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
@@ -850,9 +849,7 @@ export default function VideoEditor() {
             </div>
             {!lengthOk && (
               <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
-                {tooLong
-                  ? `Please reduce the characters in one or more scenes to meet the ${targetLabel} target (about ${totalChars - charLimit!} too many). Download unlocks once it fits.`
-                  : `Please add more characters to one or more scenes to meet the ${targetLabel} target (about ${charMin! - totalChars} too few). Download unlocks once it fits.`}
+                {`Please reduce the characters in one or more scenes to meet the ${targetLabel} target (about ${totalChars - charLimit!} too many). Download unlocks once it fits.`}
               </p>
             )}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">

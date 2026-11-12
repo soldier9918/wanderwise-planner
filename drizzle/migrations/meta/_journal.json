@@ -281,6 +281,13 @@
       "when": 1794506567185,
       "tag": "0039_narration_real_speech_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794507066591,
+      "tag": "0040_narration_min_ai_only",
+      "breakpoints": true
     }
   ]
 }
