@@ -399,8 +399,10 @@ export default function VideoEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, hasData]);
 
+  const [dirty, setDirty] = useState<Record<string, boolean>>({});
   const saveNarration = async (scene: Scene, narration: string) => {
     if (narration === scene.narration) return;
+    setDirty((d) => ({ ...d, [scene.id]: false }));
     const { error } = await supabase.from("video_scenes").update({ narration, audio_path: null }).eq("id", scene.id);
     if (error) return toast.error(error.message);
     toast.success("Narration saved — regenerate the voiceover to hear it.");
@@ -1188,7 +1190,16 @@ export default function VideoEditor() {
                     <p className="font-semibold">{s.heading}</p>
                   </div>
                 </div>
-                <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
+                <Textarea key={s.narration} id={`narr-${s.id}`} className="mt-3 text-sm" rows={3} defaultValue={s.narration}
+                  onChange={(e) => setDirty((d) => ({ ...d, [s.id]: e.target.value.trim() !== s.narration }))}
+                  onBlur={(e) => saveNarration(s, e.target.value.trim())} />
+                <div className="mt-2 flex justify-end">
+                  <Button size="sm" variant={dirty[s.id] ? "default" : "outline"} className="h-7 px-3 text-xs" disabled={!dirty[s.id]}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { const el = document.getElementById(`narr-${s.id}`) as HTMLTextAreaElement | null; if (el) saveNarration(s, el.value.trim()); }}>
+                    {dirty[s.id] ? "Save" : "Saved"}
+                  </Button>
+                </div>
                 {!s.image_path && assetErr[`${s.id}-image`] && (
                   <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">Picture failed: {assetErr[`${s.id}-image`]}</p>
                 )}
