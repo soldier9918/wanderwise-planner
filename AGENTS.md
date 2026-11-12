@@ -28,4 +28,4 @@
 - Free accounts with 0 credits are read-only: DB `can_mutate_project` gates project/scene writes and uploads; edge functions call `requireMutable` first. Why: server enforces credit exhaustion.
 
 - Refunds/disputes reverse credits proportionally (`_shared/refunds.ts`), idempotent, capped at balance; won disputes restore. Why: no negative balances.
-- Live activation is a one-time admin action in `activate-live-billing` (read-only Stripe permission/price checks, typed confirmation, `activate_live_billing_audited` writes `live_activation_audit` once); it never sets STRIPE_MODE, which the owner sets as a server secret first. Why: both switches must agree and only the owner can authorize Live.
+- Live activation: one-time admin `activate-live-billing` (checks, typed confirm, audited); owner sets STRIPE_MODE. Why: both switches must agree.
