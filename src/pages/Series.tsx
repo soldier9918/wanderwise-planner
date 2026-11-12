@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { STYLES, TONES, VOICES, generateScript, generateSeries, type SeriesPlan } from "@/lib/videoApi";
 import { estimateCredits } from "@/lib/credits";
 import { useAccount } from "@/lib/account";
-import { voiceAllowed, FREE_MAX_SCENES } from "@/lib/tiers";
+import { voiceAllowed, FREE_MAX_SCENES, lengthAllowedForPlan } from "@/lib/tiers";
+import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, minScenesForSeconds, maxScenesForSeconds } from "@/lib/durations";
 
 export default function Series() {
   const { data: account } = useAccount();
@@ -24,6 +25,8 @@ export default function Series() {
   const [tone, setTone] = useState("history");
   const [voice, setVoice] = useState("Charon");
   const [scenes, setScenes] = useState("6");
+  const [length, setLength] = useState("60");
+  const tier = account?.tier ?? "free";
   const [plan, setPlan] = useState<SeriesPlan | null>(null);
   const [planning, setPlanning] = useState(false);
   const [creating, setCreating] = useState<number | null>(null);
@@ -58,7 +61,7 @@ export default function Series() {
     ].filter(Boolean).join(" ");
     setCreating(i);
     try {
-      const { videoId } = await generateScript({ topic: brief.slice(0, 1500), style, voice, tone, sceneCount: Number(scenes), captionStyle: "typewriter", aspectRatio: "16:9", targetSeconds: 60 });
+      const { videoId } = await generateScript({ topic: brief.slice(0, 1500), style, voice, tone, sceneCount: Number(scenes), captionStyle: "typewriter", aspectRatio: "16:9", targetSeconds: Number(length) });
       await supabase.from("videos").update({ title: `${plan.title} [Part ${i + 1}/${n}]: ${ep.title}`.slice(0, 200) }).eq("id", videoId);
       setMade((m) => ({ ...m, [i]: videoId }));
       toast.success(`Part ${i + 1} created`);
@@ -83,7 +86,7 @@ export default function Series() {
 
         <section className="mt-8 space-y-4 rounded-xl border border-border bg-card p-5">
           <div><Label>Series topic</Label><Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. The Cold War" maxLength={300} className="mt-1" /></div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <div><Label>Episodes</Label>
               <Select value={String(parts)} onValueChange={(v) => setParts(v === "5" ? 5 : 3)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="3">3-part</SelectItem><SelectItem value="5">5-part</SelectItem></SelectContent></Select></div>
@@ -98,7 +101,11 @@ export default function Series() {
                 <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{v.label}{!voiceAllowed(v.id, pro) ? " (Pro)" : ""}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Scenes / episode</Label>
               <Select value={scenes} onValueChange={setScenes}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{sceneOptions.map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent></Select></div>
+                <SelectContent>{sceneOptions.map((n) => <SelectItem key={n} value={String(n)} disabled={!isLengthAllowed(Number(length), n)}>{n}{!isLengthAllowed(Number(length), n) ? ` · ${n > maxScenesForSeconds(Number(length)) ? "too many" : "too few"}` : ""}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Episode length</Label>
+              <Select value={length} onValueChange={setLength}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{VIDEO_LENGTHS.map((s) => { const plan = lengthAllowedForPlan(s, tier); const fit = isLengthAllowed(s, Number(scenes)); return (
+                  <SelectItem key={s} value={String(s)} disabled={!plan || !fit}>{!plan ? "🔒 " : ""}{formatSeconds(s)}{!plan ? " · upgrade" : !fit ? (Number(scenes) < minScenesForSeconds(s) ? ` · needs ${minScenesForSeconds(s)}+ scenes` : ` · max ${maxScenesForSeconds(s)} scenes`) : ""}</SelectItem>); })}</SelectContent></Select></div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">Planning the outline is free. Each episode costs about <b className="text-foreground">{perEpisode} credits</b> (≈{perEpisode * parts} for the full series).</p>
