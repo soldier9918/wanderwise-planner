@@ -21,7 +21,7 @@ export const used30d = (ledger: LedgerRow[], now = Date.now()) =>
 
 export const REASON_LABEL: Record<string, string> = {
   starter: "Free monthly credits", monthly_free: "Monthly free credits", subscription: "Monthly plan credits", referral_joined: "Joined with an invite", referral_invite: "Friend joined with your invite", admin_adjustment: "Adjusted by Vydora",
-  topup: "Credit top-up", coupon: "Coupon code", thumbnail: "Thumbnail", seo: "SEO title & tags", scene_voice: "Scene voiceover", scene_image: "Scene image", script: "Video script", animate: "Scene animation",
+  topup: "Credit top-up", refund_reversal: "Refunded payment", dispute_reversal: "Disputed payment", dispute_restored: "Dispute resolved", coupon: "Coupon code", thumbnail: "Thumbnail", seo: "SEO title & tags", scene_voice: "Scene voiceover", scene_image: "Scene image", script: "Video script", animate: "Scene animation",
 };
 
 export function useAccount() {
@@ -39,7 +39,7 @@ export function useAccount() {
         supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
         supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id").eq("user_id", user!.id).order("created_at", { ascending: false }),
         supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
-        supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).maybeSingle(),
+        supabase.rpc("stripe_livemode").then(({ data: live }) => supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).eq("livemode", live === true).maybeSingle()),
       ]);
       const subscription = sub && isActiveStatus(sub.status) ? sub : null;
       const rows = (ledger ?? []) as LedgerRow[];

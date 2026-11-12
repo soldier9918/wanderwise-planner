@@ -1,5 +1,6 @@
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
 import { stripe } from "../_shared/stripe.ts";
+import { LIVE, billingBlocked } from "../_shared/stripe.ts";
 
 // Lists the signed-in user's own Stripe invoices and top-up receipts. The customer id
 // comes only from the server-side user_subscriptions row, never from the client.
@@ -8,7 +9,8 @@ Deno.serve(async (req) => {
   try {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
-    const { data: sub } = await adminClient().from("user_subscriptions").select("stripe_customer_id").eq("user_id", auth.user.id).maybeSingle();
+    if (await billingBlocked(adminClient())) return json({ error: "Billing is temporarily unavailable." }, 503);
+    const { data: sub } = await adminClient().from("user_subscriptions").select("stripe_customer_id").eq("user_id", auth.user.id).eq("livemode", LIVE).maybeSingle();
     const customer = sub?.stripe_customer_id;
     if (!customer) return json({ records: [] });
 

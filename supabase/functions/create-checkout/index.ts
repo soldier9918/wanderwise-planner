@@ -1,6 +1,6 @@
 import { z } from "npm:zod@3";
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
-import { stripe, TIER_PRICE, returnOrigin, TOPUP_CREDITS_PER_GBP } from "../_shared/stripe.ts";
+import { stripe, TIER_PRICE, returnOrigin, TOPUP_CREDITS_PER_GBP, LIVE, billingBlocked } from "../_shared/stripe.ts";
 
 const Body = z.union([
   z.object({ plan: z.enum(["creator", "pro"]) }),
@@ -23,8 +23,10 @@ Deno.serve(async (req) => {
     if (!parsed.success) return json({ error: "Choose a plan or enter a top-up amount." }, 400);
     const db = adminClient();
     const userId = auth.user.id;
+    const blocked = await billingBlocked(db);
+    if (blocked) { console.error("create-checkout blocked:", blocked); return json({ error: "Payments are temporarily unavailable." }, 503); }
 
-    const { data: sub } = await db.from("user_subscriptions").select("*").eq("user_id", userId).maybeSingle();
+    const { data: sub } = await db.from("user_subscriptions").select("*").eq("user_id", userId).eq("livemode", LIVE).maybeSingle();
     const isTopUp = "amount_gbp" in parsed.data;
 
     // Subscribers may still top up; only plan checkouts are blocked while a plan is live.
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
     if (!customerId) {
       const c = await stripe.customers.create({ email: auth.user.email, metadata: { app: "vydora", user_id: userId } });
       customerId = c.id;
-      await db.from("user_subscriptions").insert({ user_id: userId, stripe_customer_id: customerId, status: "incomplete" });
+      await db.from("user_subscriptions").insert({ user_id: userId, stripe_customer_id: customerId, status: "incomplete", livemode: LIVE });
     }
     const origin = returnOrigin(req);
     const urls = {

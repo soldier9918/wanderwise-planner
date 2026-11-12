@@ -1,5 +1,5 @@
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
-import { stripe, returnOrigin, TIER_PRICE } from "../_shared/stripe.ts";
+import { stripe, returnOrigin, TIER_PRICE, LIVE, billingBlocked } from "../_shared/stripe.ts";
 
 // Bump when the settings below change so a fresh Vydora-only portal configuration is created.
 const CONFIG_VERSION = "3";
@@ -47,7 +47,9 @@ Deno.serve(async (req) => {
   try {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
-    const { data: sub } = await adminClient().from("user_subscriptions").select("stripe_customer_id").eq("user_id", auth.user.id).maybeSingle();
+    const blocked = await billingBlocked(adminClient());
+    if (blocked) { console.error("customer-portal blocked:", blocked); return json({ error: "Billing is temporarily unavailable." }, 503); }
+    const { data: sub } = await adminClient().from("user_subscriptions").select("stripe_customer_id").eq("user_id", auth.user.id).eq("livemode", LIVE).maybeSingle();
     if (!sub?.stripe_customer_id) return json({ error: "No subscription found." }, 404);
     const portal = await stripe.billingPortal.sessions.create({
       customer: sub.stripe_customer_id,

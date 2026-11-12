@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       db.from("credit_ledger").select("amount").eq("user_id", uid),
       db.from("credit_ledger").select("id").eq("user_id", uid).in("reason", PAID_REASONS).gt("amount", 0).limit(1),
     ]);
-    const { data: subRow } = await db.from("user_subscriptions").select("plan_tier").eq("user_id", uid).maybeSingle();
+    const { data: subRow } = await db.from("user_subscriptions").select("plan_tier").eq("user_id", uid).eq("livemode", (await db.rpc("stripe_livemode")).data === true).maybeSingle();
     if (!scenes?.length || scenes.some((s) => !s.image_path)) return json({ error: "Every scene needs an image before exporting." }, 400);
     const admin = isAdmin === true, paid = admin || sub === true;
     // 1080p exports are Pro (or admin) only; Free and Creator always render 720p.

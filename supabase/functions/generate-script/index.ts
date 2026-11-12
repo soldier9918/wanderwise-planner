@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     const [{ data: sub }, { data: isAdmin }, { data: subRow }] = await Promise.all([
       auth.client.rpc("has_active_subscription", { _user_id: auth.user.id }),
       auth.client.rpc("has_role", { _user_id: auth.user.id, _role: "admin" }),
-      adminClient().from("user_subscriptions").select("plan_tier").eq("user_id", auth.user.id).maybeSingle(),
+      adminClient().from("user_subscriptions").select("plan_tier").eq("user_id", auth.user.id).eq("livemode", (await adminClient().rpc("stripe_livemode")).data === true).maybeSingle(),
     ]);
     const pro = !!isAdmin || sub === true;
     const tier = planTierOf(isAdmin, sub, subRow?.plan_tier);

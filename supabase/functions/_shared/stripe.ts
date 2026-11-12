@@ -1,27 +1,25 @@
 import Stripe from "npm:stripe@17.7.0";
+import { resolveStripeConfig, billingBlockReason, plansFor } from "./stripeConfig.ts";
 
-// Live mode turns on only once STRIPE_LIVE_SECRET_KEY is saved; until then everything stays in TEST mode.
-const LIVE_KEY = Deno.env.get("STRIPE_LIVE_SECRET_KEY");
-export const LIVE = !!LIVE_KEY;
-export const stripe = new Stripe((LIVE_KEY ?? Deno.env.get("STRIPE_TEST_SECRET_KEY"))!, { apiVersion: "2024-11-20.acacia" });
-export const WEBHOOK_SECRET = LIVE ? Deno.env.get("STRIPE_LIVE_WEBHOOK_SECRET") : Deno.env.get("STRIPE_WEBHOOK_SECRET");
+// Live runs only when STRIPE_MODE=live, all four Live settings are valid, and the database switch is on.
+export const CONFIG = resolveStripeConfig(Deno.env.toObject());
+if (CONFIG.mode === "misconfigured") console.error("Stripe disabled:", CONFIG.problems.join("; ")); // names only, never values
+export const LIVE = CONFIG.mode === "live";
+const key = CONFIG.mode === "misconfigured" ? undefined : CONFIG.secretKey;
+export const stripe = new Stripe(key ?? "sk_test_unconfigured", { apiVersion: "2024-11-20.acacia" });
+export const WEBHOOK_SECRET = CONFIG.mode === "misconfigured" ? undefined : CONFIG.webhookSecret;
 
-const TEST_CREATOR = "price_1UaDVw9wksHmZlqMObItDTFY";
-const TEST_PRO = "price_1UaDWp9wksHmZlqMSo0QbIH6";
-const LIVE_CREATOR = Deno.env.get("STRIPE_LIVE_PRICE_CREATOR");
-const LIVE_PRO = Deno.env.get("STRIPE_LIVE_PRICE_PRO");
+/** Vydora's own Stripe prices for the running mode -> plan tier and monthly credits. Anything else is ignored. */
+export const PLANS = plansFor(CONFIG);
+export const TIER_PRICE: Record<string, string> =
+  CONFIG.mode === "misconfigured" ? {} : { creator: CONFIG.creatorPrice, pro: CONFIG.proPrice };
 
-/** Vydora's own Stripe prices -> plan tier and monthly credits. Anything else is ignored. */
-export const PLANS: Record<string, { tier: "creator" | "pro"; credits: number }> = {
-  [TEST_CREATOR]: { tier: "creator", credits: 600 },
-  [TEST_PRO]: { tier: "pro", credits: 2000 },
-  ...(LIVE_CREATOR ? { [LIVE_CREATOR]: { tier: "creator" as const, credits: 600 } } : {}),
-  ...(LIVE_PRO ? { [LIVE_PRO]: { tier: "pro" as const, credits: 2000 } } : {}),
-};
-export const TIER_PRICE: Record<string, string> = {
-  creator: LIVE ? LIVE_CREATOR! : TEST_CREATOR,
-  pro: LIVE ? LIVE_PRO! : TEST_PRO,
-};
+/** Returns why billing must not run right now, or null when it's safe. */
+// deno-lint-ignore no-explicit-any
+export async function billingBlocked(db: any): Promise<string | null> {
+  const { data } = await db.rpc("stripe_livemode");
+  return billingBlockReason(CONFIG, data === true);
+}
 
 /** One-time top-ups: credits granted per £1 paid. */
 export const TOPUP_CREDITS_PER_GBP = 25;

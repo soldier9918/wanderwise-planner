@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_config: {
+        Row: {
+          id: boolean
+          live: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          live?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          live?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coupon_codes: {
         Row: {
           active: boolean
@@ -96,6 +114,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          livemode: boolean | null
           reason: string
           stripe_invoice_id: string | null
           user_id: string
@@ -104,6 +123,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          livemode?: boolean | null
           reason: string
           stripe_invoice_id?: string | null
           user_id: string
@@ -112,6 +132,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          livemode?: boolean | null
           reason?: string
           stripe_invoice_id?: string | null
           user_id?: string
@@ -218,6 +239,7 @@ export type Database = {
         Row: {
           cancel_at_period_end: boolean
           current_period_end: string | null
+          livemode: boolean
           plan_tier: string | null
           price_id: string | null
           status: string
@@ -229,6 +251,7 @@ export type Database = {
         Insert: {
           cancel_at_period_end?: boolean
           current_period_end?: string | null
+          livemode?: boolean
           plan_tier?: string | null
           price_id?: string | null
           status?: string
@@ -240,6 +263,7 @@ export type Database = {
         Update: {
           cancel_at_period_end?: boolean
           current_period_end?: string | null
+          livemode?: boolean
           plan_tier?: string | null
           price_id?: string | null
           status?: string
@@ -588,6 +612,7 @@ export type Database = {
         Args: { _amount: number; _reason: string; _user: string }
         Returns: string
       }
+      stripe_livemode: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

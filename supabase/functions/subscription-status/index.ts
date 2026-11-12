@@ -1,5 +1,6 @@
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
 import { stripe, PLANS } from "../_shared/stripe.ts";
+import { LIVE, billingBlocked } from "../_shared/stripe.ts";
 
 // Reads the signed-in user's own subscription live from Stripe (read-only) and reports
 // any scheduled plan change from its subscription schedule. Never modifies Stripe.
@@ -8,7 +9,8 @@ Deno.serve(async (req) => {
   try {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
-    const { data: row } = await adminClient().from("user_subscriptions").select("stripe_subscription_id").eq("user_id", auth.user.id).maybeSingle();
+    if (await billingBlocked(adminClient())) return json({ error: "Billing is temporarily unavailable." }, 503);
+    const { data: row } = await adminClient().from("user_subscriptions").select("stripe_subscription_id").eq("user_id", auth.user.id).eq("livemode", LIVE).maybeSingle();
     if (!row?.stripe_subscription_id) return json({ pending: null });
     const sub = await stripe.subscriptions.retrieve(row.stripe_subscription_id, { expand: ["schedule"] });
     const item = sub.items.data[0] as any;
