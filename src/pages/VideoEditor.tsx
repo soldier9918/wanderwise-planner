@@ -1252,7 +1252,7 @@ export default function VideoEditor() {
                   <Progress value={playing === i ? progress * 100 : 0} className="h-1.5 flex-1" />
                   <span className="text-xs tabular-nums text-muted-foreground">{formatSeconds(playing === i ? progress * secOf(s) : 0)} / {formatSeconds(secOf(s))}</span>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">If an image fails to load, click <span className="font-semibold">New image</span> to retry or <span className="font-semibold">Upload image</span> to add your own.</p>
+                <p className="mt-2 text-xs text-muted-foreground">If a scene image isn't loading, click <span className="font-semibold">New image</span> and then <span className="font-semibold">Redo voiceover</span> to recreate both, or <span className="font-semibold">Upload image</span> to add your own.</p>
               </li>
             ))}
           </ol>
