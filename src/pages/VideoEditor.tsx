@@ -941,7 +941,7 @@ export default function VideoEditor() {
             </div>
             <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
               <p className="text-sm font-semibold">Channel logo / watermark</p>
-              <p className="-mt-2 text-xs text-muted-foreground">Shows semi-transparent in a corner of the preview and download.</p>
+              <p className="-mt-2 text-xs text-muted-foreground">Shows semi-transparent in a corner of the preview and download. PNG recommended (transparent background) • Max 2 MB.</p>
               <div className="flex flex-wrap items-center gap-2">
                 {video.logo_path && urls[video.logo_path] && <img src={urls[video.logo_path]} alt="Your logo" className="h-10 w-10 rounded object-contain bg-muted" />}
                 <label className="inline-flex cursor-pointer items-center rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent/20">
@@ -951,8 +951,8 @@ export default function VideoEditor() {
                       const f = e.target.files?.[0];
                       e.target.value = "";
                       if (!f) return;
-                      if (!f.type.startsWith("image/")) return toast.error("Please pick an image.");
-                      if (f.size > 5 * 1024 * 1024) return toast.error("Please pick a logo under 5 MB.");
+                      if (!["image/png", "image/jpeg", "image/webp"].includes(f.type)) return toast.error("Please choose a PNG, WebP or JPEG image.");
+                      if (f.size > 2 * 1024 * 1024) return toast.error("Please choose an image under 2 MB (PNG recommended for transparency).");
                       setLogoBusy(true);
                       try {
                         const { data: u } = await supabase.auth.getUser();
