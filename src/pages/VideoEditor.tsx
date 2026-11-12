@@ -29,7 +29,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
-import { narrationTotalCharLimit } from "@/lib/tiers";
+import { narrationTotalCharLimit, narrationTotalCharMin } from "@/lib/tiers";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -598,6 +598,7 @@ export default function VideoEditor() {
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
   };
   const charLimit = account ? narrationTotalCharLimit((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
+  const charMin = account ? narrationTotalCharMin((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
   const totalChars = scenes.reduce((n, sc) => n + sc.narration.length, 0);
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
@@ -1177,6 +1178,7 @@ export default function VideoEditor() {
                 </div>
                 <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
                 {charLimit && totalChars > charLimit && <p className="mt-1 text-xs font-semibold text-destructive">The whole video is {totalChars - charLimit} characters too long for its length. Please reduce the characters.</p>}
+                {charMin && totalChars < charMin && <p className="mt-1 text-xs font-semibold text-destructive">The whole video is {charMin - totalChars} characters too short for its length. Please add more.</p>}
                 {!s.image_path && assetErr[`${s.id}-image`] && (
                   <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">Picture failed: {assetErr[`${s.id}-image`]}</p>
                 )}

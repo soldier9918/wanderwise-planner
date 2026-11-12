@@ -267,6 +267,13 @@
       "when": 1794505495493,
       "tag": "0037_narration_fixed_20s_buffer",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794506035958,
+      "tag": "0038_narration_min_length",
+      "breakpoints": true
     }
   ]
 }

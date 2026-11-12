@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { narrationTotalCharLimit, CHARS_PER_SECOND } from "./tiers";
+import { narrationTotalCharLimit, narrationTotalCharMin, CHARS_PER_SECOND } from "./tiers";
 
 describe("narrationTotalCharLimit", () => {
   it("a 2-minute video never runs past 2:20", () => {
@@ -17,5 +17,14 @@ describe("narrationTotalCharLimit", () => {
   });
   it("admins have no limit", () => {
     expect(narrationTotalCharLimit(120, "pro", true)).toBeNull();
+  });
+});
+
+describe("narrationTotalCharMin", () => {
+  it("a 2-minute video must be at least 1:50", () => {
+    expect(narrationTotalCharMin(120, "free")! / CHARS_PER_SECOND).toBe(110);
+  });
+  it("an 8-minute video must be at least 7:50", () => {
+    expect(narrationTotalCharMin(480, "creator")! / CHARS_PER_SECOND).toBe(470);
   });
 });

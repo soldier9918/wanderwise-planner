@@ -165,12 +165,18 @@ Deno.serve(async (req) => {
     const pastTitles = [...new Set((past ?? []).map((p) => p.title).filter(Boolean))];
     const hasPlaceholder = /\[[^\]]+\]/.test(topic);
     const uniqueRule = `${hasPlaceholder ? "\n\nThe idea contains placeholders in [square brackets]. Replace each one with a specific, surprising subject of your own choosing — avoid the most obvious, overused examples." : ""}${pastTitles.length ? `\n\nThis creator has already made these videos. Your video must be on a clearly different subject with a different title — never repeat or lightly reword any of them:\n- ${pastTitles.join("\n- ")}` : ""}`;
-    const result = streamText({
+    // Strict length window: chosen length -10s to +20s (≈15 spoken characters per second).
+    const minChars = total ? Math.max(1, total - 10) * 15 : 0, maxChars = total ? (total + 20) * 15 : Infinity;
+    let output: z.infer<typeof schema> | null = null;
+    let lengthNote = "";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let out: z.infer<typeof schema>;
+      const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
         `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never more than that. The whole video must not run over its target length. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
       messages: [
-        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${uniqueRule}${research ? `\n\nResearch sources:\n${research}` : ""}` },
+        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${uniqueRule}${lengthNote}${research ? `\n\nResearch sources:\n${research}` : ""}` },
       ],
       output: Output.object({ schema }),
       abortSignal: req.signal,
@@ -185,9 +191,8 @@ Deno.serve(async (req) => {
       },
     });
 
-    let output: z.infer<typeof schema>;
     try {
-      output = await result.output;
+      out = await result.output;
     } catch (e) {
       if (NoObjectGeneratedError.isInstance(e)) return json({ error: "The AI returned an unexpected script. Please try again." }, 502);
       const status = (e as { statusCode?: number })?.statusCode ?? 500;
@@ -195,6 +200,14 @@ Deno.serve(async (req) => {
       if (status === 429) return json({ error: "Too many requests right now — please wait a moment and try again." }, 429);
       throw e;
     }
+
+      const chars = out.scenes.slice(0, count).reduce((n, sc) => n + (sc.narration?.trim().length ?? 0), 0);
+      output = out;
+      if (chars >= minChars && chars <= maxChars) break;
+      lengthNote = `\n\nIMPORTANT LENGTH RULE: all narration together must be between ${minChars} and ${maxChars} characters (about ${total} seconds spoken). Your last attempt had ${chars} characters — ${chars < minChars ? "write longer, fuller narration in every scene" : "make every scene shorter"}.`;
+      if (attempt === 2 && chars < minChars) return json({ error: "The AI couldn't write a script long enough for this length. Please try again." }, 502);
+    }
+    if (!output) return json({ error: "No scenes were written. Please try again." }, 502);
 
     const scenes = output.scenes.slice(0, count).filter((s) => s.narration?.trim());
     if (!scenes.length) return json({ error: "No scenes were written. Please try again." }, 502);

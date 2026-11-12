@@ -19,3 +19,8 @@ export const CHARS_PER_SECOND = 15;
 /** Whole video may run up to 20 seconds over the chosen length (3:00 → 3:20). Total characters across all scenes. Mirrors DB `narration_total_char_limit`. */
 export const narrationTotalCharLimit = (targetSeconds: number | null | undefined, tier: PlanTier, isAdmin = false) =>
   isAdmin ? null : Math.floor((Math.min(targetSeconds || 120, MAX_SECONDS_BY_TIER[tier]) + 20) * CHARS_PER_SECOND);
+/** Minimum total characters: chosen length minus 10 seconds (2:00 → 1:50). Mirrors DB `enforce_narration_length`. */
+export const narrationTotalCharMin = (targetSeconds: number | null | undefined, tier: PlanTier, isAdmin = false) => {
+  const max = narrationTotalCharLimit(targetSeconds, tier, isAdmin);
+  return max === null ? null : Math.max(max - 30 * CHARS_PER_SECOND, CHARS_PER_SECOND);
+};
