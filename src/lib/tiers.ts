@@ -16,6 +16,6 @@ export const lengthAllowedForPlan = (seconds: number, tier: PlanTier) => seconds
 export const qualityAllowedForPlan = (quality: string, tier: PlanTier) => quality !== "1080p" || tier === "pro";
 /** Spoken characters per second, used to turn seconds into a per-scene text limit. */
 export const CHARS_PER_SECOND = 15;
-/** Whole video may run up to 1/6 over the chosen length (2 min → 2:20). Total characters across all scenes. Mirrors DB `narration_total_char_limit`. */
+/** Whole video may run up to 20 seconds over the chosen length (3:00 → 3:20). Total characters across all scenes. Mirrors DB `narration_total_char_limit`. */
 export const narrationTotalCharLimit = (targetSeconds: number | null | undefined, tier: PlanTier, isAdmin = false) =>
-  isAdmin ? null : Math.floor(Math.min(targetSeconds || 120, MAX_SECONDS_BY_TIER[tier]) * 7 / 6 * CHARS_PER_SECOND);
+  isAdmin ? null : Math.floor((Math.min(targetSeconds || 120, MAX_SECONDS_BY_TIER[tier]) + 20) * CHARS_PER_SECOND);

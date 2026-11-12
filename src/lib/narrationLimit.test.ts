@@ -9,8 +9,11 @@ describe("narrationTotalCharLimit", () => {
   it("free tier counts as 2 minutes even if a longer length is stored", () => {
     expect(narrationTotalCharLimit(600, "free")).toBe(2100);
   });
-  it("creator 10-minute video allows up to 11:40", () => {
-    expect(narrationTotalCharLimit(600, "creator")! / CHARS_PER_SECOND).toBe(700);
+  it("an 8-minute video allows up to 8:20", () => {
+    expect(narrationTotalCharLimit(480, "creator")! / CHARS_PER_SECOND).toBe(500);
+  });
+  it("creator 10-minute video allows up to 10:20", () => {
+    expect(narrationTotalCharLimit(600, "creator")! / CHARS_PER_SECOND).toBe(620);
   });
   it("admins have no limit", () => {
     expect(narrationTotalCharLimit(120, "pro", true)).toBeNull();
