@@ -45,9 +45,14 @@ export default function ProfileMenu({ onSignOut }: { onSignOut: () => void }) {
       <DropdownMenuTrigger
         aria-label={`Account: ${email}`}
         title={email}
-        className="grid h-9 w-9 place-items-center rounded-full border border-primary/60 bg-card font-display text-sm font-bold uppercase text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative grid h-9 w-9 place-items-center rounded-full border border-primary/60 bg-card font-display text-sm font-bold uppercase text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {email.charAt(0) || "?"}
+        {acct && (
+          <span className={`pointer-events-none absolute -bottom-1.5 -right-2 rounded-full px-1 py-px text-[8px] font-extrabold leading-none tracking-wide ring-2 ring-background ${planLabel(acct) === "Free" ? "bg-muted text-muted-foreground" : planLabel(acct) === "Creator" ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"}`}>
+            {planLabel(acct).toUpperCase()}
+          </span>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel className="font-normal">
