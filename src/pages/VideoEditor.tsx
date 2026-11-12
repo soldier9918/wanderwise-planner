@@ -722,8 +722,13 @@ export default function VideoEditor() {
               {playing === null && scenes.length > 0 && !previewReady && (
                 <div role="status" aria-label="Preview loading" className="absolute inset-0 grid place-items-center bg-background/60">
                   <div className="flex flex-col items-center gap-3 text-sm font-semibold text-foreground">
-                    <span className="h-12 w-12 animate-spin rounded-full border-4 border-muted-foreground/30 border-t-primary" />
+                    {busyAny || done === scenes.length ? <span className="h-12 w-12 animate-spin rounded-full border-4 border-muted-foreground/30 border-t-primary" /> : null}
                     Preparing preview… {done}/{scenes.length} scenes ready
+                    {!busyAny && done < scenes.length && !readOnly && (
+                      <Button size="sm" onClick={() => generateMissing(scenes)}>
+                        Finish {scenes.length - done} missing scene{scenes.length - done === 1 ? "" : "s"}
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
