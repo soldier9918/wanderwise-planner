@@ -634,6 +634,7 @@ export type Database = {
         Returns: boolean
       }
       live_activation_ready: { Args: never; Returns: Json }
+      narration_char_limit: { Args: { _video: string }; Returns: number }
       new_referral_code: { Args: never; Returns: string }
       redeem_coupon: { Args: { _code: string }; Returns: string }
       refund_credits: {

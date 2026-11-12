@@ -29,6 +29,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
+import { narrationCharLimit } from "@/lib/tiers";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -596,6 +597,7 @@ export default function VideoEditor() {
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
   };
+  const charLimit = account ? narrationCharLimit((video as { target_seconds?: number | null }).target_seconds, scenes.length, account.tier, account.isAdmin) : null;
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
   const readOnly = isReadOnlyAccount(account);
@@ -1172,7 +1174,8 @@ export default function VideoEditor() {
                     <p className="font-semibold">{s.heading}</p>
                   </div>
                 </div>
-                <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
+                <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} maxLength={charLimit ?? undefined} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
+                {charLimit && <p className="mt-1 text-right text-xs text-muted-foreground">Up to {charLimit} characters per scene for this video length{s.narration.length > charLimit ? ` (now ${s.narration.length})` : ""}</p>}
                 {!s.image_path && assetErr[`${s.id}-image`] && (
                   <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">Picture failed: {assetErr[`${s.id}-image`]}</p>
                 )}
