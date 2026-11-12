@@ -981,7 +981,7 @@ export default function VideoEditor() {
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   <span className="font-semibold">Background music</span>
-                  <span className="block text-xs text-muted-foreground">Plays under the narration in preview and download.</span>
+                  <span className="block text-xs text-muted-foreground">Plays under the narration in preview and download. Your own track: MP3 or WAV, max 20 MB. It loops if shorter than the video and stops when the video ends. Only use music you own or have a licence for.</span>
                 </span>
                 <Switch
                   checked={video.music_enabled ?? true}
@@ -1010,6 +1010,7 @@ export default function VideoEditor() {
                       const f = e.target.files?.[0];
                       e.target.value = "";
                       if (!f) return;
+                      if (!/\.(mp3|wav)$/i.test(f.name)) return toast.error("Please choose an MP3 or WAV audio file.");
                       if (f.size > 20 * 1024 * 1024) return toast.error("Please pick a track under 20 MB.");
                       setMusicBusy(true);
                       try {
