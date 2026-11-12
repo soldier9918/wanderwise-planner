@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { poundsFor, gbp } from "@/lib/paymentValue";
 import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -62,6 +63,11 @@ export default function Admin() {
     (!q || u.email?.toLowerCase().includes(q.toLowerCase()) || u.user_id.includes(q) || u.referral_code?.includes(q.toUpperCase())) &&
     (planFilter === "all" || (planFilter === "paid" ? u.paid_total > 0 : u.paid_total === 0))), [users.data, q, planFilter]);
   const paidRows = useMemo(() => (ledger.data ?? []).filter((l) => ["purchase", "topup", "subscription"].includes(l.reason) && l.amount > 0), [ledger.data]);
+
+  const money = useMemo(() => paidRows.reduce((m, l) => {
+    const v = poundsFor(l.reason, l.amount);
+    if (l.livemode === true) m.real += v; else m.test += v;
+    return m; }, { real: 0, test: 0 }), [paidRows]);
 
   if (!allowed) return <Navigate to="/" replace />;
   if (role.isLoading) return <div className="min-h-screen bg-background" />;
@@ -128,6 +134,8 @@ export default function Admin() {
           <Stat label="Scenes" value={o?.scenes ?? "…"} sub={`${o?.animated ?? 0} AI-animated`} />
           <Stat label="Credits issued" value={o?.credits_issued ?? "…"} />
           <Stat label="Credits spent" value={o?.credits_spent ?? "…"} />
+          <Stat label="Real money in" value={ledger.data ? gbp(money.real) : "…"} sub="Live payments" />
+          <Stat label="Test payments" value={ledger.data ? gbp(money.test) : "…"} sub="Sandbox, not real money" />
         </div>
 
         <div className="mt-6 rounded-xl border border-border bg-card p-4">
@@ -235,11 +243,11 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <p className="mb-3 text-sm text-muted-foreground">Paid credit activity — subscriptions and top-ups. £1 = 25 credits · Creator £19/mo = 600 credits · Pro £49/mo = 2,000 credits.</p>
+            <p className="mb-3 text-sm text-muted-foreground">Paid credit activity — subscriptions and top-ups. £1 = 25 credits · Creator £19/mo = 600 credits · Pro £49/mo = 2,000 credits. £ amounts are worked out from credits, so check Stripe for exact totals (e.g. part-month upgrades).</p>
             <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
-                  <tr>{["When", "User", "Type", "Credits"].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr>
+                  <tr>{["When", "User", "Type", "Credits", "Paid", "Mode"].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {paidRows.map((l) => (
@@ -247,9 +255,11 @@ export default function Admin() {
                       <td className="px-3 py-2 whitespace-nowrap">{fmt(l.created_at)}</td><td className="px-3 py-2">{l.email}</td>
                       <td className="px-3 py-2 capitalize">{l.reason.replace(/_/g, " ")}</td>
                       <td className="px-3 py-2 font-semibold text-accent">+{l.amount}</td>
+                      <td className="px-3 py-2 font-semibold">{gbp(poundsFor(l.reason, l.amount))}</td>
+                      <td className="px-3 py-2 text-xs">{l.livemode === true ? <span className="rounded-full bg-primary/15 px-2 py-0.5 font-semibold text-primary">Real</span> : <span className="text-muted-foreground">Test</span>}</td>
                     </tr>
                   ))}
-                  {!paidRows.length && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">No paid credit activity yet.</td></tr>}
+                  {!paidRows.length && <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">No paid credit activity yet.</td></tr>}
                 </tbody>
               </table>
             </div>

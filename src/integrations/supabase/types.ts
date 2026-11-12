@@ -578,6 +578,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          livemode: boolean
           reason: string
         }[]
       }

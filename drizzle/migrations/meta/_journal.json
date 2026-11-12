@@ -239,6 +239,13 @@
       "when": 1794448000002,
       "tag": "0033_live_activation_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794448000003,
+      "tag": "0034_migration",
+      "breakpoints": true
     }
   ]
 }
