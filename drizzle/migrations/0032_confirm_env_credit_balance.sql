@@ -1,0 +1,1 @@
+COMMENT ON FUNCTION public.stripe_livemode() IS 'Current Stripe mode from billing_config.live';

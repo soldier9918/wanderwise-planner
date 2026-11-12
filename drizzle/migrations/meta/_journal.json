@@ -225,6 +225,13 @@
       "when": 1794448000000,
       "tag": "0031_env_credit_balance",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794448000001,
+      "tag": "0032_confirm_env_credit_balance",
+      "breakpoints": true
     }
   ]
 }

@@ -517,6 +517,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_live_billing: { Args: never; Returns: number }
       admin_adjust_credits: {
         Args: { _amount: number; _note: string; _user: string }
         Returns: undefined
@@ -593,6 +594,7 @@ export type Database = {
       can_mutate_project: { Args: { _user_id: string }; Returns: boolean }
       claim_monthly_free_credits: { Args: never; Returns: number }
       claim_referral: { Args: { _code: string }; Returns: string }
+      credit_balance: { Args: { _user: string }; Returns: number }
       grant_monthly_free_credits_all: { Args: never; Returns: number }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
