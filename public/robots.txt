@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /admin-kb20
 Disallow: /dashboard
 Disallow: /my-videos
 Disallow: /video/
