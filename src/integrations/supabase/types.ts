@@ -139,6 +139,30 @@ export type Database = {
         }
         Relationships: []
       }
+      live_activation_audit: {
+        Row: {
+          activated_at: string
+          adjustments: number
+          admin_id: string
+          details: Json
+          id: string
+        }
+        Insert: {
+          activated_at?: string
+          adjustments: number
+          admin_id: string
+          details?: Json
+          id?: string
+        }
+        Update: {
+          activated_at?: string
+          adjustments?: number
+          admin_id?: string
+          details?: Json
+          id?: string
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           adults: number
@@ -518,6 +542,10 @@ export type Database = {
     }
     Functions: {
       activate_live_billing: { Args: never; Returns: number }
+      activate_live_billing_audited: {
+        Args: { _admin: string; _details: Json }
+        Returns: number
+      }
       admin_adjust_credits: {
         Args: { _amount: number; _note: string; _user: string }
         Returns: undefined
@@ -604,6 +632,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      live_activation_ready: { Args: never; Returns: Json }
       new_referral_code: { Args: never; Returns: string }
       redeem_coupon: { Args: { _code: string }; Returns: string }
       refund_credits: {

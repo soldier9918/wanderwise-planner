@@ -8,6 +8,7 @@ import SiteHeader from "@/components/SiteHeader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import GoLivePanel from "@/components/GoLivePanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ADMIN_EMAIL = "samyhussain123@gmail.com";
@@ -146,6 +147,7 @@ export default function Admin() {
             <TabsTrigger value="ledger">Credit activity</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="coupons">Coupons</TabsTrigger>
+            <TabsTrigger value="golive">Go Live</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -252,6 +254,8 @@ export default function Admin() {
               </table>
             </div>
           </TabsContent>
+
+          <TabsContent value="golive"><GoLivePanel /></TabsContent>
 
           <TabsContent value="coupons">
             <div className="rounded-xl border border-border bg-card p-5">
