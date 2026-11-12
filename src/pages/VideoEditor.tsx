@@ -29,7 +29,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
-import { narrationTotalCharLimit, narrationTotalCharMin } from "@/lib/tiers";
+import { narrationTotalCharLimit, narrationTotalCharMin, CHARS_PER_SECOND } from "@/lib/tiers";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -600,6 +600,10 @@ export default function VideoEditor() {
   const charLimit = account ? narrationTotalCharLimit((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
   const charMin = account ? narrationTotalCharMin((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
   const totalChars = scenes.reduce((n, sc) => n + sc.narration.length, 0);
+  const tooLong = !!charLimit && totalChars > charLimit;
+  const tooShort = !!charMin && totalChars < charMin;
+  const lengthOk = !tooLong && !tooShort;
+  const targetLabel = charLimit ? formatSeconds(Math.round(charLimit / CHARS_PER_SECOND) - 20) : "";
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
   const readOnly = isReadOnlyAccount(account);
@@ -837,13 +841,20 @@ export default function VideoEditor() {
                 <option value="mp4">MP4{canRecordMp4() ? "" : " (not in this browser)"}</option>
                 <option value="webm">WebM</option>
               </select>
-              <Button variant="secondary" onClick={download} disabled={exportPct !== null || busyAny || exportInfo?.decision === "busy"}>
+              <Button variant="secondary" onClick={download} disabled={!lengthOk || exportPct !== null || busyAny || exportInfo?.decision === "busy"}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
               </Button>
             </div>
+            {!lengthOk && (
+              <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                {tooLong
+                  ? `Please reduce the characters in one or more scenes to meet the ${targetLabel} target (about ${totalChars - charLimit!} too many). Download unlocks once it fits.`
+                  : `Please add more characters to one or more scenes to meet the ${targetLabel} target (about ${charMin! - totalChars} too few). Download unlocks once it fits.`}
+              </p>
+            )}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
               <LookSelect label="Caption" value={captionStyle} options={CAPTION_STYLES} onChange={(v) => saveLook({ caption_style: v })} />
               <LookSelect label="Font" value={video.caption_font} options={CAPTION_FONTS} onChange={(v) => saveLook({ caption_font: v })} />
@@ -1177,8 +1188,6 @@ export default function VideoEditor() {
                   </div>
                 </div>
                 <Textarea key={s.narration} className="mt-3 text-sm" rows={3} defaultValue={s.narration} onBlur={(e) => saveNarration(s, e.target.value.trim())} />
-                {charLimit && totalChars > charLimit && <p className="mt-1 text-xs font-semibold text-destructive">The whole video is {totalChars - charLimit} characters too long for its length. Please reduce the characters.</p>}
-                {charMin && totalChars < charMin && <p className="mt-1 text-xs font-semibold text-destructive">The whole video is {charMin - totalChars} characters too short for its length. Please add more.</p>}
                 {!s.image_path && assetErr[`${s.id}-image`] && (
                   <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive">Picture failed: {assetErr[`${s.id}-image`]}</p>
                 )}
