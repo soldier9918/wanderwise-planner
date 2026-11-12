@@ -38,9 +38,19 @@ export default function SubscriptionPlans() {
     enabled: !!active,
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("subscription-status", { body: {} });
-      if (error) throw error;
-      return data as { cancel_at: string | null; pending: { tier: string; effective_at: string } | null };
+      type Status = { cancel_at: string | null; pending: { tier: string; effective_at: string } | null };
+      // Send a fresh sign-in token; if it had just expired (401), refresh once and retry.
+      const call = async (token?: string) =>
+        supabase.functions.invoke("subscription-status", { body: {}, headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      const { data: { session } } = await supabase.auth.getSession();
+      let res = await call(session?.access_token);
+      if ((res.error as { context?: Response } | null)?.context?.status === 401) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        res = await call(refreshed.session?.access_token);
+      }
+      // Pending-change details are optional: never break the page if they can't load.
+      if (res.error) return { cancel_at: null, pending: null } as Status;
+      return res.data as Status;
     },
   });
   const pending = active ? status?.pending ?? null : null;
