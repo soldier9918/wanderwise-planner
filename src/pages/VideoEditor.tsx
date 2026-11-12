@@ -856,7 +856,7 @@ export default function VideoEditor() {
             </div>
             {!lengthOk && (
               <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
-                {`Your video is ${formatSeconds(Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)))} long, exceeding your selected ${targetLabel} duration. Please shorten the narration in one or more scenes to continue.`}
+                {(() => { const actual = Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)); const cut = Math.max(1, actual - (maxSecs ?? actual)); return `Your video is ${formatSeconds(actual)} long, exceeding your selected ${targetLabel} duration. Please shorten the narration by about ${cut} second${cut === 1 ? "" : "s"} in one or more scenes to continue.`; })()}
               </p>
             )}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
