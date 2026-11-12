@@ -91,6 +91,7 @@ export type Scene = {
   position: number;
   heading: string;
   narration: string;
+  initial_narration?: string | null;
   visual_prompt: string;
   image_path: string | null;
   audio_path: string | null;

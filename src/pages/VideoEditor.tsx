@@ -29,7 +29,7 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
-import { narrationTotalCharLimit, CHARS_PER_SECOND } from "@/lib/tiers";
+import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND } from "@/lib/tiers";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -599,10 +599,12 @@ export default function VideoEditor() {
     const { error } = await supabase.from("videos").update(patch).eq("id", id!);
     if (error) { toast.error("Couldn't save caption settings"); refresh(); }
   };
-  const charLimit = account ? narrationTotalCharLimit((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
+  const edited = narrationEdited(scenes);
+  const maxSecs = account ? maxVideoSeconds((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin, edited) : null;
+  const charLimit = maxSecs ? Math.floor(maxSecs * CHARS_PER_SECOND) : null;
   const totalChars = scenes.reduce((n, sc) => n + sc.narration.length, 0);
   const tooLongChars = !!charLimit && totalChars > charLimit;
-  const targetLabel = charLimit ? formatSeconds(Math.round(charLimit / CHARS_PER_SECOND) - 20) : "";
+  const targetLabel = maxSecs ? formatSeconds(maxSecs - (edited ? 0 : 20)) : "";
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
   const readOnly = isReadOnlyAccount(account);
@@ -619,7 +621,6 @@ export default function VideoEditor() {
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
   // Real recorded length counts too: voices can speak slower than the character estimate.
-  const maxSecs = charLimit ? Math.round(charLimit / CHARS_PER_SECOND) : null;
   const overSecs = maxSecs ? Math.ceil(totalSecs - maxSecs) : 0;
   const tooLong = tooLongChars || overSecs > 0;
   // Minimum length only applies to AI-written scripts; manual edits may be shorter.
@@ -855,7 +856,7 @@ export default function VideoEditor() {
             </div>
             {!lengthOk && (
               <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
-                {`This video runs ${formatSeconds(totalSecs)}, over the ${targetLabel} target (max ${formatSeconds(maxSecs ?? 0)}). Please reduce the characters in one or more scenes, then redo those voiceovers. Download unlocks once it fits.`}
+                {`Your video is ${formatSeconds(Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)))} long, exceeding your selected ${targetLabel} duration. Please shorten the narration in one or more scenes to continue.`}
               </p>
             )}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">

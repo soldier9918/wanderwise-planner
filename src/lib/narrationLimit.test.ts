@@ -42,3 +42,13 @@ describe("every offered length on every plan: -10s to +20s", () => {
     }
   }
 });
+
+import { maxVideoSeconds, narrationEdited } from "./tiers";
+describe("strict length after edits", () => {
+  it("unedited 2:00 AI video may run to 2:20", () => expect(maxVideoSeconds(120, "free", false, false)).toBe(140));
+  it("edited 2:00 video must not exceed 2:00", () => expect(maxVideoSeconds(120, "free", false, true)).toBe(120));
+  it("restoring the original text counts as unedited", () =>
+    expect(narrationEdited([{ narration: "Hello world ", initial_narration: "Hello world" }])).toBe(false));
+  it("changed text counts as edited", () =>
+    expect(narrationEdited([{ narration: "Hello", initial_narration: "Hello world" }])).toBe(true));
+});

@@ -24,3 +24,9 @@ export const narrationTotalCharMin = (targetSeconds: number | null | undefined, 
   const max = narrationTotalCharLimit(targetSeconds, tier, isAdmin);
   return max === null ? null : Math.max(max - 30 * CHARS_PER_SECOND, CHARS_PER_SECOND);
 };
+/** True once any scene's text differs from what the AI first wrote (restoring it exactly undoes this). */
+export const narrationEdited = (scenes: { narration: string; initial_narration?: string | null }[]) =>
+  scenes.some((s) => s.narration.trim() !== (s.initial_narration ?? s.narration).trim());
+/** Longest allowed video. Unedited AI videos get a hidden 20s buffer; edited ones must fit the selected length. Mirrors DB `enforce_narration_length`. */
+export const maxVideoSeconds = (targetSeconds: number | null | undefined, tier: PlanTier, isAdmin: boolean, edited: boolean) =>
+  isAdmin ? null : Math.min(targetSeconds || 120, MAX_SECONDS_BY_TIER[tier]) + (edited ? 0 : 20);

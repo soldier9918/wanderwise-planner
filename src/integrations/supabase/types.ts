@@ -367,6 +367,7 @@ export type Database = {
           heading: string
           id: string
           image_path: string | null
+          initial_narration: string | null
           narration: string
           position: number
           user_id: string
@@ -382,6 +383,7 @@ export type Database = {
           heading?: string
           id?: string
           image_path?: string | null
+          initial_narration?: string | null
           narration: string
           position: number
           user_id: string
@@ -397,6 +399,7 @@ export type Database = {
           heading?: string
           id?: string
           image_path?: string | null
+          initial_narration?: string | null
           narration?: string
           position?: number
           user_id?: string

@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const { data: video } = await auth.client.from("videos").select("*").eq("id", videoId).maybeSingle();
     if (!video) return json({ error: "Video not found." }, 404);
     const [{ data: scenes }, { data: cardRow }, { data: isAdmin }, { data: sub }, { data: bal }, { data: paidRow }] = await Promise.all([
-      db.from("video_scenes").select("id, position, narration, image_path, audio_path, clip_path").eq("video_id", video.id).order("position"),
+      db.from("video_scenes").select("id, position, narration, initial_narration, image_path, audio_path, clip_path").eq("video_id", video.id).order("position"),
       db.from("user_brand_cards").select("cards").eq("user_id", uid).maybeSingle(),
       db.rpc("has_role", { _user_id: uid, _role: "admin" }),
       db.rpc("has_active_subscription", { _user_id: uid }),
@@ -71,6 +71,13 @@ Deno.serve(async (req) => {
     ]);
     const { data: subRow } = await db.from("user_subscriptions").select("plan_tier").eq("user_id", uid).eq("livemode", (await db.rpc("stripe_livemode")).data === true).maybeSingle();
     if (!scenes?.length || scenes.some((s) => !s.image_path)) return json({ error: "Every scene needs an image before exporting." }, 400);
+    // Edited videos must fit the selected length (no hidden buffer). Mirrors DB enforce_narration_length.
+    const { data: lim } = await db.rpc("narration_total_char_limit", { _video: video.id });
+    if (typeof lim === "number") {
+      const edited = scenes.some((s) => s.narration.trim() !== (s.initial_narration ?? s.narration).trim());
+      const total = scenes.reduce((n, s) => n + s.narration.length, 0);
+      if (total > (edited ? lim - 230 : lim)) return json({ error: "Your video is longer than your selected duration. Please shorten the narration in one or more scenes to continue." }, 400);
+    }
     const admin = isAdmin === true, paid = admin || sub === true;
     // 1080p exports are Pro (or admin) only; Free and Creator always render 720p.
     const quality = effectiveQuality(video.quality, planTierOf(admin, sub, subRow?.plan_tier) === "pro");
