@@ -160,12 +160,17 @@ Deno.serve(async (req) => {
       headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
     });
 
+    // Keep every video unique: show the AI this account's recent titles and force a fresh pick for template placeholders.
+    const { data: past } = await adminClient().from("videos").select("title").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(40);
+    const pastTitles = [...new Set((past ?? []).map((p) => p.title).filter(Boolean))];
+    const hasPlaceholder = /\[[^\]]+\]/.test(topic);
+    const uniqueRule = `${hasPlaceholder ? "\n\nThe idea contains placeholders in [square brackets]. Replace each one with a specific, surprising subject of your own choosing — avoid the most obvious, overused examples." : ""}${pastTitles.length ? `\n\nThis creator has already made these videos. Your video must be on a clearly different subject with a different title — never repeat or lightly reword any of them:\n- ${pastTitles.join("\n- ")}` : ""}`;
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
         `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never more than that. The whole video must not run over its target length. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
       messages: [
-        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${research ? `\n\nResearch sources:\n${research}` : ""}` },
+        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${uniqueRule}${research ? `\n\nResearch sources:\n${research}` : ""}` },
       ],
       output: Output.object({ schema }),
       abortSignal: req.signal,
