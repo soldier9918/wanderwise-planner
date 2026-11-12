@@ -28,3 +28,17 @@ describe("narrationTotalCharMin", () => {
     expect(narrationTotalCharMin(480, "creator")! / CHARS_PER_SECOND).toBe(470);
   });
 });
+
+import { VIDEO_LENGTHS } from "./durations";
+import { MAX_SECONDS_BY_TIER, type PlanTier } from "./tiers";
+
+describe("every offered length on every plan: -10s to +20s", () => {
+  for (const tier of ["free", "creator", "pro"] as PlanTier[]) {
+    for (const len of VIDEO_LENGTHS.filter((l) => l <= MAX_SECONDS_BY_TIER[tier])) {
+      it(`${tier} ${len}s → ${len - 10}s to ${len + 20}s`, () => {
+        expect(narrationTotalCharMin(len, tier)! / CHARS_PER_SECOND).toBe(len - 10);
+        expect(narrationTotalCharLimit(len, tier)! / CHARS_PER_SECOND).toBe(len + 20);
+      });
+    }
+  }
+});
