@@ -65,11 +65,27 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
+    const started = new Date(Date.now() - 5000).toISOString();
+    let moved = false;
+    const go = (videoId: string) => { if (moved) return; moved = true; clearInterval(poll); navigate(`/video/${videoId}?autogen=1`); };
+    // Fallback: if the reply is slow or lost, open the new video as soon as it has its scenes.
+    const findNew = async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data: v } = await supabase.from("videos").select("id, video_scenes(count)").eq("user_id", u.user.id).gte("created_at", started).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const n = (v as { video_scenes?: { count: number }[] } | null)?.video_scenes?.[0]?.count ?? 0;
+      return v && n > 0 ? v.id : null;
+    };
+    const poll = setInterval(async () => { const vid = await findNew().catch(() => null); if (vid) go(vid); }, 4000);
     try {
       const { videoId } = await generateScript({ topic, sourceUrl: fromUrl ? url.trim() : undefined, narrationSpeed: Number(speed), accent, style, voice, tone, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
       await supabase.from("videos").update({ music_mood: mood, music_enabled: mood !== "none" }).eq("id", videoId);
-      navigate(`/video/${videoId}?autogen=1`);
+      go(videoId);
     } catch (err) {
+      const vid = await findNew().catch(() => null);
+      if (vid) return go(vid);
+      clearInterval(poll);
+      if (moved) return;
       toast.error((err as Error).message);
       setBusy(false);
     }
