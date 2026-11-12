@@ -599,9 +599,7 @@ export default function VideoEditor() {
   };
   const charLimit = account ? narrationTotalCharLimit((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin) : null;
   const totalChars = scenes.reduce((n, sc) => n + sc.narration.length, 0);
-  const tooLong = !!charLimit && totalChars > charLimit;
-  // Minimum length only applies to AI-written scripts; manual edits may be shorter.
-  const lengthOk = !tooLong;
+  const tooLongChars = !!charLimit && totalChars > charLimit;
   const targetLabel = charLimit ? formatSeconds(Math.round(charLimit / CHARS_PER_SECOND) - 20) : "";
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
@@ -618,6 +616,12 @@ export default function VideoEditor() {
   const secOf = (s: Scene) => sceneSeconds(s.audio_path && audioSecs[s.id] ? audioSecs[s.id] / speed : null, s.narration);
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
+  // Real recorded length counts too: voices can speak slower than the character estimate.
+  const maxSecs = charLimit ? Math.round(charLimit / CHARS_PER_SECOND) : null;
+  const overSecs = maxSecs ? Math.ceil(totalSecs - maxSecs) : 0;
+  const tooLong = tooLongChars || overSecs > 0;
+  // Minimum length only applies to AI-written scripts; manual edits may be shorter.
+  const lengthOk = !tooLong;
   const curMotion = motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null);
   const motionOn = video?.motion_enabled ?? true;
   const trans = playing !== null && playing > 0 ? transitionAt(video?.transition_type ?? "crossfade", playing, (progress * sceneSecs[playing]) / TRANSITION_SECS, video?.transition_enabled ?? false) : null;
@@ -849,7 +853,7 @@ export default function VideoEditor() {
             </div>
             {!lengthOk && (
               <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
-                {`Please reduce the characters in one or more scenes to meet the ${targetLabel} target (about ${totalChars - charLimit!} too many). Download unlocks once it fits.`}
+                {`This video runs ${formatSeconds(totalSecs)}, over the ${targetLabel} target (max ${formatSeconds(maxSecs ?? 0)}). Please reduce the characters in one or more scenes, then redo those voiceovers. Download unlocks once it fits.`}
               </p>
             )}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
