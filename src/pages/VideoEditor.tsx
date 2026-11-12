@@ -855,9 +855,14 @@ export default function VideoEditor() {
               </Button>
             </div>
             {!lengthOk && (
-              <p role="alert" className="mt-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
-                {(() => { const actual = Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)); const cut = Math.max(1, actual - (maxSecs ?? actual)); return `Your video is ${formatSeconds(actual)} long, exceeding your selected ${targetLabel} duration. Please shorten the narration by about ${cut} second${cut === 1 ? "" : "s"} in one or more scenes to continue${account?.tier === "pro" || account?.isAdmin ? "" : account?.tier === "creator" ? ", or upgrade to Pro plan to continue" : ", or upgrade to Creator or Pro plan to continue"}.`; })()}
-              </p>
+              <div role="alert" className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
+                {(() => { const actual = Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)); const cut = Math.max(1, actual - (maxSecs ?? actual)); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; return (
+                  <>
+                    <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding your selected {targetLabel} duration.</p>
+                    <p className="mt-1 text-muted-foreground">Please shorten the narration by about {cut} second{cut === 1 ? "" : "s"} in one or more scenes to continue{canUpgrade ? <>, or <Link to="/pricing" className="text-primary underline">{upgradeText}</Link> to continue</> : "."}.</p>
+                  </>
+                ); })()}
+              </div>
             )}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
               <LookSelect label="Caption" value={captionStyle} options={CAPTION_STYLES} onChange={(v) => saveLook({ caption_style: v })} />
