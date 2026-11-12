@@ -253,6 +253,13 @@
       "when": 1794504969436,
       "tag": "0035_narration_length_cap",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794505327775,
+      "tag": "0036_narration_total_length_cap",
+      "breakpoints": true
     }
   ]
 }

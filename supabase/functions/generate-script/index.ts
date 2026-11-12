@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
     const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never far off that. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
+        `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never more than that. The whole video must not run over its target length. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
       messages: [
         { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${research ? `\n\nResearch sources:\n${research}` : ""}` },
       ],
