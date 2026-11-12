@@ -1,14 +1,14 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /admin-kb20
+Disallow: /dashboard
+Disallow: /my-videos
+Disallow: /video/
+Disallow: /library
+Disallow: /create
+Disallow: /from-url
+Disallow: /series
+Disallow: /billing
+Disallow: /reset-password
+
+Sitemap: https://vydora.ai/sitemap.xml
