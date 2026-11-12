@@ -7,7 +7,7 @@ describe("narrationTotalCharLimit", () => {
     expect(lim / CHARS_PER_SECOND).toBe(140);
   });
   it("free tier counts as 2 minutes even if a longer length is stored", () => {
-    expect(narrationTotalCharLimit(600, "free")).toBe(2100);
+    expect(narrationTotalCharLimit(600, "free")).toBe(1610);
   });
   it("an 8-minute video allows up to 8:20", () => {
     expect(narrationTotalCharLimit(480, "creator")! / CHARS_PER_SECOND).toBe(500);

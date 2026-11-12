@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
 
     const total = Math.min(3600, Math.max(30, Math.round(Number(targetSeconds)) || 0)) || null;
     const per = total ? Math.round(total / count) : 12;
-    const words = Math.max(5, Math.round(per * 2.6));
+    const words = Math.max(5, Math.round(per * 2));
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
 
@@ -165,8 +165,8 @@ Deno.serve(async (req) => {
     const pastTitles = [...new Set((past ?? []).map((p) => p.title).filter(Boolean))];
     const hasPlaceholder = /\[[^\]]+\]/.test(topic);
     const uniqueRule = `${hasPlaceholder ? "\n\nThe idea contains placeholders in [square brackets]. Replace each one with a specific, surprising subject of your own choosing — avoid the most obvious, overused examples." : ""}${pastTitles.length ? `\n\nThis creator has already made these videos. Your video must be on a clearly different subject with a different title — never repeat or lightly reword any of them:\n- ${pastTitles.join("\n- ")}` : ""}`;
-    // Strict length window: chosen length -10s to +20s (≈15 spoken characters per second).
-    const minChars = total ? Math.max(1, total - 10) * 15 : 0, maxChars = total ? (total + 20) * 15 : Infinity;
+    // Strict length window: chosen length -10s to +20s (≈11.5 spoken characters (measured voice pace) per second).
+    const minChars = total ? Math.max(1, total - 10) * 11.5 : 0, maxChars = total ? (total + 20) * 11.5 : Infinity;
     let output: z.infer<typeof schema> | null = null;
     let lengthNote = "";
     for (let attempt = 0; attempt < 3; attempt++) {

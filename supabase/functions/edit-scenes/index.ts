@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     if (!apiKey) return json({ error: "AI is not configured." }, 500);
 
     const per = video.target_seconds && current ? Math.round(video.target_seconds / current) : 12;
-    const words = Math.max(5, Math.round(per * 2.6));
+    const words = Math.max(5, Math.round(per * 2));
     const framing = ({
       "16:9": "wide 16:9 landscape",
       "9:16": "tall 9:16 vertical, phone-first with the subject centred",
