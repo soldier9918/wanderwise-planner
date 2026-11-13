@@ -9,6 +9,7 @@ import HeroDotLogo from "@/components/HeroDotLogo";
 import HeroStudio from "@/components/HeroStudio";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import { useEffect, useRef, useState } from "react";
+import CreationTimelapse from "@/components/CreationTimelapse";
 import TypedHeadline from "@/components/TypedHeadline";
 import { Play, Link2, Layers, Search, Film, Smartphone, Music, ArrowRight } from "lucide-react";
 import thumbMh370 from "@/assets/example-thumb-mh370.jpg";
@@ -128,6 +129,8 @@ export default function Landing() {
           </div>
 
         </section>
+
+        <CreationTimelapse />
 
         <section className="container py-20">
           <div className="mb-10 text-center">
