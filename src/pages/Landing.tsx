@@ -79,7 +79,7 @@ export default function Landing() {
   const { user } = useAuth();
   const cta = user ? "/create" : "/auth?mode=signup";
   // 0 = VYDORA in dots, 1 = dot grid, 2 = thumbnail reel, 3 = AI studio
-  const [mode, setMode] = useState(0);
+  const [mode, setMode] = useState(2);
   const headRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
