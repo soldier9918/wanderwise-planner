@@ -10,7 +10,7 @@ import HeroStudio from "@/components/HeroStudio";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import { useEffect, useRef, useState } from "react";
 import TypedHeadline from "@/components/TypedHeadline";
-import { Star, Play } from "lucide-react";
+import { Play, Link2, Layers, Search, Film, Smartphone, Music, ArrowRight } from "lucide-react";
 import thumbMh370 from "@/assets/example-thumb-mh370.jpg";
 import thumbRome from "@/assets/example-thumb-rome.jpg";
 import thumbBitcoin from "@/assets/example-thumb-bitcoin.jpg";
@@ -27,65 +27,21 @@ const examples = [
   { img: thumbAi, title: "AI in 2030: The Future Is Closer Than You Think", by: "Tech Horizon", views: "176K views" },
 ];
 
-type Review = { name: string; role: string; stars: number; text: string };
+import reelTitanic from "@/assets/reel-titanic.jpg";
+import reelEgypt from "@/assets/reel-egypt.jpg";
+import reelMars from "@/assets/reel-mars.jpg";
+import reelVikings from "@/assets/reel-vikings.jpg";
+import reelTokyo from "@/assets/reel-tokyo.jpg";
+import reelOcean from "@/assets/reel-ocean.jpg";
 
-const reviews: Review[] = [
-  { name: "Marcus T.", role: "True crime channel, 40K subscribers", stars: 5, text: "I typed one sentence about a cold case and had a full video with voiceover in under ten minutes. My watch time has doubled since I started posting daily." },
-  { name: "Priya S.", role: "History teacher & creator", stars: 5, text: "The fact-checking with sources is what sold me. I can trust the scripts enough to use them in class, and the thumbnails genuinely get clicks." },
-  { name: "Dan W.", role: "Faceless finance channel", stars: 4, text: "Background music, captions and camera motion are all built in. I went from one video a week to one a day without hiring an editor." },
-  { name: "Aisha K.", role: "Sleep stories & ASMR, 12K subs", stars: 5, text: "The whisper tone and the soft female voices are perfect for bedtime content. I used to record everything myself at 2am — now I don't." },
-  { name: "Tom B.", role: "Gaming Shorts channel", stars: 4, text: "Switching to portrait 9:16 and picking the hype tone took me from long uploads to daily Shorts. The random mix of transition sounds keeps it lively." },
-  { name: "Lena M.", role: "Study-with-me channel", stars: 5, text: "I set the mood to lo-fi, drop my own timer footage in for one scene, and export at 1080p. It sounds like a produced video, not a screen recording." },
-  { name: "Chris O.", role: "Tech reviews, 78K subscribers", stars: 5, text: "The fast tech review tone is uncanny — punchy, no waffle. I redo the script on a scene until the hook lands, then ship it." },
-  { name: "Sofia R.", role: "Stoicism & motivation page", stars: 5, text: "Thumbnails used to be my bottleneck. Now I generate one, tweak the text size, and it's done. My click rate went up the week I switched." },
-  { name: "Jake P.", role: "Sports stats channel", stars: 4, text: "Setting the video length is the killer feature. Four scenes, two minutes, and the narration actually fills the time instead of trailing off." },
-  { name: "Nina F.", role: "Nature & travel channel", stars: 5, text: "When the AI drew a landmark wrong, I just uploaded my own photo for that scene. Much easier than regenerating and hoping." },
-  { name: "Ben H.", role: "Personal finance shorts", stars: 5, text: "I checked the sources list before posting a video on interest rates and every figure was right. That's what keeps my comments section calm." },
-  { name: "Grace L.", role: "Book summaries channel", stars: 5, text: "Twenty-two scenes for a full book summary, all written from one line. The sentence captions look clean and never crowd the screen." },
-  { name: "Omar D.", role: "History of science, 25K subs", stars: 5, text: "Calm documentary tone plus the documentary music mood is exactly the feel I wanted. It costs nothing to try, so I make three versions and pick one." },
-  { name: "Ruby S.", role: "Horror story channel", stars: 5, text: "The horror camera movements are unreal — flickering light, film scratches, a slow creeping zoom. My viewers think I bought an effect pack." },
-  { name: "Kai M.", role: "Coding tutorials", stars: 4, text: "I put my own screenshots in the tricky scenes and keep the AI pictures for the intros. Uploads, captions and export all work in one place." },
-  { name: "Ella V.", role: "Parenting tips channel", stars: 5, text: "I hate being on camera. Now I write the idea, choose a warm narrator, and the video is finished before my coffee goes cold." },
+const features = [
+  { img: reelTitanic, icon: Link2, tag: "Article to Video", t: "Turn any link into a video", d: "Paste a news story or blog post. Vydora pulls out the key points, keeps the sources, and builds a full video.", to: "/from-url" },
+  { img: reelEgypt, icon: Layers, tag: "Series", t: "Plan a whole series at once", d: "Pick a topic and get a run of connected episodes with a shared look, each one ready to generate.", to: "/series" },
+  { img: reelMars, icon: Search, tag: "Real facts", t: "Scripts backed by sources", d: "Switch on real facts and the script is researched from the web, with every source listed for you to check.", to: "/create" },
+  { img: reelVikings, icon: Film, tag: "Animation & B-roll", t: "Bring scenes to life", d: "Animate any scene with AI or drop in free stock footage to keep viewers watching.", to: "/create" },
+  { img: reelTokyo, icon: Smartphone, tag: "Shorts remix", t: "One video, two formats", d: "Remix any widescreen video into a vertical Short in one click, using the same scenes and voice.", to: "/create" },
+  { img: reelOcean, icon: Music, tag: "Branding & sound", t: "Make it yours", d: "Add your logo, intro and outro cards, background music and the narrator voice and accent you like.", to: "/create" },
 ];
-
-const rowA = reviews.slice(0, 8);
-const rowB = reviews.slice(8);
-
-function ReviewRow({ items, dir, secs }: { items: Review[]; dir: "left" | "right"; secs: number }) {
-  return (
-    <div className="marquee marquee-mask overflow-hidden">
-      <div
-        className={`marquee-track ${dir === "left" ? "animate-marquee-left" : "animate-marquee-right"}`}
-        style={{ animationDuration: `${secs}s` }}
-      >
-        {[0, 1].map((copy) => (
-          <div key={copy} className="flex items-stretch" aria-hidden={copy === 1}>
-            {items.map((r) => (
-              <div key={r.name} className="w-[340px] shrink-0 pr-5">
-                <blockquote className="flex h-full flex-col rounded-xl border border-border bg-card p-6">
-                  <div className="flex gap-1" aria-label={`${r.stars} out of 5 stars`}>
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star
-                        key={i}
-                        className={i < r.stars ? "h-4 w-4 text-star" : "h-4 w-4 text-muted-foreground/40"}
-                        fill="currentColor"
-                      />
-                    ))}
-                  </div>
-                  <p className="mt-3 text-muted-foreground">“{r.text}”</p>
-                  <footer className="mt-auto pt-4">
-                    <p className="font-semibold">{r.name}</p>
-                    <p className="text-sm text-muted-foreground">{r.role}</p>
-                  </footer>
-                </blockquote>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const steps = [
   { n: "01", t: "Drop an idea", d: "“The rise and fall of Blockbuster” or “5 habits of ancient Stoics.” One line is enough." },
@@ -172,14 +128,29 @@ export default function Landing() {
             ))}
           </div>
 
-          <div className="mt-16">
-            <p className="mb-6 text-center text-sm uppercase tracking-widest text-muted-foreground">
-              What creators say
-            </p>
-            <div className="space-y-5">
-              <ReviewRow items={rowA} dir="left" secs={62} />
-              <ReviewRow items={rowB} dir="right" secs={74} />
-            </div>
+        </section>
+
+        <section className="container py-20">
+          <div className="mb-10 text-center">
+            <p className="text-sm uppercase tracking-widest text-accent">Everything in one studio</p>
+            <h2 className="mt-3 text-4xl font-extrabold md:text-5xl">More ways to make videos</h2>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f) => (
+              <Link key={f.tag} to={user ? f.to : cta} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/50">
+                <div className="relative aspect-video overflow-hidden">
+                  <img src={f.img} alt={f.t} loading="lazy" width={1280} height={720} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-xs font-semibold backdrop-blur">
+                    <f.icon className="h-3.5 w-3.5 text-primary" /> {f.tag}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-xl font-semibold">{f.t}</h3>
+                  <p className="mt-2 text-muted-foreground">{f.d}</p>
+                  <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-primary">Try it <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 
