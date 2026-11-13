@@ -19,12 +19,12 @@ import thumbStoic from "@/assets/example-thumb-stoic.jpg";
 import thumbAi from "@/assets/example-thumb-ai.jpg";
 
 const examples = [
-  { img: thumbMh370, title: "The MH370 Mystery: What Really Happened?", by: "Dark Skies Daily", views: "212K views" },
-  { img: thumbRome, title: "The Rise of Rome in 10 Minutes", by: "Past Forward", views: "98K views" },
-  { img: thumbBitcoin, title: "Bitcoin Explained Simply", by: "Money Mindset", views: "154K views" },
-  { img: thumbSpace, title: "Black Holes: What's Inside?", by: "Cosmos Lab", views: "301K views" },
-  { img: thumbStoic, title: "5 Stoic Habits That Changed My Life", by: "Quiet Strength", views: "87K views" },
-  { img: thumbAi, title: "AI in 2030: The Future Is Closer Than You Think", by: "Tech Horizon", views: "176K views" },
+  { img: thumbMh370, title: "The MH370 Mystery: What Really Happened?" },
+  { img: thumbRome, title: "The Rise of Rome in 10 Minutes" },
+  { img: thumbBitcoin, title: "Bitcoin Explained Simply" },
+  { img: thumbSpace, title: "Black Holes: What's Inside?" },
+  { img: thumbStoic, title: "5 Stoic Habits That Changed My Life" },
+  { img: thumbAi, title: "AI in 2030: The Future Is Closer Than You Think" },
 ];
 
 import reelTitanic from "@/assets/reel-titanic.jpg";
@@ -102,7 +102,7 @@ export default function Landing() {
         <section className="container py-20">
           <div className="mb-10 text-center">
             <h2 className="text-4xl font-extrabold md:text-5xl">Made with Vydora</h2>
-            <p className="mt-3 text-muted-foreground">Real-style videos our creators shipped from a single sentence.</p>
+            <p className="mt-3 text-muted-foreground">Example videos, each made from a single sentence.</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {examples.map((e) => (
@@ -122,7 +122,6 @@ export default function Landing() {
                 </div>
                 <figcaption className="p-4">
                   <p className="font-semibold leading-snug">{e.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{e.by} · {e.views}</p>
                 </figcaption>
               </figure>
             ))}
