@@ -48,10 +48,10 @@ function LookSelect<T extends string>({ label, value, options, onChange, swatch,
         <SelectTrigger className="h-9"><SelectValue className="truncate" /></SelectTrigger>
         <SelectContent>
           {options.map((o) => (
-            <SelectItem key={o.value} value={o.value} textValue={o.textValue ?? o.label}>
+            <SelectItem key={o.value} value={o.value} textValue={o.textValue ?? o.label} description={o.textValue ? o.label.replace(`${o.textValue} — `, "") : undefined}>
               <span className="flex items-center gap-2">
                 {swatch && <span className="h-3 w-3 rounded-full border border-border" style={{ background: o.value }} />}
-                <span style={o.css ? { fontFamily: o.css, fontSize: "15px" } : undefined}>{o.label}</span>
+                <span style={o.css ? { fontFamily: o.css, fontSize: "15px" } : undefined}>{o.textValue ?? o.label}</span>
               </span>
             </SelectItem>
           ))}
