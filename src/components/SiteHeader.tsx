@@ -26,7 +26,7 @@ export default function SiteHeader() {
   const on = (to: string) => (pathname === to || (to === "/dashboard" && pathname === "/my-videos") ? "text-primary" : "");
   const [open, setOpen] = useState(false);
   const navBtn = "h-9 px-4 text-sm whitespace-nowrap";
-  const low = acct ? acct.balance <= 5 : false;
+  const low = acct ? !acct.isAdmin && acct.balance <= 5 : false;
   const balancePill = "inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 text-sm font-semibold tabular-nums";
   const close = () => setOpen(false);
   const doSignOut = async () => { close(); await signOut(); navigate("/"); };
@@ -61,7 +61,7 @@ export default function SiteHeader() {
               <div className={`${balancePill} pr-1 ${low ? "border-primary/60 text-primary" : ""}`}>
                 <Link to="/billing" aria-label="Credit balance" className="inline-flex items-center gap-1.5 hover:opacity-80">
                   <Coins className="h-4 w-4 text-primary" />
-                  {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
+                  {acct ? (acct.isAdmin ? "Unlimited" : acct.balance) : "—"}<span className="font-medium text-muted-foreground">credits</span>
                 </Link>
                 <Link to="/billing#top-ups" onClick={onTopUpClick} aria-label="Top up credits" title="Top up credits" className="ml-1 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                   <Plus className="h-4 w-4" />
@@ -115,7 +115,7 @@ export default function SiteHeader() {
                 <div className="mb-2 flex items-center gap-2">
                   <Link to="/billing" onClick={close} className={`${balancePill} min-w-0 flex-1 justify-center ${low ? "border-primary/60 text-primary" : ""}`}>
                     <Coins className="h-4 w-4 text-primary" />
-                    {acct ? acct.balance : "—"}<span className="font-medium text-muted-foreground">credits</span>
+                    {acct ? (acct.isAdmin ? "Unlimited" : acct.balance) : "—"}<span className="font-medium text-muted-foreground">credits</span>
                   </Link>
                   <button onClick={close} aria-label="Close menu" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                     <X className="h-4 w-4" />
