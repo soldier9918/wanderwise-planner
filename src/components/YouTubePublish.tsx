@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Status = { configured: boolean; connection: { channel_id: string; channel_title: string; channel_thumbnail: string | null } | null };
@@ -44,11 +45,12 @@ export function youtubeDefaults(seo: { titles?: string[]; description?: string; 
   return { title: seo?.titles?.[0] ?? fallbackTitle ?? "", description, tags: (seo?.tags ?? []).join(", ") };
 }
 
-export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled }: {
-  videoId: string; title: string; description: string; tags: string; hasExport: boolean; disabled?: boolean;
+export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled, onSeoRequested }: {
+  videoId: string; title: string; description: string; tags: string; hasExport: boolean; disabled?: boolean; onSeoRequested?: () => void;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [askSeo, setAskSeo] = useState(false);
   const { data: status } = useQuery({ queryKey: ["youtube-status"], queryFn: youtubeStatus, staleTime: 60_000, retry: false });
   const [form, setForm] = useState({ title, description, tags, privacy: "private", synthetic: true, kids: false });
   const [busy, setBusy] = useState(false);
@@ -93,7 +95,19 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   const conn = status?.connection;
   return (
     <>
-      <Button variant="outline" disabled={disabled} onClick={() => setOpen(true)}>▶ Publish to YouTube</Button>
+      <Button variant="outline" disabled={disabled} onClick={() => (description.trim() ? setOpen(true) : setAskSeo(true))}>▶ Publish to YouTube</Button>
+      <AlertDialog open={askSeo} onOpenChange={setAskSeo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No SEO details yet</AlertDialogTitle>
+            <AlertDialogDescription>Do you want to generate SEO description, tags and Title for your video before proceeding?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setAskSeo(false); setOpen(true); }}>No</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setAskSeo(false); onSeoRequested?.(); }}>Yes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
