@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Download, ImagePlus, Plus, Search, Trash2, Youtube } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Download, ImagePlus, Plus, Search, Trash2, Youtube } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -32,6 +32,9 @@ export default function MyVideos() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<Kind | "all">("all");
   const [q, setQ] = useState("");
+  type SortKey = "name" | "category" | "type" | "credits" | "youtube" | "created";
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "created", dir: -1 });
+  const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }));
   const [toDelete, setToDelete] = useState<{ id: string; title: string } | null>(null);
   const removeVideo = async () => {
     if (!toDelete) return;
@@ -116,6 +119,15 @@ export default function MyVideos() {
     },
   });
 
+  const SortTh = ({ label, k, className = "" }: { label: string; k: SortKey; className?: string }) => (
+    <th className={`px-3 py-2 font-medium ${className}`}>
+      <button type="button" onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 uppercase tracking-wide hover:text-foreground">
+        {label}
+        {sort.key === k ? (sort.dir === 1 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+      </button>
+    </th>
+  );
+
   return (
     <div className="min-h-screen">
       <SiteHeader />
@@ -150,20 +162,37 @@ export default function MyVideos() {
           )}
           {videos && videos.length > 0 && (() => {
             const term = q.trim().toLowerCase();
-            const list = videos.filter((v) => (filter === "all" || videoKind(v) === filter) && (!term || v.title.toLowerCase().includes(term) || (v.topic ?? "").toLowerCase().includes(term)));
+            const typeOf = (v: (typeof videos)[number]) => {
+              const kind = videoKind(v);
+              return kind === "series" ? (v.title.match(/\[Part \d+\/\d+\]/)?.[0].slice(1, -1) ?? "Series")
+                : v.aspect_ratio === "9:16" ? "9:16 Short" : "16:9 Video";
+            };
+            const list = videos
+              .filter((v) => (filter === "all" || videoKind(v) === filter) && (!term || v.title.toLowerCase().includes(term) || (v.topic ?? "").toLowerCase().includes(term)))
+              .sort((a, b) => {
+                const d = sort.dir;
+                switch (sort.key) {
+                  case "name": return d * a.title.localeCompare(b.title);
+                  case "category": return d * videoKind(a).localeCompare(videoKind(b));
+                  case "type": return d * typeOf(a).localeCompare(typeOf(b));
+                  case "credits": return d * (a.credits - b.credits);
+                  case "youtube": return d * ((published?.[a.id] ? 1 : 0) - (published?.[b.id] ? 1 : 0));
+                  case "created": default: return d * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                }
+              });
             return (
               <div className="overflow-x-auto rounded-xl border border-border bg-card">
                 <table className="w-full min-w-[1000px] text-sm">
                   <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
                       <th className="px-3 py-2 font-medium">Output</th>
-                      <th className="px-3 py-2 font-medium">Name</th>
-                      <th className="px-3 py-2 font-medium">Category</th>
-                      <th className="px-3 py-2 font-medium">Type</th>
+                      <SortTh label="Name" k="name" />
+                      <SortTh label="Category" k="category" />
+                      <SortTh label="Type" k="type" />
                       <th className="px-3 py-2 font-medium">Query</th>
-                      <th className="px-3 py-2 font-medium">Credits</th>
-                      <th className="px-3 py-2 font-medium">YouTube</th>
-                      <th className="px-3 py-2 font-medium">Created</th>
+                      <SortTh label="Credits" k="credits" />
+                      <SortTh label="YouTube" k="youtube" />
+                      <SortTh label="Created" k="created" />
                       <th className="px-3 py-2 text-right font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -171,8 +200,7 @@ export default function MyVideos() {
                     {list.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">No videos match.</td></tr>}
                     {list.map((v) => {
                       const kind = videoKind(v);
-                      const typeLabel = kind === "series" ? (v.title.match(/\[Part \d+\/\d+\]/)?.[0].slice(1, -1) ?? "Series")
-                        : v.aspect_ratio === "9:16" ? "9:16 Short" : "16:9 Video";
+                      const typeLabel = typeOf(v);
                       const yt = published?.[v.id];
                       return (
                         <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/40">
