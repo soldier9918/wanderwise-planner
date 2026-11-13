@@ -93,6 +93,8 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
     try {
       const r = await call<{ url: string; studioUrl: string; thumbnail?: string }>({ action: "publish", videoId, title: form.title, description: form.description, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), privacy: form.privacy, synthetic: form.synthetic, madeForKids: form.kids });
       setResult(r);
+      qc.invalidateQueries({ queryKey: ["youtube-upload", videoId] });
+      qc.invalidateQueries({ queryKey: ["youtube-uploads-list"] });
       toast.success(r.thumbnail === "set" ? "Published to YouTube with your thumbnail!" : "Published to YouTube!");
       const tmsg: Record<string, string> = { too_large: "Your thumbnail is over YouTube's 2 MB limit — add it in YouTube Studio.", not_allowed: "YouTube only allows custom thumbnails on verified channels. Verify your channel, then add it in YouTube Studio.", failed: "Couldn't add your thumbnail — you can add it in YouTube Studio." };
       if (r.thumbnail && tmsg[r.thumbnail]) toast.message(tmsg[r.thumbnail]);

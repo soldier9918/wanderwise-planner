@@ -188,7 +188,8 @@ export default function MyVideos() {
                           <td className="max-w-[240px] px-3 py-2 text-muted-foreground"><span className="line-clamp-2" title={v.topic ?? ""}>{v.topic}</span></td>
                           <td className="whitespace-nowrap px-3 py-2 font-semibold text-primary">⚡ ~{v.credits}</td>
                           <td className="px-3 py-2">
-                            {yt ? <a href={`https://youtu.be/${yt}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"><Youtube className="h-3.5 w-3.5" />Published</a>
+                            {yt ? <a href={`https://youtu.be/${yt}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"><Youtube className="h-3.5 w-3.5" />Watch</a>
+                              {" "}<a href={`https://studio.youtube.com/video/${yt}/edit`} target="_blank" rel="noreferrer" className="whitespace-nowrap text-xs text-muted-foreground underline hover:text-primary">Studio</a>
                               : <Link to={`/video/${v.id}?publish=1`} className="whitespace-nowrap text-xs text-muted-foreground hover:text-primary">Not published · <span className="underline">Publish</span></Link>}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{new Date(v.created_at).toLocaleDateString()}</td>

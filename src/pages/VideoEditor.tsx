@@ -22,6 +22,7 @@ import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, 
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
+import YouTubePublishedBanner from "@/components/YouTubePublishedBanner";
 import YouTubePublish, { youtubeDefaults } from "@/components/YouTubePublish";
 import { Switch } from "@/components/ui/switch";
 import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
@@ -838,6 +839,7 @@ export default function VideoEditor() {
               </div>
             )}
             </div>
+            <YouTubePublishedBanner videoId={id!} />
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {playing === null ? (
                 <Button onClick={() => { soloRef.current = false; setPlaying(0); }} disabled={!previewReady}>{previewReady ? "▶ Preview" : "Loading…"}</Button>
