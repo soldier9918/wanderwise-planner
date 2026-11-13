@@ -878,9 +878,14 @@ export default function VideoEditor() {
                 {(() => { const actual = Math.ceil(actualSecs); const cut = Math.max(1, overSecs); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; const nextLen = account ? nextFittingLength((video as { target_seconds?: number | null }).target_seconds, actualSecs, account.tier, VIDEO_LENGTHS) : null; const expand = async () => { if (!nextLen) return; const { error } = await supabase.from("videos").update({ target_seconds: nextLen }).eq("id", id!); if (error) { toast.error("Couldn't change the video length"); return; } qc.setQueryData(["video", id], { ...data, video: { ...video, target_seconds: nextLen } }); qc.invalidateQueries({ queryKey: ["export-check"] }); toast.success(`Video length set to ${formatSeconds(nextLen)}.`); }; return (
                   <>
                     <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding your selected {targetLabel} duration.</p>
-                    <p className="mt-1 text-muted-foreground">Please shorten the narration by about {cut} second{cut === 1 ? "" : "s"} in one or more scenes to continue{canUpgrade ? <>, or <Link to="/billing#subscriptions" className="text-primary underline">{upgradeText}</Link> to continue</> : "."}.</p>
+                    <p className="mt-1 text-muted-foreground">To download or publish, choose one option:</p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted-foreground">
+                      {nextLen && <li><span className="font-semibold text-foreground">Expand to a {formatSeconds(nextLen)} video</span> — your plan allows it. Free: no credits used, nothing is regenerated, and your scenes stay as they are.</li>}
+                      <li><span className="font-semibold text-foreground">Shorten the narration</span> by about {cut} second{cut === 1 ? "" : "s"} across one or more scenes. Re-recording an edited scene's voiceover costs credits.</li>
+                      {canUpgrade && !nextLen && <li><Link to="/billing#subscriptions" className="text-primary underline">{upgradeText.charAt(0).toUpperCase() + upgradeText.slice(1)}</Link> for longer videos (monthly subscription).</li>}
+                    </ul>
                     {nextLen ? (
-                      <Button size="sm" className="mt-3" onClick={expand} disabled={readOnly}>Expand to {formatSeconds(nextLen)} video</Button>
+                      <Button size="sm" className="mt-3" onClick={expand} disabled={readOnly}>Expand to {formatSeconds(nextLen)} video · Free</Button>
                     ) : canUpgrade ? (
                       <p className="mt-2 text-xs text-muted-foreground">Your plan's longest video is {formatSeconds(account ? ({ free: 120, creator: 1200, pro: 3600 } as const)[account.tier] : 120)}.</p>
                     ) : null}
