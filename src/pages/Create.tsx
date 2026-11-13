@@ -211,7 +211,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Label>Quality</Label>
               <Select value={quality} onValueChange={setQuality}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{QUALITIES.map((q) => { const ok = qualityAllowedForTier(q.value, pro); return <SelectItem key={q.value} value={q.value} disabled={!ok}>{ok ? q.label : `🔒 ${q.short} · PRO`}</SelectItem>; })}</SelectContent>
+                <SelectContent>{QUALITIES.map((q) => { const ok = qualityAllowedForTier(q.value, pro); return <SelectItem key={q.value} value={q.value} disabled={!ok} textValue={q.short}>{ok ? q.label : `🔒 ${q.short} · PRO`}</SelectItem>; })}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">

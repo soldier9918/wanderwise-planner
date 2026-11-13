@@ -39,16 +39,16 @@ import { scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
-  label: string; value: string; options: readonly { value: T; label: string; css?: string }[]; onChange: (v: T) => void; swatch?: boolean; disabled?: boolean;
+  label: string; value: string; options: readonly { value: T; label: string; css?: string; textValue?: string }[]; onChange: (v: T) => void; swatch?: boolean; disabled?: boolean;
 }) {
   return (
     <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
       {label}
       <Select value={value} onValueChange={(v) => onChange(v as T)} disabled={disabled}>
-        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-9"><SelectValue className="truncate" /></SelectTrigger>
         <SelectContent>
           {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
+            <SelectItem key={o.value} value={o.value} textValue={o.textValue ?? o.label}>
               <span className="flex items-center gap-2">
                 {swatch && <span className="h-3 w-3 rounded-full border border-border" style={{ background: o.value }} />}
                 <span style={o.css ? { fontFamily: o.css, fontSize: "15px" } : undefined}>{o.label}</span>
@@ -905,7 +905,7 @@ export default function VideoEditor() {
                 Format
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
-              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.tier === "pro" || q.value !== "1080p" || video.quality === "1080p")} onChange={(v) => saveLook({ quality: v })} />
+              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.tier === "pro" || q.value !== "1080p" || video.quality === "1080p").map((q) => ({ value: q.value, label: q.label, textValue: q.short }))} onChange={(v) => saveLook({ quality: v })} />
               <LookSelect
                 label={`Scenes · ${formatSeconds(totalSecs)} total`}
                 value={String(scenes.length)}
