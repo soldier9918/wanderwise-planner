@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { generateSceneAsset, generateThumbnail, signedUrls, VOICES, TONES, editScenes, rewriteScene, animateScene, generateSeo, checkExport, startExport, completeExport, failExport, type Scene, type Seo } from "@/lib/videoApi";
+import { generateSceneAsset, generateThumbnail, signedUrls, TONES, editScenes, rewriteScene, animateScene, generateSeo, checkExport, startExport, completeExport, failExport, type Scene, type Seo } from "@/lib/videoApi";
 import { Input } from "@/components/ui/input";
 import { exportVideo, canRecordMp4 } from "@/lib/exportVideo";
 import { fetchCards, isActive, type BrandCard } from "@/lib/brandCards";
@@ -29,13 +29,13 @@ import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
-import { VoiceSampleList } from "@/components/VoiceSampleList";
+import { VoiceSelect } from "@/components/VoiceSelect";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
 import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND, nextFittingLength } from "@/lib/tiers";
 import { VIDEO_LENGTHS } from "@/lib/durations";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
-import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
+import { scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
@@ -913,24 +913,27 @@ export default function VideoEditor() {
                 options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: n > scenes.length ? `${n} scenes · ${CREDIT_COSTS.script + (n - scenes.length) * (CREDIT_COSTS.image + CREDIT_COSTS.voice)} cr` : `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
-              <div className="grid gap-1">
-              <LookSelect
-                label={`Narrator · ${rerecordCost} cr`}
-                value={video.voice ?? "Kore"}
-                options={VOICES.filter((v) => v.id === (video.voice ?? "Kore") || voiceAllowed(v.id, account?.pro ?? false)).map((v) => ({ value: v.id, label: v.label }))}
-                onChange={async (v) => {
-                  if (!await confirmRerecord("narrator")) return;
-                  await saveLook({ voice: v });
-                  toast.info("Narrator changed — re-recording every voiceover with the new voice…");
-                  for (let i = 0; i < scenes.length; i += 3) {
-                    const results = await Promise.allSettled(scenes.slice(i, i + 3).map((s) => runAsset(s, "audio")));
-                    if (results.some((r) => r.status === "rejected" && /credits|limit/i.test(String((r as PromiseRejectedResult).reason)))) return;
-                  }
-                  toast.success("All voiceovers now use the new narrator.");
-                }}
-              />
-              <VoiceSampleList pro={account?.pro ?? false} current={video.voice ?? "Kore"} accent={video.accent ?? undefined} className="h-7 w-fit text-xs" />
-              </div>
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+                {`Narrator · ${rerecordCost} cr`}
+                <VoiceSelect
+                  value={video.voice ?? "Kore"}
+                  pro={account?.pro ?? false}
+                  accent={video.accent ?? undefined}
+                  triggerClassName="h-9 text-xs font-normal text-foreground"
+                  onChange={async (v) => {
+                    if (v === (video.voice ?? "Kore")) return;
+                    if (!await confirmRerecord("narrator")) return;
+                    await saveLook({ voice: v });
+                    toast.info("Narrator changed — re-recording every voiceover with the new voice…");
+                    for (let i = 0; i < scenes.length; i += 3) {
+                      const results = await Promise.allSettled(scenes.slice(i, i + 3).map((s) => runAsset(s, "audio")));
+                      if (results.some((r) => r.status === "rejected" && /credits|limit/i.test(String((r as PromiseRejectedResult).reason)))) return;
+                    }
+                    toast.success("All voiceovers now use the new narrator.");
+                  }}
+                />
+                <span className="text-[11px] font-normal text-muted-foreground">Press play beside a name to hear it first — free.</span>
+              </label>
               <LookSelect
                 label={`Tone & emotion · ${rerecordCost} cr`}
                 value={video.tone ?? "engaging"}

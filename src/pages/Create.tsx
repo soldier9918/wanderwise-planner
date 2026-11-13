@@ -4,8 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, Link2, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { TEMPLATES } from "@/lib/templates";
-import { VoiceSampleButton } from "@/components/VoiceSampleButton";
-import { VoiceSampleList } from "@/components/VoiceSampleList";
+import { VoiceSelect } from "@/components/VoiceSelect";
 import { ACCENTS, NARRATION_SPEEDS } from "@/lib/voiceStyle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STYLES, VOICES, TONES, CAPTION_STYLES, generateScript, suggestTopic } from "@/lib/videoApi";
+import { STYLES, TONES, CAPTION_STYLES, generateScript, suggestTopic } from "@/lib/videoApi";
 import { DEFAULT_RATIO } from "@/lib/aspectRatio";
 import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
@@ -168,12 +167,8 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             </div>
             <div className="grid gap-2">
               <Label>Voice</Label>
-              <div className="flex gap-2"><Select value={voice} onValueChange={setVoice}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{voiceAllowed(v.id, pro) ? v.label : `🔒 ${v.label} · PRO`}</SelectItem>)}</SelectContent>
-              </Select><VoiceSampleButton voice={voice} accent={accent} className="h-10 shrink-0" /></div>
-              <VoiceSampleList pro={pro} current={voice} accent={accent} className="h-8 w-fit text-xs" />
-              <span className="text-xs text-muted-foreground">Listen is free — hear the voice and accent before you spend credits.</span>
+              <VoiceSelect value={voice} onChange={setVoice} pro={pro} accent={accent} />
+              <span className="text-xs text-muted-foreground">Press play next to any narrator to hear them — listening is free and never uses credits.</span>
             </div>
             <div className="grid gap-2">
               <Label>Accent</Label>
