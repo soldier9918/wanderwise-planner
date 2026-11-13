@@ -40,11 +40,11 @@ export default function CreationTimelapse() {
   const scriptCount = phase === 0 ? 0 : phase === 1 ? Math.ceil(p * SCENES.length) : SCENES.length;
   const assetDone = (i: number) => phase > 2 || (phase === 2 && p > (i + 1) / (SCENES.length + 0.5));
   const playIdx = Math.min(SCENES.length - 1, Math.floor(p * SCENES.length));
-  let cx = 20, cy = 8, click = false;
-  if (phase === 0) { if (p < 0.65) { cx = 12 + p * 30; cy = 9; } else { cx = 10; cy = 17; click = p > 0.8; } }
-  else if (phase === 1) { cx = 30; cy = 28 + p * 55; }
-  else if (phase === 2) { cx = 65 + p * 15; cy = 70; click = local % 12 === 0; }
-  else if (p < 0.6) { cx = 60 + p * 20; cy = 35; } else { cx = 72; cy = 88; click = p > 0.85; }
+  // Purposeful path: type -> click Create -> rest beside scenes -> click Download once.
+  let cx = 30, cy = 12, click = false;
+  if (phase === 0) { if (p < 0.6) { cx = 30; cy = 12; } else { cx = 12; cy = 19; click = p > 0.82 && p < 0.95; } }
+  else if (phase === 1 || phase === 2) { cx = 40; cy = 45; }
+  else if (p < 0.7) { cx = 40; cy = 45; } else { cx = 72; cy = 90; click = p > 0.88 && p < 0.98; }
   const jump = (i: number) => setT(PHASE_TICKS.slice(0, i).reduce((a, b) => a + b, 0));
 
   return (
@@ -76,7 +76,7 @@ export default function CreationTimelapse() {
         </div>
 
         <div className="relative grid gap-4 p-4 md:grid-cols-[1fr_1.4fr]">
-          <div aria-hidden className="pointer-events-none absolute z-20" style={{ left: `${cx}%`, top: `${cy}%`, transition: "left 700ms cubic-bezier(.4,0,.2,1), top 700ms cubic-bezier(.4,0,.2,1)" }}>
+          <div aria-hidden className="pointer-events-none absolute z-20" style={{ left: `${cx}%`, top: `${cy}%`, transition: "left 1100ms cubic-bezier(.65,0,.35,1), top 1100ms cubic-bezier(.65,0,.35,1)" }}>
             {click && <span className="absolute -left-3 -top-3 h-6 w-6 animate-ping rounded-full bg-primary/60" />}
             <svg width="22" height="22" viewBox="0 0 24 24" className={`drop-shadow-lg transition-transform duration-150 ${click ? "scale-90" : ""}`}>
               <path d="M3 2l7 19 2.5-7.5L20 11z" className="fill-foreground stroke-background" strokeWidth="1.5" strokeLinejoin="round" />
