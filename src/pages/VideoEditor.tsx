@@ -22,6 +22,7 @@ import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, 
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
+import YouTubePublish from "@/components/YouTubePublish";
 import { Switch } from "@/components/ui/switch";
 import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
@@ -418,6 +419,12 @@ export default function VideoEditor() {
     staleTime: 30_000,
   });
 
+  const { data: lastExport, refetch: refetchLastExport } = useQuery({
+    queryKey: ["last-export", id],
+    queryFn: async () => (await supabase.from("video_exports").select("id").eq("video_id", id!).eq("status", "completed").limit(1).maybeSingle()).data,
+    enabled: !!id,
+  });
+
   const download = async () => {
     if (!data) return;
     const missing = data.scenes.some((s) => !s.image_path);
@@ -473,6 +480,7 @@ export default function VideoEditor() {
       const { error: upErr } = await supabase.storage.from("video-assets").uploadToSignedUrl(job.path, job.token, blob, { contentType: blob.type });
       if (upErr) throw upErr;
       await completeExport(job.exportId);
+      refetchLastExport();
       job = null;
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -850,6 +858,10 @@ export default function VideoEditor() {
               <Button variant="secondary" onClick={download} disabled={!lengthOk || exportPct !== null || busyAny || exportInfo?.decision === "busy"}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
+              <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={exportPct !== null}
+                title={((video.seo as unknown as Seo | null)?.titles?.[0]) ?? video.title ?? ""}
+                description={(video.seo as unknown as Seo | null)?.description ?? ""}
+                tags={(video.seo as unknown as Seo | null)?.tags ?? []} />
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
               </Button>

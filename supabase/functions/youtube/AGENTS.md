@@ -1,0 +1,1 @@
+- Google OAuth redirect URI is this function's own URL; `state` is HMAC-signed with YOUTUBE_STATE_SECRET and return URLs are allow-listed.

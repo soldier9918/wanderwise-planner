@@ -539,6 +539,72 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_connections: {
+        Row: {
+          access_token: string
+          channel_id: string
+          channel_thumbnail: string | null
+          channel_title: string
+          connected_at: string
+          expires_at: string
+          refresh_token: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          channel_id: string
+          channel_thumbnail?: string | null
+          channel_title?: string
+          connected_at?: string
+          expires_at: string
+          refresh_token: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          channel_id?: string
+          channel_thumbnail?: string | null
+          channel_title?: string
+          connected_at?: string
+          expires_at?: string
+          refresh_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      youtube_uploads: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          privacy: string
+          status: string
+          user_id: string
+          video_id: string
+          youtube_video_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          privacy: string
+          status?: string
+          user_id: string
+          video_id: string
+          youtube_video_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          privacy?: string
+          status?: string
+          user_id?: string
+          video_id?: string
+          youtube_video_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
