@@ -21,6 +21,9 @@ import Series from "./pages/Series";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import FeatureLanding from "./pages/FeatureLanding";
+import Guides from "./pages/Guides";
+import GuideArticle from "./pages/GuideArticle";
+import { GUIDES } from "@/lib/guides";
 import { FEATURE_PAGES } from "@/lib/featurePages";
 import { ReferralCatcher } from "@/lib/account";
 import { LEGAL_DOCS } from "@/lib/legal";
@@ -40,6 +43,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             {FEATURE_PAGES.map((p) => <Route key={p.slug} path={`/${p.slug}`} element={<FeatureLanding page={p} />} />)}
+            <Route path="/guides" element={<Guides />} />
+            {GUIDES.map((g) => <Route key={g.slug} path={`/guides/${g.slug}`} element={<GuideArticle guide={g} />} />)}
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/auth" element={<Auth />} />

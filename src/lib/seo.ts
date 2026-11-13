@@ -1,4 +1,5 @@
 import { FEATURE_PAGES } from "./featurePages";
+import { GUIDES } from "./guides";
 
 export const SITE = "https://vydora.ai";
 
@@ -11,6 +12,8 @@ export const PUBLIC_PAGES: Record<string, { title: string; description: string }
   "/refund": { title: "Refund Policy – Vydora", description: "When you can get a refund for Vydora subscriptions and credits." },
   "/disclaimer": { title: "Disclaimer – Vydora", description: "What Vydora's AI-generated videos do and do not promise." },
   "/acceptable-use": { title: "Acceptable Use Policy – Vydora", description: "What you must not create with Vydora." },
+  "/guides": { title: "YouTube Creator Guides – Vydora", description: "Free guides on faceless niches, YouTube monetisation, Shorts hooks, repurposing blog posts and planning a series." },
+  ...Object.fromEntries(GUIDES.map((g) => [`/guides/${g.slug}`, { title: g.title, description: g.description }])),
   ...Object.fromEntries(FEATURE_PAGES.map((p) => [`/${p.slug}`, { title: p.title, description: p.description }])),
 };
 

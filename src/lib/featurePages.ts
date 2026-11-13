@@ -93,6 +93,79 @@ export const FEATURE_PAGES: FeaturePage[] = [
     ],
     cta: { label: "Make a Short free", to: "/auth?mode=signup" },
   },
+  {
+    slug: "text-to-video", eyebrow: "Text to video",
+    title: "Text to Video AI – Turn Words into YouTube Videos | Vydora",
+    description: "Type a sentence or paste a script and Vydora's text to video AI creates scenes, images, voiceover, captions and music, ready for YouTube.",
+    h1: "Text to video AI that makes full YouTube videos",
+    intro: "Write an idea or paste your own script. Vydora breaks it into scenes, creates a picture for each one, records a voiceover and adds captions and music so you get a complete video, not just a clip.",
+    steps: [
+      { title: "Write or paste text", text: "A one-line idea, a rough outline or a finished script all work." },
+      { title: "Shape the scenes", text: "Edit any scene's words or picture, pick a voice, accent and speed." },
+      { title: "Download", text: "Preview the whole video in your browser, then download it with no watermark." },
+    ],
+    sections: [
+      { heading: "More than a short clip", paras: [
+        "Many text to video tools make a few seconds of footage. Vydora builds a whole narrated video with a beginning, middle and end, the format that works on YouTube.",
+        "Every scene gets camera motion, and you can add free stock B-roll or animate a scene with AI for extra movement.",
+      ]},
+      { heading: "You stay in control", paras: [
+        "Nothing is final until you say so. Rewrite a line and only that scene's voiceover is remade. Swap an image you don't like, or upload your own from My Library.",
+      ]},
+    ],
+    faqs: [
+      ["Can I use my own script?", "Yes. Paste it in and Vydora splits it into scenes for you."],
+      ["What voices are available?", "Several natural AI voices, with accent and speed you can change per video."],
+      ["Do I own the videos?", "Yes. You can publish what you make, including on monetised channels."],
+    ],
+    cta: { label: "Try text to video free", to: "/auth?mode=signup" },
+  },
+  {
+    slug: "youtube-series-generator", eyebrow: "Series generator",
+    title: "AI YouTube Series Generator – Plan Episodes | Vydora",
+    description: "Plan a full YouTube series with AI: episode titles, hooks and a shared visual style, then turn each episode into a finished video.",
+    h1: "Plan and make a whole YouTube series in one go",
+    intro: "Give Vydora a theme and it plans a run of connected episodes, each with its own title and angle. Every episode shares the same visual style, so your channel looks like one brand.",
+    steps: [
+      { title: "Choose a theme", text: "For example “unsolved mysteries of the ocean” or “money mistakes in your 20s”." },
+      { title: "Review the plan", text: "Rename, reorder or remove episodes before anything is made." },
+      { title: "Create episodes", text: "Turn each episode into a full video whenever you're ready." },
+    ],
+    sections: [
+      { heading: "Why series grow channels", paras: [
+        "Viewers who enjoy one episode often watch the next. A planned series gives you a steady upload schedule and makes playlists easy.",
+        "Planning the series is free. You only use credits when you create an episode.",
+      ]},
+    ],
+    faqs: [
+      ["How many episodes can I plan?", "You choose the number when you plan the series."],
+      ["Do episodes look the same?", "They share a visual style so they feel connected, while each has its own scenes."],
+    ],
+    cta: { label: "Plan a series free", to: "/auth?mode=signup" },
+  },
+  {
+    slug: "history-documentary-video-maker", eyebrow: "History & documentary",
+    title: "AI History & Documentary Video Maker – Vydora",
+    description: "Make history, mystery and documentary-style YouTube videos with AI. Real-facts mode searches the web and lists sources you can check.",
+    h1: "Make history and documentary videos with sources you can check",
+    intro: "Documentary channels live or die on accuracy. Turn on “Use real facts” and Vydora searches the web while it writes, then saves the sources with your video so you can check every claim.",
+    steps: [
+      { title: "Pick an event or mystery", text: "The fall of Rome, the Dyatlov Pass incident, the space race." },
+      { title: "Check the facts", text: "Read the script and the sources Vydora used. Fix anything before you continue." },
+      { title: "Set the mood", text: "Choose a calm narrator and atmospheric music, then download." },
+    ],
+    sections: [
+      { heading: "Accuracy builds trust", paras: [
+        "AI can make mistakes, so Vydora shows where its facts came from. Add the links to your video description to show viewers your research.",
+        "Pictures are AI-made illustrations, not historical photos. Say so in your description where it matters.",
+      ]},
+    ],
+    faqs: [
+      ["Are facts guaranteed correct?", "No. Real-facts mode helps, but always check the sources before you publish."],
+      ["Can I make long documentaries?", "Video length depends on your plan. See the pricing page for each plan's limit."],
+    ],
+    cta: { label: "Make a documentary free", to: "/auth?mode=signup" },
+  },
 ];
 
 export const findFeaturePage = (slug: string) => FEATURE_PAGES.find((p) => p.slug === slug);
