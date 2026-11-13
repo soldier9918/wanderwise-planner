@@ -6,6 +6,7 @@ describe("seo", () => {
   });
   it("public pages are indexed with self canonical", () => {
     expect(seoFor("/pricing")).toMatchObject({ index: true, canonical: "https://vydora.ai/pricing" });
+    expect(seoFor("/article-to-video")).toMatchObject({ index: true, canonical: "https://vydora.ai/article-to-video" });
     expect(seoFor("/").canonical).toBe("https://vydora.ai/");
   });
 });

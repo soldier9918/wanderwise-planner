@@ -118,6 +118,10 @@ export default function Pricing() {
             ["Do redos cost credits?", "Yes — redoing an image, voiceover, script, thumbnail or SEO costs the same as making it the first time."],
             ["What happens if I run out?", "AI steps pause until you top up. You can still view and download your videos for free."],
             ["Are estimates exact?", "They're close guides based on your settings. Redos and extra scenes add to the total."],
+            ["Do I own the videos I make?", "You can download and publish your videos on YouTube or anywhere else. Downloads never carry a watermark."],
+            ["Do Free credits roll over?", "Yes. Free accounts get 30 credits each month, added on top of what you already have."],
+            ["Do top-ups unlock paid features?", "No. Top-ups add credits (25 per £1, from £5). Longer videos and 1080p come with Creator or Pro."],
+            ["Can I cancel anytime?", "Yes. Cancel from Billing and keep your plan until the end of the period you paid for."],
           ].map(([q, a]) => (
             <div key={q} className="rounded-xl border border-border bg-card p-5"><p className="font-semibold">{q}</p><p className="mt-2 text-sm text-muted-foreground">{a}</p></div>
           ))}

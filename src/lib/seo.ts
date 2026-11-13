@@ -1,3 +1,5 @@
+import { FEATURE_PAGES } from "./featurePages";
+
 export const SITE = "https://vydora.ai";
 
 export const PUBLIC_PAGES: Record<string, { title: string; description: string }> = {
@@ -9,6 +11,7 @@ export const PUBLIC_PAGES: Record<string, { title: string; description: string }
   "/refund": { title: "Refund Policy – Vydora", description: "When you can get a refund for Vydora subscriptions and credits." },
   "/disclaimer": { title: "Disclaimer – Vydora", description: "What Vydora's AI-generated videos do and do not promise." },
   "/acceptable-use": { title: "Acceptable Use Policy – Vydora", description: "What you must not create with Vydora." },
+  ...Object.fromEntries(FEATURE_PAGES.map((p) => [`/${p.slug}`, { title: p.title, description: p.description }])),
 };
 
 export function seoFor(pathname: string) {
