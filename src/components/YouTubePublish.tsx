@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 type Status = { configured: boolean; connection: { channel_id: string; channel_title: string; channel_thumbnail: string | null } | null };
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session && (session.expires_at ?? 0) * 1000 < Date.now() + 60_000) await supabase.auth.refreshSession().catch(() => {});
   const { data, error } = await supabase.functions.invoke("youtube", { body });
   if (error) {
     let msg = error.message;

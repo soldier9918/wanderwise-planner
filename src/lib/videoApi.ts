@@ -100,8 +100,20 @@ export type Scene = {
   clip_credit?: string | null;
 };
 
+// Make sure we send a live sign-in token; a stale saved one is refreshed first.
+async function freshAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session && (session.expires_at ?? 0) * 1000 < Date.now() + 60_000) await supabase.auth.refreshSession().catch(() => {});
+}
+
 async function invoke<T>(name: string, body: unknown): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(name, { body });
+  await freshAuth();
+  let { data, error } = await supabase.functions.invoke(name, { body });
+  // One retry after refreshing the sign-in if the server didn't accept it.
+  if (error && (error as { context?: Response }).context?.status === 401) {
+    const { data: r } = await supabase.auth.refreshSession();
+    if (r.session) ({ data, error } = await supabase.functions.invoke(name, { body }));
+  }
   // AI actions spend credits server-side; refresh the balance shown in the header.
   queryClient.invalidateQueries({ queryKey: ["account"] });
   if (error) {
