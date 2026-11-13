@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { exportVideo, canRecordMp4 } from "@/lib/exportVideo";
 import { fetchCards, isActive, type BrandCard } from "@/lib/brandCards";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
-import { elapsedSeconds, locateTime, formatSeconds, formatClock, sceneSeconds, clipRate } from "@/lib/durations";
+import { elapsedSeconds, locateTime, formatSeconds, formatClock, formatSecsBadge, sceneSeconds, clipRate } from "@/lib/durations";
 import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
@@ -1225,9 +1225,10 @@ export default function VideoEditor() {
                     {s.clip_path && urls[s.clip_path] ? <video src={urls[s.clip_path]} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                       : s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
                       : <div className={`h-full w-full ${working[`${s.id}-image`] ? "animate-pulse bg-secondary" : ""}`} />}
+                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium text-white">{formatSecsBadge(secOf(s))}</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs uppercase tracking-widest text-accent">Scene {i + 1} · {formatSeconds(secOf(s))}</p>
+                    <p className="text-xs uppercase tracking-widest text-accent">Scene {i + 1}</p>
                     <p className="font-semibold">{s.heading}</p>
                   </div>
                 </div>

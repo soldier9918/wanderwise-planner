@@ -107,6 +107,11 @@ export function clipRate(clipSecs: number, sceneSecs: number) {
   return Math.min(4, Math.max(0.25, clipSecs / sceneSecs));
 }
 
+/** Compact badge for scene thumbnails, e.g. "22s". */
+export function formatSecsBadge(total: number) {
+  return `${Math.max(0, Math.round(total))}s`;
+}
+
 /** Player clock, e.g. 2:12 (only for the video player's time display). */
 export function formatClock(total: number) {
   const t = Math.max(0, Math.floor(total));
