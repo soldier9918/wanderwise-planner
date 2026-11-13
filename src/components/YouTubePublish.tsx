@@ -21,7 +21,13 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export const youtubeStatus = () => call<Status>({ action: "status" });
+export async function youtubeStatus(): Promise<Status> {
+  // Wait for the signed-in session; never let a status check crash the page.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { configured: true, connection: null };
+  try { return await call<Status>({ action: "status" }); }
+  catch { return { configured: true, connection: null }; }
+}
 
 export async function connectYouTube() {
   const { url } = await call<{ url: string }>({ action: "auth_url", returnTo: window.location.href.split("?")[0] });
@@ -33,7 +39,7 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { data: status } = useQuery({ queryKey: ["youtube-status"], queryFn: youtubeStatus, staleTime: 60_000 });
+  const { data: status } = useQuery({ queryKey: ["youtube-status"], queryFn: youtubeStatus, staleTime: 60_000, retry: false });
   const [form, setForm] = useState({ title, description, tags: tags.join(", "), privacy: "private", synthetic: true, kids: false });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ url: string; studioUrl: string } | null>(null);
