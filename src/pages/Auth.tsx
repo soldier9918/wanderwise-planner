@@ -103,7 +103,7 @@ export default function Auth() {
               {resendBusy
                 ? "Sending…"
                 : resendCooldown > 0
-                  ? `Resend verification email (${resendCooldown}s)`
+                  ? `Resend verification email (${resendCooldown} seconds)`
                   : "Resend verification email"}
             </Button>
           )}

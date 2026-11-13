@@ -12,7 +12,7 @@ export default function GuideArticle({ guide }: { guide: Guide }) {
       <main className="container max-w-3xl py-14">
         <Link to="/guides" className="text-sm text-muted-foreground hover:text-primary">← All guides</Link>
         <article>
-          <p className="mt-6 text-xs uppercase tracking-widest text-primary">Guide · {guide.readMins} min read</p>
+          <p className="mt-6 text-xs uppercase tracking-widest text-primary">Guide · {guide.readMins} {guide.readMins === 1 ? "minute" : "minutes"} read</p>
           <h1 className="mt-3 text-4xl font-extrabold md:text-5xl">{guide.h1}</h1>
           <p className="mt-5 text-lg text-muted-foreground">{guide.intro}</p>
           {guide.sections.map((s) => (

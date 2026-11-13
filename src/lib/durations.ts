@@ -33,11 +33,19 @@ export function elapsedSeconds(sceneSecs: number[], index: number, progress: num
   return sceneSecs.slice(0, i).reduce((a, s) => a + s, 0) + sceneSecs[i] * p;
 }
 
-/** "9s" for anything under a minute, "1:15" beyond it. */
+/**
+ * A length written out in full: "45 seconds", "1 minute", "1 minute 48 seconds".
+ * Times are always followed by the words minute(s) / second(s) — never a bare 1:48.
+ */
 export function formatSeconds(total: number) {
   const s = Math.max(0, Math.round(total));
-  if (s < 60) return `${s}s`;
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+  const m = mins === 1 ? "minute" : "minutes";
+  const sec = secs === 1 ? "second" : "seconds";
+  if (!mins) return `${secs} ${sec}`;
+  if (!secs) return `${mins} ${m}`;
+  return `${mins} ${m} ${secs} ${sec}`;
 }
 
 /** Video lengths offered on the New video screen, in seconds. */

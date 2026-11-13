@@ -206,7 +206,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
               <Select value={length} onValueChange={setLength}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{VIDEO_LENGTHS.map((s) => (
-                  <SelectItem key={s} value={String(s)} disabled={!isLengthAllowed(s, Number(scenes)) || !lengthAllowedForTier(s, pro)}>{!lengthAllowedForTier(s, pro) ? "🔒 " : ""}{s < 60 ? `${s} seconds` : `${s / 60} min`}{!lengthAllowedForTier(s, pro) ? " · PRO" : !isLengthAllowed(s, Number(scenes)) ? (Number(scenes) < minScenesForSeconds(s) ? ` · needs ${minScenesForSeconds(s)}+ scenes` : ` · max ${maxScenesForSeconds(s)} scenes`) : ""}</SelectItem>
+                  <SelectItem key={s} value={String(s)} disabled={!isLengthAllowed(s, Number(scenes)) || !lengthAllowedForTier(s, pro)}>{!lengthAllowedForTier(s, pro) ? "🔒 " : ""}{formatSeconds(s)}{!lengthAllowedForTier(s, pro) ? " · PRO" : !isLengthAllowed(s, Number(scenes)) ? (Number(scenes) < minScenesForSeconds(s) ? ` · needs ${minScenesForSeconds(s)}+ scenes` : ` · max ${maxScenesForSeconds(s)} scenes`) : ""}</SelectItem>
                 ))}</SelectContent>
               </Select>
             </div>
@@ -233,7 +233,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             </div>
           </div>
           <p className="-mt-2 text-sm text-muted-foreground">
-            {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : Number(scenes) < minScenesForSeconds(Number(length)) ? `A ${formatSeconds(Number(length))} video needs at least ${minScenesForSeconds(Number(length))} scenes (each scene can last up to 90s). Pick more scenes or a shorter length.` : `A ${formatSeconds(Number(length))} video fits at most ${maxScenesForSeconds(Number(length))} scenes (each scene needs at least 7s). Pick fewer scenes or a longer length.`}
+            {lengthOk ? `${scenes} scenes × about ${formatSeconds(secondsPerScene(Number(length), Number(scenes)))} each = ${formatSeconds(Number(length))}` : Number(scenes) < minScenesForSeconds(Number(length)) ? `A video ${formatSeconds(Number(length))} long needs at least ${minScenesForSeconds(Number(length))} scenes (each scene can last up to 90 seconds). Pick more scenes or a shorter length.` : `A video ${formatSeconds(Number(length))} long fits at most ${maxScenesForSeconds(Number(length))} scenes (each scene needs at least 7 seconds). Pick fewer scenes or a longer length.`}
           </p>
           <p className="-mt-3 text-xs text-muted-foreground">
             Longer videos need more scenes — greyed-out lengths show how many scenes they need.
@@ -242,7 +242,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
             <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
           </p>
-          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator and longer videos (Creator: 20 min, Pro: 60 min + 1080p).</p>}
+          {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator and longer videos (Creator: 20 minutes, Pro: 60 minutes + 1080p).</p>}
           <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
         {fromUrl && (

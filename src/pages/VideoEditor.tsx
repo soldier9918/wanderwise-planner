@@ -793,7 +793,7 @@ export default function VideoEditor() {
             </div>
             {scenes.length > 0 && (
               <div className="mt-3 flex items-center gap-3">
-                <span className="w-24 text-xs tabular-nums text-muted-foreground">{formatSeconds(elapsedSecs)}{playing !== null ? ` · Scene ${playing + 1}/${scenes.length}` : ""}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatSeconds(elapsedSecs)}{playing !== null ? ` · Scene ${playing + 1}/${scenes.length}` : ""}</span>
                 <div className="relative flex-1 pb-5">
                   <Slider
                     aria-label="Video position"
@@ -825,7 +825,7 @@ export default function VideoEditor() {
                     );
                   })}
                 </div>
-                <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
+                <span className="shrink-0 whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
                 <Button size="sm" variant="outline" aria-label={full ? "Exit full screen" : "Full screen"} onClick={toggleFull}>{full ? "✕" : "⛶"}</Button>
               </div>
             )}
@@ -880,15 +880,15 @@ export default function VideoEditor() {
               <div role="alert" className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
                 {(() => { const actual = Math.ceil(actualSecs); const cut = Math.max(1, overSecs); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; const nextLen = account ? nextFittingLength((video as { target_seconds?: number | null }).target_seconds, actualSecs, account.tier, VIDEO_LENGTHS) : null; const expand = async () => { if (!nextLen) return; const { error } = await supabase.from("videos").update({ target_seconds: nextLen }).eq("id", id!); if (error) { toast.error("Couldn't change the video length"); return; } qc.setQueryData(["video", id], { ...data, video: { ...video, target_seconds: nextLen } }); qc.invalidateQueries({ queryKey: ["export-check"] }); toast.success(`Video length set to ${formatSeconds(nextLen)}.`); }; return (
                   <>
-                    <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding your selected {targetLabel} duration.</p>
+                    <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding the {targetLabel} you selected.</p>
                     <p className="mt-1 text-muted-foreground">To download or publish, choose one option:</p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted-foreground">
-                      {nextLen && <li><span className="font-semibold text-foreground">Expand to a {formatSeconds(nextLen)} video</span> — your plan allows it. Free: no credits used, nothing is regenerated, and your scenes stay as they are.</li>}
+                      {nextLen && <li><span className="font-semibold text-foreground">Expand the video to {formatSeconds(nextLen)}</span> — your plan allows it. Free: no credits used, nothing is regenerated, and your scenes stay as they are.</li>}
                       <li><span className="font-semibold text-foreground">Shorten the narration</span> by about {cut} second{cut === 1 ? "" : "s"} across one or more scenes. Re-recording an edited scene's voiceover costs credits.</li>
                       {canUpgrade && !nextLen && <li><Link to="/billing#subscriptions" className="text-primary underline">{upgradeText.charAt(0).toUpperCase() + upgradeText.slice(1)}</Link> for longer videos (monthly subscription).</li>}
                     </ul>
                     {nextLen ? (
-                      <Button size="sm" className="mt-3" onClick={expand} disabled={readOnly}>Expand to {formatSeconds(nextLen)} video · Free</Button>
+                      <Button size="sm" className="mt-3" onClick={expand} disabled={readOnly}>Expand to {formatSeconds(nextLen)} · Free</Button>
                     ) : canUpgrade ? (
                       <p className="mt-2 text-xs text-muted-foreground">Your plan's longest video is {formatSeconds(account ? ({ free: 120, creator: 1200, pro: 3600 } as const)[account.tier] : 120)}.</p>
                     ) : null}
@@ -1225,10 +1225,9 @@ export default function VideoEditor() {
                     {s.clip_path && urls[s.clip_path] ? <video src={urls[s.clip_path]} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                       : s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
                       : <div className={`h-full w-full ${working[`${s.id}-image`] ? "animate-pulse bg-secondary" : ""}`} />}
-                    <span className="absolute bottom-1 right-1 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">{formatSeconds(secOf(s))}</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs uppercase tracking-widest text-accent">Scene {i + 1}</p>
+                    <p className="text-xs uppercase tracking-widest text-accent">Scene {i + 1} · {formatSeconds(secOf(s))}</p>
                     <p className="font-semibold">{s.heading}</p>
                   </div>
                 </div>
@@ -1259,7 +1258,7 @@ export default function VideoEditor() {
                     </label>
                   </Button>
                   <Button size="sm" variant="outline" disabled={!s.image_path || working[`${s.id}-clip`] || working[`${s.id}-image`]} onClick={() => animate(s)}>
-                    {working[`${s.id}-clip`] ? "Animating… (1–3 min)" : s.clip_path ? "Re-animate" : "✨ Animate scene"} · {CREDIT_COSTS.animate} cr
+                    {working[`${s.id}-clip`] ? "Animating… (1–3 minutes)" : s.clip_path ? "Re-animate" : "✨ Animate scene"} · {CREDIT_COSTS.animate} cr
                   </Button>
 <StockFootagePicker
                     sceneId={s.id} sceneNo={i + 1} defaultQuery={s.heading}
@@ -1319,7 +1318,7 @@ export default function VideoEditor() {
                     <Button size="sm" variant="outline" disabled={!s.image_path} onClick={() => { soloRef.current = true; setPaused(false); setPlaying(i); }}>▶ Play scene</Button>
                   )}
                   <Progress value={playing === i ? progress * 100 : 0} className="h-1.5 flex-1" />
-                  <span className="text-xs tabular-nums text-muted-foreground">{formatSeconds(playing === i ? progress * secOf(s) : 0)} / {formatSeconds(secOf(s))}</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatSeconds(playing === i ? progress * secOf(s) : 0)} / {formatSeconds(secOf(s))}</span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">If a scene image isn't loading, click <span className="font-semibold">New image</span> and then <span className="font-semibold">Redo voiceover</span> to recreate both, or <span className="font-semibold">Upload image</span> to add your own.</p>
               </li>

@@ -54,7 +54,7 @@ export default function StockFootagePicker({ sceneId, sceneNo, defaultQuery, ori
               className="group relative overflow-hidden rounded-lg border border-border text-left hover:border-primary disabled:opacity-60">
               <video src={c.preview} poster={c.thumb} muted loop playsInline preload="none" className="aspect-video w-full object-cover"
                 onMouseEnter={(e) => e.currentTarget.play().catch(() => {})} onMouseLeave={(e) => e.currentTarget.pause()} />
-              <span className="block truncate px-2 py-1 text-xs text-muted-foreground">{using === c.id ? "Adding…" : `${c.duration}s · ${c.author}`}</span>
+              <span className="block truncate px-2 py-1 text-xs text-muted-foreground">{using === c.id ? "Adding…" : `${c.duration} seconds · ${c.author}`}</span>
             </button>
           ))}
         </div>

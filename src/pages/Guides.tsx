@@ -14,7 +14,7 @@ export default function Guides() {
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           {GUIDES.map((g) => (
             <Link key={g.slug} to={`/guides/${g.slug}`} className="group rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary">
-              <p className="text-xs text-muted-foreground">{g.readMins} min read</p>
+              <p className="text-xs text-muted-foreground">{g.readMins} {g.readMins === 1 ? "minute" : "minutes"} read</p>
               <h2 className="mt-2 text-xl font-bold group-hover:text-primary">{g.h1}</h2>
               <p className="mt-3 text-sm text-muted-foreground">{g.description}</p>
             </Link>

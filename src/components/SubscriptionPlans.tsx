@@ -16,7 +16,7 @@ const PLANS = [
     credits: `${STARTER_CREDITS} credits / month`,
     perks: [
       `${FREE_VOICES.length} narrators`,
-      `Videos up to ${FREE_MINUTES} min · ${FREE_MAX_SCENES} scenes`,
+      `Videos up to ${FREE_MINUTES} minutes · ${FREE_MAX_SCENES} scenes`,
       "720p HD · music, SFX & captions free",
       "Free downloads · no watermark",
     ],

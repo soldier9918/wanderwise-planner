@@ -37,15 +37,19 @@ describe("elapsedSeconds", () => {
 });
 
 describe("formatSeconds", () => {
-  it("uses plain seconds under a minute", () => {
-    expect(formatSeconds(9)).toBe("9s");
-    expect(formatSeconds(59.4)).toBe("59s");
+  it("writes seconds in words under a minute", () => {
+    expect(formatSeconds(9)).toBe("9 seconds");
+    expect(formatSeconds(59.4)).toBe("59 seconds");
+    expect(formatSeconds(1)).toBe("1 second");
   });
 
-  it("switches to minutes and seconds once it reaches a minute", () => {
-    expect(formatSeconds(59.6)).toBe("1:00");
-    expect(formatSeconds(60)).toBe("1:00");
-    expect(formatSeconds(75)).toBe("1:15");
+  it("writes minutes and seconds in words once it reaches a minute", () => {
+    expect(formatSeconds(59.6)).toBe("1 minute");
+    expect(formatSeconds(60)).toBe("1 minute");
+    expect(formatSeconds(75)).toBe("1 minute 15 seconds");
+    expect(formatSeconds(108)).toBe("1 minute 48 seconds");
+    expect(formatSeconds(120)).toBe("2 minutes");
+    expect(formatSeconds(1200)).toBe("20 minutes");
   });
 });
 
