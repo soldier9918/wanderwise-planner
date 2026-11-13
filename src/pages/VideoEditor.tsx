@@ -1228,9 +1228,9 @@ export default function VideoEditor() {
                     <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium text-white">{formatSecsBadge(secOf(s))}</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs uppercase tracking-widest text-accent">Scene {i + 1}</p>
                     <p className="font-semibold">{s.heading}</p>
                   </div>
+                  <p className="ml-auto shrink-0 self-start text-xs uppercase tracking-widest text-accent">Scene {i + 1}</p>
                 </div>
                 <Textarea key={s.narration} id={`narr-${s.id}`} className="mt-3 text-sm" rows={3} defaultValue={s.narration}
                   onChange={(e) => setDirty((d) => ({ ...d, [s.id]: e.target.value.trim() !== s.narration }))}
