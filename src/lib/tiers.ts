@@ -30,3 +30,8 @@ export const narrationEdited = (scenes: { narration: string; initial_narration?:
 /** Longest allowed video. Unedited AI videos get a hidden 20s buffer; edited ones must fit the selected length. Mirrors DB `enforce_narration_length`. */
 export const maxVideoSeconds = (targetSeconds: number | null | undefined, tier: PlanTier, isAdmin: boolean, edited: boolean) =>
   isAdmin ? null : Math.min(targetSeconds || 120, MAX_SECONDS_BY_TIER[tier]) + (edited ? 0 : 20);
+/** Smallest standard length above the current target that fits the video and the plan cap, or null. */
+export const nextFittingLength = (currentTarget: number | null | undefined, actualSecs: number, tier: PlanTier, lengths: readonly number[]) => {
+  const cur = currentTarget || 120;
+  return lengths.find((l) => l > cur && l >= Math.ceil(actualSecs) && l <= MAX_SECONDS_BY_TIER[tier]) ?? null;
+};

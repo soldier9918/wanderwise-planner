@@ -30,7 +30,8 @@ import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
-import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND } from "@/lib/tiers";
+import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND, nextFittingLength } from "@/lib/tiers";
+import { VIDEO_LENGTHS } from "@/lib/durations";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -874,10 +875,15 @@ export default function VideoEditor() {
             </div>
             {!lengthOk && (
               <div role="alert" className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
-                {(() => { const actual = Math.ceil(actualSecs); const cut = Math.max(1, overSecs); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; return (
+                {(() => { const actual = Math.ceil(actualSecs); const cut = Math.max(1, overSecs); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; const nextLen = account ? nextFittingLength((video as { target_seconds?: number | null }).target_seconds, actualSecs, account.tier, VIDEO_LENGTHS) : null; const expand = async () => { if (!nextLen) return; const { error } = await supabase.from("videos").update({ target_seconds: nextLen }).eq("id", id!); if (error) { toast.error("Couldn't change the video length"); return; } qc.setQueryData(["video", id], { ...data, video: { ...video, target_seconds: nextLen } }); qc.invalidateQueries({ queryKey: ["export-check"] }); toast.success(`Video length set to ${formatSeconds(nextLen)}.`); }; return (
                   <>
                     <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding your selected {targetLabel} duration.</p>
                     <p className="mt-1 text-muted-foreground">Please shorten the narration by about {cut} second{cut === 1 ? "" : "s"} in one or more scenes to continue{canUpgrade ? <>, or <Link to="/billing#subscriptions" className="text-primary underline">{upgradeText}</Link> to continue</> : "."}.</p>
+                    {nextLen ? (
+                      <Button size="sm" className="mt-3" onClick={expand} disabled={readOnly}>Expand to {formatSeconds(nextLen)} video</Button>
+                    ) : canUpgrade ? (
+                      <p className="mt-2 text-xs text-muted-foreground">Your plan's longest video is {formatSeconds(account ? ({ free: 120, creator: 1200, pro: 3600 } as const)[account.tier] : 120)}.</p>
+                    ) : null}
                   </>
                 ); })()}
               </div>
