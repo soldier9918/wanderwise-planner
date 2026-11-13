@@ -50,6 +50,31 @@ const steps = [
   { n: "03", t: "Voice it, ship it", d: "A natural voiceover is recorded per scene. Preview, tweak, and download your video." },
 ];
 
+const niches = [
+  { t: "History & mystery", d: "Documentary-style videos on unsolved cases, lost civilisations and famous events, with optional real-fact research and sources." },
+  { t: "Finance, tech & crypto", d: "Clear explainers on markets, Bitcoin, AI and gadgets, turned from a single idea or a news article link." },
+  { t: "Science & space", d: "Visual stories about planets, the deep sea and big discoveries, with AI images or stock B-roll for every scene." },
+  { t: "Shorts & quick facts", d: "Vertical 9:16 videos for YouTube Shorts, or remix any long video into a Short without paying again." },
+];
+
+const allInOne = [
+  "AI script writing from an idea, a brief or an article link",
+  "An image for every scene, plus optional animation or free stock B-roll",
+  "Natural AI voiceover with adjustable speed and accent",
+  "Captions, background music, intro and outro cards with your logo",
+  "Export a YouTube-ready MP4 in 16:9 or 9:16, right in your browser",
+];
+
+const faqs = [
+  { q: "How does Vydora make a video from one sentence?", a: "You type an idea. Vydora writes a script, splits it into scenes, creates an image and voiceover for each scene and times them together. You can edit any scene, swap images or narration, then download the finished video." },
+  { q: "Can I turn an article or blog post into a video?", a: "Yes. Paste a link into Article to Video and Vydora reads the page, writes a narrated script from it and builds the scenes, keeping a link to the original source." },
+  { q: "Can I make YouTube Shorts?", a: "Yes. Create videos in vertical 9:16, or use Remix for Shorts to turn an existing video into a Short using the same media, at no extra credit cost." },
+  { q: "Do I need video editing experience or software?", a: "No. Everything runs in your web browser. There is nothing to install, and the editor is built for beginners as well as experienced creators." },
+  { q: "Can I monetise videos made with Vydora?", a: "You own the videos you create. YouTube decides monetisation based on its own policies, which favour original, valuable content and ask creators to disclose realistic AI content, so add your own ideas, research and voice to every video." },
+  { q: "Can Vydora use real facts and sources?", a: "Turn on Use real facts and Vydora researches the topic on the web before writing, then lists the sources so you can check them." },
+  { q: "How much does it cost?", a: "There is a free plan with 30 credits every month. Creator is £19 a month with 600 credits and Pro is £49 a month with 2,000 credits. You can also buy credit top-ups at any time." },
+];
+
 export default function Landing() {
   const { user } = useAuth();
   const cta = user ? "/create" : "/auth?mode=signup";
@@ -152,6 +177,54 @@ export default function Landing() {
                   <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-primary">Try it <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
                 </div>
               </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="container py-20">
+          <div className="mb-10 text-center">
+            <p className="text-sm uppercase tracking-widest text-accent">Built for faceless YouTube channels</p>
+            <h2 className="mt-3 text-4xl font-extrabold md:text-5xl">Videos for every niche</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">Vydora is an AI YouTube video maker for creators who never show their face. Pick a topic, choose a style and get a narrated, scene-by-scene video ready to upload.</p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {niches.map((n) => (
+              <div key={n.t} className="rounded-xl border border-border bg-card p-6">
+                <h3 className="text-lg font-semibold">{n.t}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{n.d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="container py-20">
+          <div className="grid gap-10 rounded-2xl border border-border bg-card p-8 md:grid-cols-2 md:p-12">
+            <div>
+              <p className="text-sm uppercase tracking-widest text-accent">One studio, not five tools</p>
+              <h2 className="mt-3 text-3xl font-extrabold md:text-4xl">Replace your whole video workflow</h2>
+              <p className="mt-4 text-muted-foreground">Making a faceless YouTube video usually means juggling a script writer, an image generator, a voiceover tool, stock footage sites and a video editor. Vydora puts every step in one place, so you go from idea to finished MP4 without copying files between apps.</p>
+            </div>
+            <ul className="space-y-3">
+              {allInOne.map((a) => (
+                <li key={a} className="flex gap-3"><span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" /><span>{a}</span></li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section className="container max-w-3xl py-20">
+          <div className="mb-10 text-center">
+            <h2 className="text-4xl font-extrabold md:text-5xl">Frequently asked questions</h2>
+          </div>
+          <div className="divide-y divide-border rounded-xl border border-border bg-card">
+            {faqs.map((f) => (
+              <details key={f.q} className="group p-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+                  <h3 className="text-lg">{f.q}</h3>
+                  <span className="text-2xl text-primary transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-3 text-muted-foreground">{f.a}</p>
+              </details>
             ))}
           </div>
         </section>
