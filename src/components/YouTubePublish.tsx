@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,13 +34,21 @@ export async function connectYouTube() {
   window.location.href = url;
 }
 
+/** Builds publish defaults from the video's saved SEO pack only (no regeneration). Hashtags are appended to the description if missing. */
+export function youtubeDefaults(seo: { titles?: string[]; description?: string; hashtags?: string[]; tags?: string[] } | null, fallbackTitle?: string | null) {
+  const body = (seo?.description ?? "").trim();
+  const missing = (seo?.hashtags ?? []).filter((h) => h && !body.toLowerCase().includes(h.toLowerCase()));
+  const description = [body, missing.join(" ")].filter(Boolean).join("\n\n");
+  return { title: seo?.titles?.[0] ?? fallbackTitle ?? "", description, tags: (seo?.tags ?? []).join(", ") };
+}
+
 export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled }: {
-  videoId: string; title: string; description: string; tags: string[]; hasExport: boolean; disabled?: boolean;
+  videoId: string; title: string; description: string; tags: string; hasExport: boolean; disabled?: boolean;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const { data: status } = useQuery({ queryKey: ["youtube-status"], queryFn: youtubeStatus, staleTime: 60_000, retry: false });
-  const [form, setForm] = useState({ title, description, tags: tags.join(", "), privacy: "private", synthetic: true, kids: false });
+  const [form, setForm] = useState({ title, description, tags, privacy: "private", synthetic: true, kids: false });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ url: string; studioUrl: string } | null>(null);
 
@@ -56,7 +64,14 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
     if (yt === "connected") setOpen(true);
   }, [qc]);
 
-  useEffect(() => { if (open) { setForm((f) => ({ ...f, title: f.title || title, description: f.description || description, tags: f.tags || tags.join(", ") })); setResult(null); } }, [open, title, description, tags]);
+  // Fill from saved SEO once per video; never overwrite what the user typed.
+  const filledFor = useRef<string | null>(null);
+  const edited = useRef({ title: false, description: false, tags: false });
+  useEffect(() => {
+    if (filledFor.current !== videoId) { filledFor.current = videoId; edited.current = { title: false, description: false, tags: false }; setForm((f) => ({ ...f, title, description, tags })); }
+  }, [videoId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (filledFor.current === videoId) setForm((f) => ({ ...f, title: edited.current.title ? f.title : title, description: edited.current.description ? f.description : description, tags: edited.current.tags ? f.tags : tags })); }, [title, description, tags, videoId]);
+  useEffect(() => { if (open) setResult(null); }, [open]);
 
   const publish = async () => {
     setBusy(true);
@@ -109,13 +124,13 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
               </div>
               {!hasExport && <p role="alert" className="rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">Download the video first — we publish your latest download.</p>}
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Title
-                <Input maxLength={100} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <Input maxLength={100} value={form.title} onChange={(e) => { edited.current.title = true; setForm({ ...form, title: e.target.value }); }} />
               </label>
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Description
-                <Textarea rows={5} maxLength={5000} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <Textarea rows={5} maxLength={5000} value={form.description} onChange={(e) => { edited.current.description = true; setForm({ ...form, description: e.target.value }); }} />
               </label>
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Tags (comma separated)
-                <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+                <Input value={form.tags} onChange={(e) => { edited.current.tags = true; setForm({ ...form, tags: e.target.value }); }} />
               </label>
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Visibility
                 <select value={form.privacy} onChange={(e) => setForm({ ...form, privacy: e.target.value })} className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground">

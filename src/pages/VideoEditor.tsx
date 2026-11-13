@@ -22,7 +22,7 @@ import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, 
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
 import { QUALITIES, qualityOf } from "@/lib/quality";
 import RatioSelect from "@/components/RatioSelect";
-import YouTubePublish from "@/components/YouTubePublish";
+import YouTubePublish, { youtubeDefaults } from "@/components/YouTubePublish";
 import { Switch } from "@/components/ui/switch";
 import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
@@ -864,9 +864,7 @@ export default function VideoEditor() {
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
               <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={exportPct !== null}
-                title={((video.seo as unknown as Seo | null)?.titles?.[0]) ?? video.title ?? ""}
-                description={(video.seo as unknown as Seo | null)?.description ?? ""}
-                tags={(video.seo as unknown as Seo | null)?.tags ?? []} />
+                {...youtubeDefaults(video.seo as unknown as Seo | null, video.title)} />
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
               </Button>
