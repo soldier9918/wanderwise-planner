@@ -5,6 +5,7 @@ import { Sparkles, Link2, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { TEMPLATES } from "@/lib/templates";
 import { VoiceSampleButton } from "@/components/VoiceSampleButton";
+import { VoiceSampleList } from "@/components/VoiceSampleList";
 import { ACCENTS, NARRATION_SPEEDS } from "@/lib/voiceStyle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,6 +172,7 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{voiceAllowed(v.id, pro) ? v.label : `🔒 ${v.label} · PRO`}</SelectItem>)}</SelectContent>
               </Select><VoiceSampleButton voice={voice} accent={accent} className="h-10 shrink-0" /></div>
+              <VoiceSampleList pro={pro} current={voice} accent={accent} className="h-8 w-fit text-xs" />
               <span className="text-xs text-muted-foreground">Listen is free — hear the voice and accent before you spend credits.</span>
             </div>
             <div className="grid gap-2">

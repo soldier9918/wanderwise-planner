@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { VoiceSampleButton } from "@/components/VoiceSampleButton";
+import { VoiceSampleList } from "@/components/VoiceSampleList";
 import { STYLES, TONES, VOICES, generateScript, generateSeries, type SeriesPlan } from "@/lib/videoApi";
 import { estimateCredits } from "@/lib/credits";
 import { useAccount } from "@/lib/account";
@@ -99,7 +100,7 @@ export default function Series() {
                 <SelectContent>{TONES.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Narrator</Label>
               <div className="mt-1 flex gap-2"><Select value={voice} onValueChange={setVoice}><SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{v.label}{!voiceAllowed(v.id, pro) ? " (Pro)" : ""}</SelectItem>)}</SelectContent></Select><VoiceSampleButton voice={voice} className="h-10 shrink-0" /></div></div>
+                <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{v.label}{!voiceAllowed(v.id, pro) ? " (Pro)" : ""}</SelectItem>)}</SelectContent></Select><VoiceSampleButton voice={voice} className="h-10 shrink-0" /></div><VoiceSampleList pro={pro} current={voice} className="mt-2 h-8 w-fit text-xs" /></div>
             <div><Label>Scenes / episode</Label>
               <Select value={scenes} onValueChange={setScenes}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>{sceneOptions.map((n) => <SelectItem key={n} value={String(n)} disabled={!isLengthAllowed(Number(length), n)}>{n}{!isLengthAllowed(Number(length), n) ? ` · ${n > maxScenesForSeconds(Number(length)) ? "too many" : "too few"}` : ""}</SelectItem>)}</SelectContent></Select></div>

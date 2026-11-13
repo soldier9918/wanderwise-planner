@@ -29,7 +29,7 @@ import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
-import { VoiceSampleButton } from "@/components/VoiceSampleButton";
+import { VoiceSampleList } from "@/components/VoiceSampleList";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
 import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND, nextFittingLength } from "@/lib/tiers";
@@ -929,7 +929,7 @@ export default function VideoEditor() {
                   toast.success("All voiceovers now use the new narrator.");
                 }}
               />
-              <VoiceSampleButton voice={video.voice ?? "Kore"} accent={video.accent ?? undefined} className="h-7 w-fit text-xs" />
+              <VoiceSampleList pro={account?.pro ?? false} current={video.voice ?? "Kore"} accent={video.accent ?? undefined} className="h-7 w-fit text-xs" />
               </div>
               <LookSelect
                 label={`Tone & emotion · ${rerecordCost} cr`}
