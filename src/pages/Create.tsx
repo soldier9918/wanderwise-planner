@@ -26,7 +26,7 @@ import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene, minScen
 
 export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
   const navigate = useNavigate();
-  const [topic, setTopic] = useState("");
+  const [topic, setTopic] = useState(() => new URLSearchParams(window.location.search).get("idea") ?? "");
   const [style, setStyle] = useState<string>("Cinematic");
   const [voice, setVoice] = useState<string>("Kore");
   const [tone, setTone] = useState<string>("engaging");

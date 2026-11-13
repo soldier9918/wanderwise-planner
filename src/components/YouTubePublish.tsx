@@ -62,7 +62,7 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   const [open, setOpen] = useState(false);
   const [askSeo, setAskSeo] = useState(false);
   const { data: status } = useQuery({ queryKey: ["youtube-status"], queryFn: youtubeStatus, staleTime: 60_000, retry: false });
-  const [form, setForm] = useState({ title, description, tags, privacy: "private", synthetic: true, kids: false });
+  const [form, setForm] = useState({ title, description, tags, privacy: "private", synthetic: true, kids: false, when: "now", at: "" });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ url: string; studioUrl: string } | null>(null);
 
@@ -101,11 +101,12 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   const publish = async () => {
     setBusy(true);
     try {
-      const r = await call<{ url: string; studioUrl: string; thumbnail?: string }>({ action: "publish", videoId, title: form.title, description: form.description, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), privacy: form.privacy, synthetic: form.synthetic, madeForKids: form.kids });
+      const r = await call<{ url: string; studioUrl: string; thumbnail?: string }>({ action: "publish", videoId, title: form.title, description: form.description, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), privacy: form.privacy, publishAt: form.when === "later" && form.at ? new Date(form.at).toISOString() : undefined, synthetic: form.synthetic, madeForKids: form.kids });
       setResult(r);
       qc.invalidateQueries({ queryKey: ["youtube-upload", videoId] });
       qc.invalidateQueries({ queryKey: ["youtube-uploads-list"] });
-      toast.success(r.thumbnail === "set" ? "Published to YouTube with your thumbnail!" : "Published to YouTube!");
+      qc.invalidateQueries({ queryKey: ["autopilot-uploads"] });
+      toast.success(form.when === "later" ? "Scheduled on YouTube!" : r.thumbnail === "set" ? "Published to YouTube with your thumbnail!" : "Published to YouTube!");
       const tmsg: Record<string, string> = { too_large: "Your thumbnail is over YouTube's 2 MB limit — add it in YouTube Studio.", not_allowed: "YouTube only allows custom thumbnails on verified channels. Verify your channel, then add it in YouTube Studio.", failed: "Couldn't add your thumbnail — you can add it in YouTube Studio." };
       if (r.thumbnail && tmsg[r.thumbnail]) toast.message(tmsg[r.thumbnail]);
     } catch (e) { toast.error((e as Error).message); }
@@ -148,7 +149,7 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
             </div>
           ) : result ? (
             <div className="grid gap-3 text-sm">
-              <p>Your video is on YouTube. It may take a few minutes to finish processing.</p>
+              <p>{form.when === "later" ? `Scheduled — it goes public on ${new Date(form.at).toLocaleString()}.` : "Your video is on YouTube."} {" "}It may take a few minutes to finish processing.</p>
               <div className="flex flex-wrap gap-2">
                 <Button asChild><a href={result.url} target="_blank" rel="noreferrer">Watch on YouTube</a></Button>
                 <Button asChild variant="outline"><a href={result.studioUrl} target="_blank" rel="noreferrer">Open in YouTube Studio</a></Button>
@@ -174,15 +175,24 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
                 <Input value={form.tags} onChange={(e) => { edited.current.tags = true; setForm({ ...form, tags: e.target.value }); }} />
               </label>
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Visibility
-                <select value={form.privacy} onChange={(e) => setForm({ ...form, privacy: e.target.value })} className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground">
+                <select disabled={form.when === "later"} value={form.privacy} onChange={(e) => setForm({ ...form, privacy: e.target.value })} className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground">
                   <option value="private">Private (only you)</option>
                   <option value="unlisted">Unlisted (anyone with the link)</option>
                   <option value="public">Public</option>
                 </select>
               </label>
+              <div className="grid gap-1 text-xs font-semibold text-muted-foreground">When
+                <div className="flex gap-2">
+                  {(["now", "later"] as const).map((w) => <Button key={w} type="button" size="sm" variant={form.when === w ? "default" : "outline"} onClick={() => setForm({ ...form, when: w })}>{w === "now" ? "Publish now" : "Schedule for later"}</Button>)}
+                </div>
+                {form.when === "later" && <>
+                  <Input type="datetime-local" value={form.at} min={new Date(Date.now() + 10 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)} onChange={(e) => setForm({ ...form, at: e.target.value })} />
+                  <span className="font-normal">Uploads now as private, then YouTube makes it public at this time (your local time).</span>
+                </>}
+              </div>
               <label className="flex items-start gap-2 text-sm"><Checkbox checked={form.synthetic} onCheckedChange={(v) => setForm({ ...form, synthetic: v === true })} /> <span>Mark as altered or synthetic content (YouTube's AI disclosure)</span></label>
               <label className="flex items-start gap-2 text-sm"><Checkbox checked={form.kids} onCheckedChange={(v) => setForm({ ...form, kids: v === true })} /> <span>Made for kids</span></label>
-              <Button onClick={publish} disabled={busy || !hasExport || !form.title.trim()}>{busy ? "Uploading to YouTube…" : "Publish"}</Button>
+              <Button onClick={publish} disabled={busy || !hasExport || !form.title.trim() || (form.when === "later" && !form.at)}>{busy ? "Uploading to YouTube…" : form.when === "later" ? "Schedule" : "Publish"}</Button>
             </div>
           )}
         </DialogContent>

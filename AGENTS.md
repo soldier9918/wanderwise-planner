@@ -31,3 +31,4 @@
 - Live activation: one-time admin `activate-live-billing` (checks, typed confirm, audited); owner sets STRIPE_MODE. Why: both switches must agree.
 - YouTube: `youtube` fn keeps tokens. Why: server-side.
 - `voice-sample`: free narrator previews cached in `samples/`.
+- Autopilot (`/autopilot`): `autopilot_plans` rows are free planning only (no auto-generation or credits); YouTube scheduling uses native `publishAt` via the `youtube` fn, stored in `youtube_uploads.publish_at`. Why: no background credit spend without a user action.

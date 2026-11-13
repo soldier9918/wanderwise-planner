@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      autopilot_plans: {
+        Row: {
+          create_on: string
+          created_at: string
+          id: string
+          publish_on: string | null
+          status: string
+          topic: string
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          create_on: string
+          created_at?: string
+          id?: string
+          publish_on?: string | null
+          status?: string
+          topic: string
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          create_on?: string
+          created_at?: string
+          id?: string
+          publish_on?: string | null
+          status?: string
+          topic?: string
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: []
+      }
       billing_config: {
         Row: {
           id: boolean
@@ -578,7 +611,9 @@ export type Database = {
           error: string | null
           id: string
           privacy: string
+          publish_at: string | null
           status: string
+          title: string | null
           user_id: string
           video_id: string
           youtube_video_id: string | null
@@ -588,7 +623,9 @@ export type Database = {
           error?: string | null
           id?: string
           privacy: string
+          publish_at?: string | null
           status?: string
+          title?: string | null
           user_id: string
           video_id: string
           youtube_video_id?: string | null
@@ -598,7 +635,9 @@ export type Database = {
           error?: string | null
           id?: string
           privacy?: string
+          publish_at?: string | null
           status?: string
+          title?: string | null
           user_id?: string
           video_id?: string
           youtube_video_id?: string | null

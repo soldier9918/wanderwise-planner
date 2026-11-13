@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import RouteSeo from "@/components/RouteSeo";
 import { AuthProvider } from "@/hooks/useAuth";
+import Autopilot from "@/pages/Autopilot";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
             <Route path="/from-url" element={<ProtectedRoute><Create key="url" fromUrl /></ProtectedRoute>} />
             <Route path="/series" element={<ProtectedRoute><Series /></ProtectedRoute>} />
+            <Route path="/autopilot" element={<ProtectedRoute><Autopilot /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
             <Route path="/admin-kb20" element={<ProtectedRoute><Admin /></ProtectedRoute>} />

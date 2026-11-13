@@ -55,6 +55,7 @@ export default function SiteHeader() {
               <Button variant="ghost" asChild className={`${navBtn} ${on("/from-url")}`}><Link to="/from-url" aria-current={on("/from-url") ? "page" : undefined}>Article to video</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/series")}`}><Link to="/series" aria-current={on("/series") ? "page" : undefined}>Series</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/dashboard")}`}><Link to="/dashboard" aria-current={on("/dashboard") ? "page" : undefined}>My videos</Link></Button>
+              <Button variant="ghost" asChild className={`${navBtn} ${on("/autopilot")}`}><Link to="/autopilot" aria-current={on("/autopilot") ? "page" : undefined}>Autopilot</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/library")}`}><Link to="/library" aria-current={on("/library") ? "page" : undefined}>My Library</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/pricing")}`}><Link to="/pricing" aria-current={on("/pricing") ? "page" : undefined}>Pricing</Link></Button>
               <Button variant="ghost" asChild className={`${navBtn} ${on("/billing")}`}><Link to="/billing" aria-current={on("/billing") ? "page" : undefined}>Plans &amp; Billing</Link></Button>
@@ -109,6 +110,7 @@ export default function SiteHeader() {
                 <Link to="/from-url" onClick={close} className={`${mobileLink} ${on("/from-url")}`}>Article to video</Link>
                 <Link to="/series" onClick={close} className={`${mobileLink} ${on("/series")}`}>Series generator</Link>
                 <Link to="/dashboard" onClick={close} className={`${mobileLink} ${on("/dashboard")}`}>My videos</Link>
+                <Link to="/autopilot" onClick={close} className={`${mobileLink} ${on("/autopilot")}`}>Autopilot</Link>
                 <Link to="/library" onClick={close} className={`${mobileLink} ${on("/library")}`}>My Library</Link>
                 <Link to="/pricing" onClick={close} className={`${mobileLink} ${on("/pricing")}`}>Pricing</Link>
                 <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Plans &amp; Billing</Link>

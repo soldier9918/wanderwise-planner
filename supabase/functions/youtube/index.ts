@@ -119,6 +119,12 @@ Deno.serve(async (req) => {
       const privacy = ["public", "unlisted", "private"].includes(body.privacy) ? body.privacy : "private";
       const synthetic = body.synthetic !== false;
       const kids = body.madeForKids === true;
+      let publishAt: string | null = null;
+      if (body.publishAt) {
+        const t = new Date(String(body.publishAt)).getTime();
+        if (!Number.isFinite(t) || t < Date.now() + 5 * 60_000 || t > Date.now() + 180 * 86400_000) return json({ error: "Pick a release time at least 5 minutes ahead and within 6 months." }, 400);
+        publishAt = new Date(t).toISOString();
+      }
       if (!title) return json({ error: "Please add a title." }, 400);
       const { data: video } = await auth.client.from("videos").select("id, thumbnail_path").eq("id", videoId).maybeSingle();
       if (!video) return json({ error: "Video not found." }, 404);
@@ -127,7 +133,7 @@ Deno.serve(async (req) => {
       const token = await freshToken(db, uid);
       if (!token) return json({ error: "Please connect your YouTube channel again.", reconnect: true }, 401);
 
-      const { data: row } = await db.from("youtube_uploads").insert({ user_id: uid, video_id: videoId, privacy }).select("id").single();
+      const { data: row } = await db.from("youtube_uploads").insert({ user_id: uid, video_id: videoId, privacy: publishAt ? "scheduled" : privacy, publish_at: publishAt, title }).select("id").single();
       const fail = async (msg: string, status = 502) => { await db.from("youtube_uploads").update({ status: "failed", error: msg }).eq("id", row!.id); return json({ error: msg }, status); };
 
       const init = await fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
@@ -135,7 +141,7 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "X-Upload-Content-Type": exp.content_type ?? "video/mp4", "X-Upload-Content-Length": String(exp.size_bytes ?? 0) },
         body: JSON.stringify({
           snippet: { title, description, tags, categoryId: "22" },
-          status: { privacyStatus: privacy, selfDeclaredMadeForKids: kids, containsSyntheticMedia: synthetic },
+          status: { privacyStatus: publishAt ? "private" : privacy, ...(publishAt ? { publishAt } : {}), selfDeclaredMadeForKids: kids, containsSyntheticMedia: synthetic },
         }),
       });
       if (!init.ok) {
