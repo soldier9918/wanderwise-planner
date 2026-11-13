@@ -870,7 +870,7 @@ export default function VideoEditor() {
               </Button>
               <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={!lengthOk || exportPct !== null}
                 onSeoRequested={() => { const el = document.getElementById("seo-section"); if (!el) return; el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("ring-2", "ring-primary"); setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000); }}
-                {...youtubeDefaults(video.seo as unknown as Seo | null, video.title)} />
+                {...youtubeDefaults(video.seo as unknown as Seo | null, video.title, video.aspect_ratio === "9:16")} />
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
               </Button>

@@ -37,12 +37,22 @@ export async function connectYouTube() {
   window.location.href = url;
 }
 
-/** Builds publish defaults from the video's saved SEO pack only (no regeneration). Hashtags are appended to the description if missing. */
-export function youtubeDefaults(seo: { titles?: string[]; description?: string; hashtags?: string[]; tags?: string[] } | null, fallbackTitle?: string | null) {
+/** Builds publish defaults from the video's saved SEO pack only (no regeneration). Hashtags are appended to the description if missing. Vertical (9:16) videos get #Shorts in the title, description and tags so YouTube picks them up as Shorts. */
+export function youtubeDefaults(seo: { titles?: string[]; description?: string; hashtags?: string[]; tags?: string[] } | null, fallbackTitle?: string | null, isShort = false) {
   const body = (seo?.description ?? "").trim();
   const missing = (seo?.hashtags ?? []).filter((h) => h && !body.toLowerCase().includes(h.toLowerCase()));
-  const description = [body, missing.join(" ")].filter(Boolean).join("\n\n");
-  return { title: seo?.titles?.[0] ?? fallbackTitle ?? "", description, tags: (seo?.tags ?? []).join(", ") };
+  let title = seo?.titles?.[0] ?? fallbackTitle ?? "";
+  let description = [body, missing.join(" ")].filter(Boolean).join("\n\n");
+  const tagList = [...(seo?.tags ?? [])];
+  if (isShort) {
+    if (!/#shorts/i.test(title)) {
+      // YouTube titles cap at 100 chars; trim the title so the tag always fits.
+      title = `${title.length + 8 > 100 ? title.slice(0, 92).trimEnd() : title} #Shorts`;
+    }
+    if (!/#shorts/i.test(description)) description = [description, "#Shorts"].filter(Boolean).join("\n\n");
+    if (!tagList.some((t) => /^#?shorts$/i.test(t.trim()))) tagList.push("Shorts");
+  }
+  return { title, description, tags: tagList.join(", ") };
 }
 
 export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled, onSeoRequested }: {
