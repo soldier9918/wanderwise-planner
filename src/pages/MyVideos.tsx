@@ -189,13 +189,14 @@ export default function MyVideos() {
                           <td className="whitespace-nowrap px-3 py-2 font-semibold text-primary">⚡ ~{v.credits}</td>
                           <td className="px-3 py-2">
                             {yt ? <a href={`https://youtu.be/${yt}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"><Youtube className="h-3.5 w-3.5" />Published</a>
-                              : <span className="whitespace-nowrap text-xs text-muted-foreground">Not published</span>}
+                              : <Link to={`/video/${v.id}?publish=1`} className="whitespace-nowrap text-xs text-muted-foreground hover:text-primary">Not published · <span className="underline">Publish</span></Link>}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{new Date(v.created_at).toLocaleDateString()}</td>
                           <td className="px-3 py-2">
                             <div className="flex justify-end gap-1">
                               <Button size="icon" variant="ghost" className="h-8 w-8" title={`${v.thumbnail_path ? "Regenerate" : "Generate"} thumbnail · ${CREDIT_COSTS.thumbnail} cr`} disabled={thumbBusy === v.id} onClick={() => makeThumbnail(v.id)}><ImagePlus className="h-4 w-4" /></Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8" title="Download (opens the editor to export)" asChild><Link to={`/video/${v.id}`}><Download className="h-4 w-4" /></Link></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" title="Publish to YouTube" asChild><Link to={`/video/${v.id}?publish=1`}><Youtube className="h-4 w-4" /></Link></Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8" title="Duplicate" disabled={dupBusy === v.id || readOnly} onClick={() => duplicate(v.id)}><Copy className="h-4 w-4" /></Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" title="Delete" onClick={() => setToDelete({ id: v.id, title: v.title })}><Trash2 className="h-4 w-4" /></Button>
                             </div>

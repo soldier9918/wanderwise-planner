@@ -76,6 +76,17 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   }, [videoId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (filledFor.current === videoId) setForm((f) => ({ ...f, title: edited.current.title ? f.title : title, description: edited.current.description ? f.description : description, tags: edited.current.tags ? f.tags : tags })); }, [title, description, tags, videoId]);
   useEffect(() => { if (open) setResult(null); }, [open]);
+  // Opened from My Videos with ?publish=1: start the same flow as clicking the button.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (autoOpened.current || p.get("publish") !== "1") return;
+    autoOpened.current = true;
+    p.delete("publish");
+    window.history.replaceState(null, "", `${window.location.pathname}${p.toString() ? `?${p}` : ""}`);
+    if (disabled) { toast.error("This video is over your plan's length limit. Fix it below, then publish."); return; }
+    if (description.trim()) setOpen(true); else setAskSeo(true);
+  }, [disabled, description]);
 
   const publish = async () => {
     setBusy(true);
