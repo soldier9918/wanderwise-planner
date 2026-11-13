@@ -865,7 +865,7 @@ export default function VideoEditor() {
               <Button variant="secondary" onClick={download} disabled={!lengthOk || exportPct !== null || busyAny || exportInfo?.decision === "busy"}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
-              <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={exportPct !== null}
+              <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={!lengthOk || exportPct !== null}
                 {...youtubeDefaults(video.seo as unknown as Seo | null, video.title)} />
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
