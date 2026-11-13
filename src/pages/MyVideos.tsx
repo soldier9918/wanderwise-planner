@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Copy, ImagePlus, Plus } from "lucide-react";
+import { Copy, Download, ImagePlus, Plus, Search, Trash2, Youtube } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SiteHeader from "@/components/SiteHeader";
@@ -28,7 +30,24 @@ export default function MyVideos() {
   const [thumbBusy, setThumbBusy] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [filter, setFilter] = useState<Kind | "all">("all");
+  const [q, setQ] = useState("");
+  const [toDelete, setToDelete] = useState<{ id: string; title: string } | null>(null);
+  const removeVideo = async () => {
+    if (!toDelete) return;
+    const { error } = await supabase.from("videos").delete().eq("id", toDelete.id);
+    if (error) toast.error(error.message); else { toast.success("Video deleted"); queryClient.invalidateQueries({ queryKey: ["videos"] }); }
+    setToDelete(null);
+  };
+  const { data: published } = useQuery({
+    queryKey: ["youtube-uploads-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("youtube_uploads").select("video_id, youtube_id, status").not("youtube_id", "is", null);
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((u) => { if (u.youtube_id) m[u.video_id] = u.youtube_id; });
+      return m;
+    },
+  });
   const [dupBusy, setDupBusy] = useState<string | null>(null);
   const { data: account } = useAccount();
   const readOnly = isReadOnlyAccount(account);
@@ -100,7 +119,7 @@ export default function MyVideos() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="container max-w-5xl py-10">
+      <main className="container max-w-7xl py-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-4xl font-extrabold">My videos</h1>
@@ -111,7 +130,17 @@ export default function MyVideos() {
           </Button>
         </div>
 
-        <div className="mt-6 grid gap-3">
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or prompt…" className="pl-8" />
+          </div>
+          {([["all", "All"], ...GROUPS.map((g) => [g.kind, g.label])] as [Kind | "all", string][]).map(([k, l]) => (
+            <Button key={k} size="sm" variant={filter === k ? "default" : "outline"} onClick={() => setFilter(k)}>{l}</Button>
+          ))}
+        </div>
+
+        <div className="mt-4">
           {isLoading && <p className="text-muted-foreground">Loading…</p>}
           {videos?.length === 0 && (
             <div className="rounded-xl border border-dashed border-border p-10 text-center">
@@ -119,52 +148,77 @@ export default function MyVideos() {
               <Button className="mt-4" asChild><Link to="/create">Create your first video</Link></Button>
             </div>
           )}
-          {videos && videos.length > 0 && GROUPS.map((g) => {
-            const list = videos.filter((v) => videoKind(v) === g.kind);
-            if (!list.length) return null;
+          {videos && videos.length > 0 && (() => {
+            const term = q.trim().toLowerCase();
+            const list = videos.filter((v) => (filter === "all" || videoKind(v) === filter) && (!term || v.title.toLowerCase().includes(term) || (v.topic ?? "").toLowerCase().includes(term)));
             return (
-              <section key={g.kind} className="mt-4 first:mt-0">
-                <h2 className="mb-3 font-display text-xl font-bold">
-                  <button type="button" aria-expanded={!collapsed[g.kind]} onClick={() => setCollapsed((c) => ({ ...c, [g.kind]: !c[g.kind] }))} className="inline-flex items-center gap-2 hover:text-primary">
-                    <ChevronDown className={`h-5 w-5 transition-transform ${collapsed[g.kind] ? "-rotate-90" : ""}`} />
-                    {g.label} <span className="text-sm font-normal text-muted-foreground">({list.length})</span>
-                  </button>
-                </h2>
-                <div className={collapsed[g.kind] ? "hidden" : "grid gap-3"}>
-          {list.map((v) => (
-            <Link key={v.id} to={`/video/${v.id}`} className="group flex gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary">
-              {v.thumb ? (
-                <img src={v.thumb} alt="" className="h-20 w-32 shrink-0 rounded-lg object-cover" />
-              ) : (
-                <div className="flex h-20 w-32 shrink-0 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">No image</div>
-              )}
-              <div className="min-w-0">
-                <p className="font-semibold group-hover:text-primary">{v.title}</p>
-                <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{v.topic}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{v.style} · {v.aspect_ratio ?? "16:9"} · {new Date(v.created_at).toLocaleDateString()} · <span className="font-semibold text-primary">⚡ ~{v.credits} credits</span></p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  disabled={thumbBusy === v.id}
-                  onClick={(e) => { e.preventDefault(); makeThumbnail(v.id); }}
-                >
-                  <ImagePlus className="h-4 w-4" />
-                  {thumbBusy === v.id ? "Creating…" : v.thumbnail_path ? "Regenerate thumbnail" : "Generate thumbnail"} · {CREDIT_COSTS.thumbnail} cr
-                </Button>
-                <Button type="button" variant="outline" size="sm" className="ml-2 mt-3" disabled={dupBusy === v.id || readOnly}
-                  onClick={(e) => { e.preventDefault(); duplicate(v.id); }}>
-                  <Copy className="h-4 w-4" />{dupBusy === v.id ? "Duplicating…" : "Duplicate"}
-                </Button>
+              <div className="overflow-x-auto rounded-xl border border-border bg-card">
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Output</th>
+                      <th className="px-3 py-2 font-medium">Name</th>
+                      <th className="px-3 py-2 font-medium">Type</th>
+                      <th className="px-3 py-2 font-medium">Query</th>
+                      <th className="px-3 py-2 font-medium">Credits</th>
+                      <th className="px-3 py-2 font-medium">YouTube</th>
+                      <th className="px-3 py-2 font-medium">Created</th>
+                      <th className="px-3 py-2 text-right font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">No videos match.</td></tr>}
+                    {list.map((v) => {
+                      const kind = videoKind(v);
+                      const typeLabel = kind === "series" ? (v.title.match(/\[Part \d+\/\d+\]/)?.[0].slice(1, -1) ?? "Series")
+                        : kind === "article" ? "Article" : v.aspect_ratio === "9:16" ? "9:16 Short" : "16:9 Video";
+                      const yt = published?.[v.id];
+                      return (
+                        <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                          <td className="px-3 py-2">
+                            <Link to={`/video/${v.id}`}>
+                              {v.thumb ? <img src={v.thumb} alt="" className="h-9 w-16 rounded object-cover" />
+                                : <div className="flex h-9 w-16 items-center justify-center rounded bg-muted text-[10px] text-muted-foreground">No image</div>}
+                            </Link>
+                          </td>
+                          <td className="max-w-[220px] px-3 py-2"><Link to={`/video/${v.id}`} className="line-clamp-2 font-semibold hover:text-primary">{v.title}</Link></td>
+                          <td className="px-3 py-2"><span className="whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-xs">{typeLabel}</span></td>
+                          <td className="max-w-[240px] px-3 py-2 text-muted-foreground"><span className="line-clamp-2" title={v.topic ?? ""}>{v.topic}</span></td>
+                          <td className="whitespace-nowrap px-3 py-2 font-semibold text-primary">⚡ ~{v.credits}</td>
+                          <td className="px-3 py-2">
+                            {yt ? <a href={`https://youtu.be/${yt}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"><Youtube className="h-3.5 w-3.5" />Published</a>
+                              : <span className="whitespace-nowrap text-xs text-muted-foreground">Not published</span>}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{new Date(v.created_at).toLocaleDateString()}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex justify-end gap-1">
+                              <Button size="icon" variant="ghost" className="h-8 w-8" title={`${v.thumbnail_path ? "Regenerate" : "Generate"} thumbnail · ${CREDIT_COSTS.thumbnail} cr`} disabled={thumbBusy === v.id} onClick={() => makeThumbnail(v.id)}><ImagePlus className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" title="Download (opens the editor to export)" asChild><Link to={`/video/${v.id}`}><Download className="h-4 w-4" /></Link></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" title="Duplicate" disabled={dupBusy === v.id || readOnly} onClick={() => duplicate(v.id)}><Copy className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" title="Delete" onClick={() => setToDelete({ id: v.id, title: v.title })}><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </Link>
-          ))}
-                </div>
-              </section>
             );
-          })}
+          })()}
         </div>
+        <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this video?</AlertDialogTitle>
+              <AlertDialogDescription>"{toDelete?.title}" will be removed from My videos. This can't be undone.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={removeVideo}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
