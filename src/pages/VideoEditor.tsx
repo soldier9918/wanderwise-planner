@@ -29,6 +29,7 @@ import { SFX_TYPES, playSfx, sfxFor } from "@/lib/sfx";
 import { MUSIC_MOODS, DUCK_RATIO, shouldPlayMusic, startMusic, rampTo, type MusicPlayer } from "@/lib/music";
 import { estimateCredits, costBreakdown, CREDIT_COSTS } from "@/lib/credits";
 import StockFootagePicker from "@/components/StockFootagePicker";
+import { VoiceSampleButton } from "@/components/VoiceSampleButton";
 import { ACCENTS, LOGO_POSITIONS, NARRATION_SPEEDS, speedOf } from "@/lib/voiceStyle";
 import { remixToShorts } from "@/lib/shorts";
 import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND, nextFittingLength } from "@/lib/tiers";
@@ -912,6 +913,7 @@ export default function VideoEditor() {
                 options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: n > scenes.length ? `${n} scenes · ${CREDIT_COSTS.script + (n - scenes.length) * (CREDIT_COSTS.image + CREDIT_COSTS.voice)} cr` : `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
+              <div className="grid gap-1">
               <LookSelect
                 label={`Narrator · ${rerecordCost} cr`}
                 value={video.voice ?? "Kore"}
@@ -927,6 +929,8 @@ export default function VideoEditor() {
                   toast.success("All voiceovers now use the new narrator.");
                 }}
               />
+              <VoiceSampleButton voice={video.voice ?? "Kore"} accent={video.accent ?? undefined} className="h-7 w-fit text-xs" />
+              </div>
               <LookSelect
                 label={`Tone & emotion · ${rerecordCost} cr`}
                 value={video.tone ?? "engaging"}

@@ -178,3 +178,6 @@ export const checkExport = (videoId: string, format: string) => invoke<ExportChe
 export const startExport = (videoId: string, format: string) => invoke<ExportStart>("video-export", { action: "start", videoId, format });
 export const completeExport = (exportId: string) => invoke<{ url: string; contentType?: string }>("video-export", { action: "complete", exportId });
 export const failExport = (exportId: string) => invoke<{ refunded: number }>("video-export", { action: "fail", exportId });
+
+// Free, cached narrator preview (no credits).
+export const voiceSample = (voice: string, accent?: string) => invoke<{ url: string }>("voice-sample", { voice, accent });

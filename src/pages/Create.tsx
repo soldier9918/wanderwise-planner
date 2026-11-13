@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, Link2, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { TEMPLATES } from "@/lib/templates";
+import { VoiceSampleButton } from "@/components/VoiceSampleButton";
 import { ACCENTS, NARRATION_SPEEDS } from "@/lib/voiceStyle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -166,10 +167,11 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             </div>
             <div className="grid gap-2">
               <Label>Voice</Label>
-              <Select value={voice} onValueChange={setVoice}>
+              <div className="flex gap-2"><Select value={voice} onValueChange={setVoice}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{VOICES.map((v) => <SelectItem key={v.id} value={v.id} disabled={!voiceAllowed(v.id, pro)}>{voiceAllowed(v.id, pro) ? v.label : `🔒 ${v.label} · PRO`}</SelectItem>)}</SelectContent>
-              </Select>
+              </Select><VoiceSampleButton voice={voice} accent={accent} className="h-10 shrink-0" /></div>
+              <span className="text-xs text-muted-foreground">Listen is free — hear the voice and accent before you spend credits.</span>
             </div>
             <div className="grid gap-2">
               <Label>Accent</Label>
