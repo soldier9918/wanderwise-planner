@@ -616,7 +616,6 @@ export default function VideoEditor() {
   const maxSecs = account ? maxVideoSeconds((video as { target_seconds?: number | null }).target_seconds, account.tier, account.isAdmin, edited) : null;
   const charLimit = maxSecs ? Math.floor(maxSecs * CHARS_PER_SECOND) : null;
   const totalChars = scenes.reduce((n, sc) => n + sc.narration.length, 0);
-  const tooLongChars = !!charLimit && totalChars > charLimit;
   const targetLabel = maxSecs ? formatSeconds(maxSecs - (edited ? 0 : 20)) : "";
   const done = scenes.filter((s) => s.image_path && s.audio_path).length;
   const busyAny = Object.values(working).some(Boolean);
@@ -634,8 +633,11 @@ export default function VideoEditor() {
   const sceneSecs = scenes.map(secOf);
   const totalSecs = sceneSecs.reduce((a, s) => a + s, 0);
   // Real recorded length counts too: voices can speak slower than the character estimate.
-  const overSecs = maxSecs ? Math.ceil(totalSecs - maxSecs) : 0;
-  const tooLong = tooLongChars || overSecs > 0;
+  // Text estimate is scaled by narrator speed; once every voiceover exists, the real playback length wins.
+  const allVoiced = scenes.length > 0 && scenes.every((s) => s.audio_path && audioSecs[s.id]);
+  const actualSecs = allVoiced ? totalSecs : Math.max(totalSecs, totalChars / (CHARS_PER_SECOND * speed));
+  const overSecs = maxSecs ? Math.ceil(actualSecs - maxSecs) : 0;
+  const tooLong = !!charLimit && overSecs > 0;
   // Minimum length only applies to AI-written scripts; manual edits may be shorter.
   const lengthOk = !tooLong;
   const curMotion = motionAt(video?.motion_type ?? "zoom-in", playing ?? 0, playing !== null ? progress : 0, (video?.motion_enabled ?? true) && playing !== null);
@@ -871,7 +873,7 @@ export default function VideoEditor() {
             </div>
             {!lengthOk && (
               <div role="alert" className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
-                {(() => { const actual = Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)); const cut = Math.max(1, actual - (maxSecs ?? actual)); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; return (
+                {(() => { const actual = Math.ceil(actualSecs); const cut = Math.max(1, overSecs); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; return (
                   <>
                     <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding your selected {targetLabel} duration.</p>
                     <p className="mt-1 text-muted-foreground">Please shorten the narration by about {cut} second{cut === 1 ? "" : "s"} in one or more scenes to continue{canUpgrade ? <>, or <Link to="/billing#subscriptions" className="text-primary underline">{upgradeText}</Link> to continue</> : "."}.</p>

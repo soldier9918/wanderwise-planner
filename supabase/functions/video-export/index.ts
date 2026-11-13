@@ -75,7 +75,8 @@ Deno.serve(async (req) => {
     const { data: lim } = await db.rpc("narration_total_char_limit", { _video: video.id });
     if (typeof lim === "number") {
       const edited = scenes.some((s) => s.narration.trim() !== (s.initial_narration ?? s.narration).trim());
-      const total = scenes.reduce((n, s) => n + s.narration.length, 0);
+      const spd = Math.min(2, Math.max(0.5, Number(video.narration_speed) || 1));
+      const total = scenes.reduce((n, s) => n + s.narration.length, 0) / spd;
       if (total > (edited ? lim - 230 : lim)) { const msg = "Your video is longer than your selected duration. Please shorten the narration in one or more scenes to continue."; return action === "check" ? json({ decision: "too_long", error: msg }) : json({ error: msg }, 400); }
     }
     const admin = isAdmin === true, paid = admin || sub === true;
