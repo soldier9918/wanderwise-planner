@@ -1225,7 +1225,7 @@ export default function VideoEditor() {
                     {s.clip_path && urls[s.clip_path] ? <video src={urls[s.clip_path]} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                       : s.image_path ? <img src={urls[s.image_path]} alt="" className="h-full w-full object-cover" />
                       : <div className={`h-full w-full ${working[`${s.id}-image`] ? "animate-pulse bg-secondary" : ""}`} />}
-                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium text-white">{formatSecsBadge(secOf(s))}</span>
+                    <span className="absolute left-1 top-1 rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium text-white">{formatSecsBadge(secOf(s))}</span>
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold">{s.heading}</p>
