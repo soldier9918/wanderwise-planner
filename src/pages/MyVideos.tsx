@@ -153,11 +153,12 @@ export default function MyVideos() {
             const list = videos.filter((v) => (filter === "all" || videoKind(v) === filter) && (!term || v.title.toLowerCase().includes(term) || (v.topic ?? "").toLowerCase().includes(term)));
             return (
               <div className="overflow-x-auto rounded-xl border border-border bg-card">
-                <table className="w-full min-w-[900px] text-sm">
+                <table className="w-full min-w-[1000px] text-sm">
                   <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
                       <th className="px-3 py-2 font-medium">Output</th>
                       <th className="px-3 py-2 font-medium">Name</th>
+                      <th className="px-3 py-2 font-medium">Category</th>
                       <th className="px-3 py-2 font-medium">Type</th>
                       <th className="px-3 py-2 font-medium">Query</th>
                       <th className="px-3 py-2 font-medium">Credits</th>
@@ -167,11 +168,11 @@ export default function MyVideos() {
                     </tr>
                   </thead>
                   <tbody>
-                    {list.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">No videos match.</td></tr>}
+                    {list.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">No videos match.</td></tr>}
                     {list.map((v) => {
                       const kind = videoKind(v);
                       const typeLabel = kind === "series" ? (v.title.match(/\[Part \d+\/\d+\]/)?.[0].slice(1, -1) ?? "Series")
-                        : kind === "article" ? "Article" : v.aspect_ratio === "9:16" ? "9:16 Short" : "16:9 Video";
+                        : v.aspect_ratio === "9:16" ? "9:16 Short" : "16:9 Video";
                       const yt = published?.[v.id];
                       return (
                         <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/40">
@@ -182,6 +183,7 @@ export default function MyVideos() {
                             </Link>
                           </td>
                           <td className="max-w-[220px] px-3 py-2"><Link to={`/video/${v.id}`} className="line-clamp-2 font-semibold hover:text-primary">{v.title}</Link></td>
+                          <td className="px-3 py-2"><span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${kind === "series" ? "bg-primary/15 text-primary" : kind === "article" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>{kind === "series" ? "Series" : kind === "article" ? "Article to video" : "Standard video"}</span></td>
                           <td className="px-3 py-2"><span className="whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-xs">{typeLabel}</span></td>
                           <td className="max-w-[240px] px-3 py-2 text-muted-foreground"><span className="line-clamp-2" title={v.topic ?? ""}>{v.topic}</span></td>
                           <td className="whitespace-nowrap px-3 py-2 font-semibold text-primary">⚡ ~{v.credits}</td>
