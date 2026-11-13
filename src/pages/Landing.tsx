@@ -140,7 +140,7 @@ export default function Landing() {
               <Link key={f.tag} to={user ? f.to : cta} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/50">
                 <div className="relative aspect-video overflow-hidden">
                   <img src={f.img} alt={f.t} loading="lazy" width={1280} height={720} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-xs font-semibold backdrop-blur">
+                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-xs font-semibold backdrop-blur">
                     <f.icon className="h-3.5 w-3.5 text-primary" /> {f.tag}
                   </span>
                 </div>
