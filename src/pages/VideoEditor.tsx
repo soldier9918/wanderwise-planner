@@ -859,7 +859,7 @@ export default function VideoEditor() {
                 {(() => { const actual = Math.ceil(Math.max(totalSecs, totalChars / CHARS_PER_SECOND)); const cut = Math.max(1, actual - (maxSecs ?? actual)); const canUpgrade = !(account?.tier === "pro" || account?.isAdmin); const upgradeText = account?.tier === "creator" ? "upgrade to Pro plan" : "upgrade to Creator or Pro plan"; return (
                   <>
                     <p className="font-semibold">Your video is {formatSeconds(actual)} long, exceeding your selected {targetLabel} duration.</p>
-                    <p className="mt-1 text-muted-foreground">Please shorten the narration by about {cut} second{cut === 1 ? "" : "s"} in one or more scenes to continue{canUpgrade ? <>, or <Link to="/pricing" className="text-primary underline">{upgradeText}</Link> to continue</> : "."}.</p>
+                    <p className="mt-1 text-muted-foreground">Please shorten the narration by about {cut} second{cut === 1 ? "" : "s"} in one or more scenes to continue{canUpgrade ? <>, or <Link to="/billing#subscriptions" className="text-primary underline">{upgradeText}</Link> to continue</> : "."}.</p>
                   </>
                 ); })()}
               </div>
