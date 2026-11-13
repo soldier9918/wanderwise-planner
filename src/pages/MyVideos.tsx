@@ -42,9 +42,9 @@ export default function MyVideos() {
   const { data: published } = useQuery({
     queryKey: ["youtube-uploads-list"],
     queryFn: async () => {
-      const { data } = await supabase.from("youtube_uploads").select("video_id, youtube_id, status").not("youtube_id", "is", null);
+      const { data } = await supabase.from("youtube_uploads").select("video_id, youtube_video_id, status").not("youtube_video_id", "is", null);
       const m: Record<string, string> = {};
-      (data ?? []).forEach((u) => { if (u.youtube_id) m[u.video_id] = u.youtube_id; });
+      (data ?? []).forEach((u) => { if (u.youtube_video_id) m[u.video_id] = u.youtube_video_id; });
       return m;
     },
   });
