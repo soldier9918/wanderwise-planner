@@ -210,10 +210,10 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
             <div className="grid gap-2">
               <Label>Quality</Label>
               <Select value={quality} onValueChange={setQuality}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="[&>span]:truncate [&>span]:whitespace-nowrap"><SelectValue /></SelectTrigger>
                 <SelectContent>{QUALITIES.map((q) => { const ok = qualityAllowedForTier(q.value, pro); return (
-                  <SelectItem key={q.value} value={q.value} disabled={!ok} textValue={ok ? q.short : `${q.short} · PRO`} description={q.label.replace(`${q.short} — `, "")}>
-                    {ok ? q.short : `🔒 ${q.short} · PRO`}
+                  <SelectItem key={q.value} value={q.value} disabled={!ok}>
+                    {ok ? q.label : `🔒 ${q.label} · PRO`}
                   </SelectItem>
                 ); })}</SelectContent>
               </Select>

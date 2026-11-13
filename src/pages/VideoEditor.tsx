@@ -45,7 +45,7 @@ function LookSelect<T extends string>({ label, value, options, onChange, swatch,
     <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
       {label}
       <Select value={value} onValueChange={(v) => onChange(v as T)} disabled={disabled}>
-        <SelectTrigger className="h-9"><SelectValue className="truncate" /></SelectTrigger>
+        <SelectTrigger className="h-9 text-xs [&>span]:truncate [&>span]:whitespace-nowrap"><SelectValue /></SelectTrigger>
         <SelectContent>
           {options.map((o) => (
             <SelectItem key={o.value} value={o.value} textValue={o.textValue ?? o.label} description={o.textValue ? o.label.replace(`${o.textValue} — `, "") : undefined}>
@@ -905,7 +905,7 @@ export default function VideoEditor() {
                 Format
                 <RatioSelect value={ratio.value} onChange={(v) => saveLook({ aspect_ratio: v })} triggerClassName="h-9" />
               </label>
-              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.tier === "pro" || q.value !== "1080p" || video.quality === "1080p").map((q) => ({ value: q.value, label: q.label, textValue: q.short }))} onChange={(v) => saveLook({ quality: v })} />
+              <LookSelect label="Quality" value={qualityOf(video.quality).value} options={QUALITIES.filter((q) => account?.tier === "pro" || q.value !== "1080p" || video.quality === "1080p").map((q) => ({ value: q.value, label: q.label }))} onChange={(v) => saveLook({ quality: v })} />
               <LookSelect
                 label={`Scenes · ${formatSeconds(totalSecs)} total`}
                 value={String(scenes.length)}
