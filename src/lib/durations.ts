@@ -106,3 +106,9 @@ export function clipRate(clipSecs: number, sceneSecs: number) {
   if (!(clipSecs > 0) || !(sceneSecs > 0)) return 1;
   return Math.min(4, Math.max(0.25, clipSecs / sceneSecs));
 }
+
+/** Player clock, e.g. 2:12 (only for the video player's time display). */
+export function formatClock(total: number) {
+  const t = Math.max(0, Math.floor(total));
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+}

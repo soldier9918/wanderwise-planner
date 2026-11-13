@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { exportVideo, canRecordMp4 } from "@/lib/exportVideo";
 import { fetchCards, isActive, type BrandCard } from "@/lib/brandCards";
 import { typedLine, typedPair, typedWords, wrapByChars, type CaptionStyle } from "@/lib/typewriter";
-import { elapsedSeconds, locateTime, formatSeconds, sceneSeconds, clipRate } from "@/lib/durations";
+import { elapsedSeconds, locateTime, formatSeconds, formatClock, sceneSeconds, clipRate } from "@/lib/durations";
 import { planSceneChange, sceneCountOptions } from "@/lib/sceneCount";
 import { CAPTION_COLORS, CAPTION_FONTS, CAPTION_SIZES, CAPTION_STYLES, fontCss, safeColor, sizePx } from "@/lib/captionLook";
 import { captionWrapPx, previewMaxPx, ratioOf } from "@/lib/aspectRatio";
@@ -773,7 +773,7 @@ export default function VideoEditor() {
               )}
               {current && (
                 <span className="absolute right-3 top-3 rounded-md bg-background/80 px-2 py-1 text-xs font-semibold tabular-nums text-foreground">
-                  {playing !== null ? `${formatSeconds(elapsedSecs)} / ${formatSeconds(totalSecs)}` : formatSeconds(totalSecs)}
+                  {playing !== null ? `${formatClock(elapsedSecs)} / ${formatClock(totalSecs)}` : formatClock(totalSecs)}
                 </span>
               )}
               {playing !== null && current && captionStyle !== "none" && (
@@ -793,7 +793,7 @@ export default function VideoEditor() {
             </div>
             {scenes.length > 0 && (
               <div className="mt-3 flex items-center gap-3">
-                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatSeconds(elapsedSecs)}{playing !== null ? ` · Scene ${playing + 1}/${scenes.length}` : ""}</span>
+                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatClock(elapsedSecs)}{playing !== null ? ` · Scene ${playing + 1}/${scenes.length}` : ""}</span>
                 <div className="relative flex-1 pb-5">
                   <Slider
                     aria-label="Video position"
@@ -825,7 +825,7 @@ export default function VideoEditor() {
                     );
                   })}
                 </div>
-                <span className="shrink-0 whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground">{formatSeconds(totalSecs)}</span>
+                <span className="shrink-0 whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground">{formatClock(totalSecs)}</span>
                 <Button size="sm" variant="outline" aria-label={full ? "Exit full screen" : "Full screen"} onClick={toggleFull}>{full ? "✕" : "⛶"}</Button>
               </div>
             )}
@@ -1318,7 +1318,7 @@ export default function VideoEditor() {
                     <Button size="sm" variant="outline" disabled={!s.image_path} onClick={() => { soloRef.current = true; setPaused(false); setPlaying(i); }}>▶ Play scene</Button>
                   )}
                   <Progress value={playing === i ? progress * 100 : 0} className="h-1.5 flex-1" />
-                  <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatSeconds(playing === i ? progress * secOf(s) : 0)} / {formatSeconds(secOf(s))}</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatClock(playing === i ? progress * secOf(s) : 0)} / {formatClock(secOf(s))}</span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">If a scene image isn't loading, click <span className="font-semibold">New image</span> and then <span className="font-semibold">Redo voiceover</span> to recreate both, or <span className="font-semibold">Upload image</span> to add your own.</p>
               </li>
