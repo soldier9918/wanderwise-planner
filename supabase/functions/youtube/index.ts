@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       const synthetic = body.synthetic !== false;
       const kids = body.madeForKids === true;
       if (!title) return json({ error: "Please add a title." }, 400);
-      const { data: video } = await auth.client.from("videos").select("id").eq("id", videoId).maybeSingle();
+      const { data: video } = await auth.client.from("videos").select("id, thumbnail_path").eq("id", videoId).maybeSingle();
       if (!video) return json({ error: "Video not found." }, 404);
       const { data: exp } = await db.from("video_exports").select("path, content_type, size_bytes").eq("video_id", videoId).eq("user_id", uid).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle();
       if (!exp?.path) return json({ error: "Download the video first, then publish it." }, 400);
@@ -153,7 +153,23 @@ Deno.serve(async (req) => {
       const out = await put.json().catch(() => ({}));
       if (!put.ok || !out.id) { console.error("youtube put", put.status, JSON.stringify(out)); return fail(out?.error?.message ?? "Upload to YouTube failed."); }
       await db.from("youtube_uploads").update({ status: "uploaded", youtube_video_id: out.id }).eq("id", row!.id);
-      return json({ youtubeId: out.id, url: `https://youtu.be/${out.id}`, studioUrl: `https://studio.youtube.com/video/${out.id}/edit` });
+      // Best-effort: set the saved Vydora thumbnail (YouTube limit 2 MB; channel must be verified for custom thumbnails).
+      let thumbnail: "set" | "none" | "too_large" | "not_allowed" | "failed" = "none";
+      const tp = (video as { thumbnail_path?: string | null }).thumbnail_path;
+      if (tp && tp.startsWith(`${uid}/`)) {
+        try {
+          const { data: blob } = await db.storage.from(BUCKET).download(tp);
+          if (!blob) thumbnail = "failed";
+          else if (blob.size > 2 * 1024 * 1024) thumbnail = "too_large";
+          else {
+            const type = blob.type && blob.type.startsWith("image/") ? blob.type : (tp.endsWith(".jpg") || tp.endsWith(".jpeg") ? "image/jpeg" : "image/png");
+            const t = await fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${out.id}&uploadType=media`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": type }, body: blob });
+            if (t.ok) thumbnail = "set";
+            else { const e = await t.json().catch(() => ({})); console.error("youtube thumb", t.status, JSON.stringify(e)); thumbnail = t.status === 403 ? "not_allowed" : "failed"; }
+          }
+        } catch (e) { console.error("youtube thumb", e); thumbnail = "failed"; }
+      }
+      return json({ thumbnail, youtubeId: out.id, url: `https://youtu.be/${out.id}`, studioUrl: `https://studio.youtube.com/video/${out.id}/edit` });
     }
 
     return json({ error: "Invalid request." }, 400);
