@@ -835,11 +835,11 @@ export default function VideoEditor() {
                           aria-label={`Jump to scene ${i + 1}, ${Math.round(sceneSecs[i])} seconds`}
                           title={`Scene ${i + 1} · ${formatSecsBadge(sceneSecs[i])}`}
                           onClick={() => seekTo(start)}
-                          className={`absolute bottom-0 flex flex-col items-center gap-0.5 rounded px-1 text-[10px] font-semibold leading-4 tabular-nums transition-colors ${active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          className={`absolute bottom-0 flex flex-col items-center gap-0.5 rounded px-1 text-[10px] font-semibold leading-4 tabular-nums transition-colors ${active ? "" : "text-muted-foreground hover:text-foreground"}`}
                           style={{ left: `calc(${left} + ${(sceneSecs[i] / Math.max(1, totalSecs)) * 50}%)`, transform: "translateX(-50%)" }}
                         >
-                          <span className={active ? "rounded bg-primary px-1" : ""}>{i + 1}</span>
-                          <span className="text-[9px] font-normal leading-3">{formatSecsBadge(sceneSecs[i])}</span>
+                          <span className={active ? "rounded bg-primary px-1 text-primary-foreground" : ""}>{i + 1}</span>
+                          <span className="text-[9px] font-normal leading-3 text-muted-foreground">{formatSecsBadge(sceneSecs[i])}</span>
                         </button>
                       </div>
                     );
