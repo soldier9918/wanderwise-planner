@@ -129,12 +129,14 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   const conn = status?.connection;
   const needsSeo = !description.trim();
   const needsThumb = hasThumbnail === false;
-  const askTitle = needsSeo && needsThumb ? "No SEO details or thumbnail yet" : needsThumb ? "No thumbnail yet" : "No SEO details yet";
+  const askTitle = needsSeo && needsThumb
+    ? "No title, description and thumbnail image created yet"
+    : needsThumb ? "No thumbnail image created yet" : "No title or description created yet";
   const askText = needsSeo && needsThumb
-    ? "Do you want to generate an SEO title, description and tags — and a thumbnail — for your video before proceeding?"
+    ? "Do you want Vydora to write your video's title, description and tags, and create a thumbnail image, before you publish?"
     : needsThumb
-      ? "Do you want to generate a thumbnail for your video before proceeding?"
-      : "Do you want to generate SEO description, tags and Title for your video before proceeding?";
+      ? "Do you want to create a thumbnail image for your video before publishing?"
+      : "Do you want Vydora to write your video's title, description and tags before publishing?";
   return (
     <>
       <Button variant="outline" disabled={disabled} onClick={() => (!needsSeo && !needsThumb ? setOpen(true) : setAskSeo(true))}>▶ Publish to YouTube</Button>
