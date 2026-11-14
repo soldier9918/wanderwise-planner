@@ -526,6 +526,16 @@ export default function VideoEditor() {
       setSeoBusy(false);
     }
   };
+  // From the publish popup's "Yes": scroll to the thumbnail box if that's missing, otherwise the SEO box.
+  const scrollToSeoOrThumb = () => {
+    const target = !data?.video?.thumbnail_path ? "thumbnail-section" : "seo-section";
+    const el = document.getElementById(target);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.add("ring-2", "ring-primary");
+    setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000);
+  };
+
   const copy = async (text: string) => {
     try { await navigator.clipboard.writeText(text); toast.success("Copied"); } catch { toast.error("Couldn't copy."); }
   };
@@ -878,9 +888,9 @@ export default function VideoEditor() {
               <Button variant="secondary" onClick={download} disabled={!lengthOk || exportPct !== null || busyAny || exportInfo?.decision === "busy"}>
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
-              <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={!lengthOk || exportPct !== null}
+              <YouTubePublish videoId={id!} hasExport={!!lastExport} hasThumbnail={!!video.thumbnail_path} disabled={!lengthOk || exportPct !== null}
                 onEnsureExport={() => renderVideo(false)}
-                onSeoRequested={() => { const el = document.getElementById("seo-section"); if (!el) return; el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("ring-2", "ring-primary"); setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000); }}
+                onSeoRequested={scrollToSeoOrThumb}
                 {...youtubeDefaults(video.seo as unknown as Seo | null, video.title, video.aspect_ratio === "9:16")} />
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>
                 Generate missing assets · {scenes.reduce((n, s) => n + (s.image_path ? 0 : CREDIT_COSTS.image) + (s.audio_path ? 0 : CREDIT_COSTS.voice), 0)} cr
@@ -1157,7 +1167,7 @@ export default function VideoEditor() {
                 />
               </div>
             </div>
-            <div className="mt-4 rounded-xl border border-border bg-card p-3">
+            <div id="thumbnail-section" className="mt-4 scroll-mt-24 rounded-xl border border-border bg-card p-3 transition-shadow">
               <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
               {video.thumbnail_path && urls[video.thumbnail_path] ? (
                 <img src={urls[video.thumbnail_path]} alt="Video thumbnail" className="mt-2 w-full rounded-lg border border-border" />
@@ -1222,6 +1232,13 @@ export default function VideoEditor() {
               <Button size="sm" variant="outline" className="mt-3" onClick={makeSeo} disabled={seoBusy || !scenes.length}>
                 {seoBusy ? "Writing…" : (video.seo as unknown as Seo | null) ? "Regenerate SEO" : "Generate SEO"} · {CREDIT_COSTS.seo} cr
               </Button>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
+              <YouTubePublish videoId={id!} hasExport={!!lastExport} hasThumbnail={!!video.thumbnail_path} disabled={!lengthOk || exportPct !== null} autoOpen={false}
+                onEnsureExport={() => renderVideo(false)}
+                onSeoRequested={scrollToSeoOrThumb}
+                {...youtubeDefaults(video.seo as unknown as Seo | null, video.title, video.aspect_ratio === "9:16")} />
+              <p className="text-xs text-muted-foreground">Ready? Publish straight to your channel from here — no need to scroll back up.</p>
             </div>
             {exportPct !== null && (
               <div className="mt-3"><Progress value={exportPct * 100} /><p className="mt-1 text-xs text-muted-foreground">Recording in real time — keep this tab open.</p></div>

@@ -55,8 +55,8 @@ export function youtubeDefaults(seo: { titles?: string[]; description?: string; 
   return { title, description, tags: tagList.join(", ") };
 }
 
-export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled, onSeoRequested, onEnsureExport }: {
-  videoId: string; title: string; description: string; tags: string; hasExport: boolean; disabled?: boolean; onSeoRequested?: () => void; onEnsureExport?: () => Promise<void>;
+export default function YouTubePublish({ videoId, title, description, tags, hasExport, hasThumbnail, disabled, onSeoRequested, onEnsureExport, autoOpen = true }: {
+  videoId: string; title: string; description: string; tags: string; hasExport: boolean; hasThumbnail?: boolean; disabled?: boolean; onSeoRequested?: () => void; onEnsureExport?: () => Promise<void>; autoOpen?: boolean;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -90,14 +90,15 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   // Opened from My Videos with ?publish=1: start the same flow as clicking the button.
   const autoOpened = useRef(false);
   useEffect(() => {
+    if (!autoOpen) return;
     const p = new URLSearchParams(window.location.search);
     if (autoOpened.current || p.get("publish") !== "1") return;
     autoOpened.current = true;
     p.delete("publish");
     window.history.replaceState(null, "", `${window.location.pathname}${p.toString() ? `?${p}` : ""}`);
     if (disabled) { toast.error("This video is over your plan's length limit. Fix it below, then publish."); return; }
-    if (description.trim()) setOpen(true); else setAskSeo(true);
-  }, [disabled, description]);
+    if (description.trim() && hasThumbnail !== false) setOpen(true); else setAskSeo(true);
+  }, [disabled, description, hasThumbnail, autoOpen]);
 
   const publish = async () => {
     setBusy(true);
@@ -122,14 +123,22 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   };
 
   const conn = status?.connection;
+  const needsSeo = !description.trim();
+  const needsThumb = hasThumbnail === false;
+  const askTitle = needsSeo && needsThumb ? "No SEO details or thumbnail yet" : needsThumb ? "No thumbnail yet" : "No SEO details yet";
+  const askText = needsSeo && needsThumb
+    ? "Do you want to generate an SEO title, description and tags — and a thumbnail — for your video before proceeding?"
+    : needsThumb
+      ? "Do you want to generate a thumbnail for your video before proceeding?"
+      : "Do you want to generate SEO description, tags and Title for your video before proceeding?";
   return (
     <>
-      <Button variant="outline" disabled={disabled} onClick={() => (description.trim() ? setOpen(true) : setAskSeo(true))}>▶ Publish to YouTube</Button>
+      <Button variant="outline" disabled={disabled} onClick={() => (!needsSeo && !needsThumb ? setOpen(true) : setAskSeo(true))}>▶ Publish to YouTube</Button>
       <AlertDialog open={askSeo} onOpenChange={setAskSeo}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>No SEO details yet</AlertDialogTitle>
-            <AlertDialogDescription>Do you want to generate SEO description, tags and Title for your video before proceeding?</AlertDialogDescription>
+            <AlertDialogTitle>{askTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{askText}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => { setAskSeo(false); setOpen(true); }}>No</AlertDialogCancel>
