@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "@/lib/account";
 import { scrollToSection } from "@/components/ScrollToTop";
 import ProfileMenu, { planLabel } from "@/components/ProfileMenu";
+import AdminTesting from "@/components/AdminTesting";
 
 export function Logo({ name = "Vydora" }: { name?: string }) {
   return (
@@ -141,6 +142,7 @@ export default function SiteHeader() {
           </nav>
         </>
       )}
+      <AdminTesting />
     </header>
   );
 }

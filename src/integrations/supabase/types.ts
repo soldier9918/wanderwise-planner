@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_test_accounts: {
+        Row: {
+          balance: number
+          mode: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          mode?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_test_credit_log: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       autopilot_plans: {
         Row: {
           create_on: string
@@ -661,6 +706,7 @@ export type Database = {
         Args: { _amount: number; _note: string; _user: string }
         Returns: undefined
       }
+      admin_adjust_test_credits: { Args: { _amount: number }; Returns: number }
       admin_coupons: {
         Args: never
         Returns: {
@@ -698,6 +744,7 @@ export type Database = {
         Args: { _active: boolean; _code: string }
         Returns: undefined
       }
+      admin_set_test_mode: { Args: { _mode: string }; Returns: undefined }
       admin_users: {
         Args: never
         Returns: {
@@ -735,6 +782,7 @@ export type Database = {
       claim_monthly_free_credits: { Args: never; Returns: number }
       claim_referral: { Args: { _code: string }; Returns: string }
       credit_balance: { Args: { _user: string }; Returns: number }
+      effective_account: { Args: { _user: string }; Returns: Json }
       grant_monthly_free_credits_all: { Args: never; Returns: number }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {

@@ -1,4 +1,4 @@
-import { planTierOf } from "@/lib/tiers";
+import { parseEffectiveAccount } from "@/lib/adminTesting";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,19 +35,21 @@ export function useAccount() {
     staleTime: 0,
     refetchOnWindowFocus: "always",
     queryFn: async () => {
+      if (!user) throw new Error("Please sign in first");
       // Free accounts get +30 credits each month; the server decides eligibility.
       await supabase.rpc("claim_monthly_free_credits");
       const { data: liveFlag } = await supabase.rpc("stripe_livemode");
       const live = liveFlag === true;
-      const [{ data: acct }, { data: ledger }, { data: admin }, { data: sub }] = await Promise.all([
-        supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user!.id).maybeSingle(),
-        supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id, livemode").eq("user_id", user!.id).order("created_at", { ascending: false }),
-        supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" }),
-        supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user!.id).eq("livemode", live).maybeSingle(),
+      const [{ data: acct }, { data: ledger }, effective, { data: sub }] = await Promise.all([
+        supabase.from("credit_accounts").select("referral_code, referred_by").eq("user_id", user.id).maybeSingle(),
+        supabase.from("credit_ledger").select("amount, reason, created_at, stripe_invoice_id, livemode").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.rpc("effective_account", { _user: user.id }),
+        supabase.from("user_subscriptions").select("plan_tier, status, current_period_end, cancel_at_period_end").eq("user_id", user.id).eq("livemode", live).maybeSingle(),
       ]);
-      const subscription = sub && isActiveStatus(sub.status) ? sub : null;
+      if (effective.error) throw effective.error;
+      const access = parseEffectiveAccount(effective.data);
       const rows = rowsForMode((ledger ?? []) as LedgerRow[], live);
-      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, balance: balanceOf(rows), isAdmin: !!admin, subscription: sub ?? null, pro: !!admin || !!subscription, tier: planTierOf(!!admin, !!subscription, subscription?.plan_tier), watermark: false };
+      return { code: acct?.referral_code ?? null, referred: !!acct?.referred_by, ledger: rows, ...access, subscription: sub ?? null, watermark: false };
     },
   });
 }

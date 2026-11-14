@@ -1,5 +1,6 @@
 import { charge, refund, COSTS } from "../_shared/credits.ts";
-import { voiceAllowed, scenesAllowedForTier, planTierOf, lengthAllowedForPlan, qualityAllowedForPlan } from "../_shared/tiers.ts";
+import { voiceAllowed, scenesAllowedForTier, lengthAllowedForPlan, qualityAllowedForPlan } from "../_shared/tiers.ts";
+import { effectiveAccount } from "../_shared/account.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
@@ -55,13 +56,7 @@ Deno.serve(async (req) => {
     const adMode = !!ad && typeof ad === "object";
     const adFramework = adMode ? String((ad as { framework?: unknown }).framework ?? "problem-solution").slice(0, 40) : "";
     const adCta = adMode ? String((ad as { cta?: unknown }).cta ?? "").slice(0, 120).trim() : "";
-    const [{ data: sub }, { data: isAdmin }, { data: subRow }] = await Promise.all([
-      auth.client.rpc("has_active_subscription", { _user_id: auth.user.id }),
-      auth.client.rpc("has_role", { _user_id: auth.user.id, _role: "admin" }),
-      adminClient().from("user_subscriptions").select("plan_tier").eq("user_id", auth.user.id).eq("livemode", (await adminClient().rpc("stripe_livemode")).data === true).maybeSingle(),
-    ]);
-    const pro = !!isAdmin || sub === true;
-    const tier = planTierOf(isAdmin, sub, subRow?.plan_tier);
+    const { pro, tier } = await effectiveAccount(auth.user.id);
     if (!voiceAllowed(String(voice), pro)) return json({ error: "That narrator is on paid plans. Subscribe to unlock it." }, 403);
     if (!scenesAllowedForTier(Number(sceneCount) || 6, pro)) return json({ error: "Free plan videos can have up to 6 scenes. Subscribe to unlock more." }, 403);
     if (targetSeconds && !lengthAllowedForPlan(Number(targetSeconds), tier)) return json({ error: tier === "free" ? "Free plan videos can be up to 2 minutes. Subscribe to unlock longer videos." : "Creator videos can be up to 20 minutes. Upgrade to Pro for up to 60 minutes." }, 403);

@@ -11,7 +11,7 @@ import {
 
 export function planLabel(acct: ReturnType<typeof useAccount>["data"]) {
   if (acct?.isAdmin) return "Admin";
-  const t = acct?.subscription?.plan_tier;
+  const t = acct?.tier;
   if (acct?.pro && t) return t.charAt(0).toUpperCase() + t.slice(1);
   return "Free";
 }
@@ -74,7 +74,7 @@ export default function ProfileMenu({ onSignOut }: { onSignOut: () => void }) {
           {acct?.code && <span className="ml-auto font-mono text-xs text-primary">{acct.code}</span>}
         </DropdownMenuItem>
         <DropdownMenuItem asChild><Link to="/billing" className="cursor-pointer"><CreditCard className="mr-2 h-4 w-4" />Plans &amp; Billing</Link></DropdownMenuItem>
-        {acct?.isAdmin && <DropdownMenuItem asChild><Link to="/admin-kb20" className="cursor-pointer"><Shield className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
+        {acct?.adminAccess && <DropdownMenuItem asChild><Link to="/admin-kb20" className="cursor-pointer"><Shield className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut} className="cursor-pointer"><LogOut className="mr-2 h-4 w-4" />Sign out</DropdownMenuItem>
       </DropdownMenuContent>

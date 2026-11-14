@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import GoLivePanel from "@/components/GoLivePanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const ADMIN_EMAIL = "samyhussain123@gmail.com";
 const fmt = (d?: string | null) => (d ? new Date(d).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—");
 
 type Overview = Record<string, number> & { signups_by_day: { day: string; n: number }[] };
@@ -42,10 +41,10 @@ export default function Admin() {
   const [adjust, setAdjust] = useState<Record<string, string>>({});
   const [coupon, setCoupon] = useState({ code: "", credits: "100", uses: "1", expires: "" });
 
-  const allowed = user?.email?.toLowerCase() === ADMIN_EMAIL;
+  const allowed = !!user;
   const role = useQuery({
     queryKey: ["admin-role", user?.id], enabled: allowed,
-    queryFn: async () => (await supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" })).data === true,
+    queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data === true : false,
   });
   const ok = allowed && role.data === true;
   const overview = useQuery({ queryKey: ["admin-overview"], enabled: ok, queryFn: async () => {
@@ -122,7 +121,7 @@ export default function Admin() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Admin</p>
             <h1 className="font-display text-3xl font-bold">Vydora control room</h1>
-            <p className="text-sm text-muted-foreground">Signed in as {user?.email}. Your account has no limits.</p>
+            <p className="text-sm text-muted-foreground">Signed in as {user?.email}. Admin controls remain available while testing a plan.</p>
           </div>
           <Button variant="outline" onClick={refresh}>Refresh</Button>
         </div>

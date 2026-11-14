@@ -1,6 +1,6 @@
 import { corsHeaders, json, getUserClient, adminClient } from "../_shared/common.ts";
 import { charge, refund } from "../_shared/credits.ts";
-import { planTierOf } from "../_shared/tiers.ts";
+import { effectiveAccount } from "../_shared/account.ts";
 import { effectiveQuality, exportFormat, exportCost, maxExportBytes, versionHash, exportDecision, RENDER_TIMEOUT_MS } from "../_shared/exports.ts";
 
 // Secure export flow: check → start (charge + signed upload) → browser renders & uploads → complete | fail (refund once).
@@ -61,15 +61,11 @@ Deno.serve(async (req) => {
     const videoId = typeof body.videoId === "string" ? body.videoId : "";
     const { data: video } = await auth.client.from("videos").select("*").eq("id", videoId).maybeSingle();
     if (!video) return json({ error: "Video not found." }, 404);
-    const [{ data: scenes }, { data: cardRow }, { data: isAdmin }, { data: sub }, { data: bal }, { data: paidRow }] = await Promise.all([
+    const [{ data: scenes }, { data: cardRow }, account] = await Promise.all([
       db.from("video_scenes").select("id, position, narration, initial_narration, image_path, audio_path, clip_path").eq("video_id", video.id).order("position"),
       db.from("user_brand_cards").select("cards").eq("user_id", uid).maybeSingle(),
-      db.rpc("has_role", { _user_id: uid, _role: "admin" }),
-      db.rpc("has_active_subscription", { _user_id: uid }),
-      db.rpc("credit_balance", { _user: uid }),
-      db.from("credit_ledger").select("id").eq("user_id", uid).in("reason", PAID_REASONS).gt("amount", 0).limit(1),
+      effectiveAccount(uid),
     ]);
-    const { data: subRow } = await db.from("user_subscriptions").select("plan_tier").eq("user_id", uid).eq("livemode", (await db.rpc("stripe_livemode")).data === true).maybeSingle();
     if (!scenes?.length || scenes.some((s) => !s.image_path)) return json({ error: "Every scene needs an image before exporting." }, 400);
     // Edited videos must fit the selected length (no hidden buffer). Mirrors DB enforce_narration_length.
     const { data: lim } = await db.rpc("narration_total_char_limit", { _video: video.id });
@@ -79,14 +75,14 @@ Deno.serve(async (req) => {
       const total = scenes.reduce((n, s) => n + s.narration.length, 0) / spd;
       if (total > (edited ? lim - 230 : lim)) { const msg = "Your video is longer than your selected duration. Please shorten the narration in one or more scenes to continue."; return action === "check" ? json({ decision: "too_long", error: msg }) : json({ error: msg }, 400); }
     }
-    const admin = isAdmin === true, paid = admin || sub === true;
+    const admin = account.isAdmin, paid = account.pro;
     // 1080p exports are Pro (or admin) only; Free and Creator always render 720p.
-    const quality = effectiveQuality(video.quality, planTierOf(admin, sub, subRow?.plan_tier) === "pro");
+    const quality = effectiveQuality(video.quality, account.tier === "pro");
     const format = exportFormat(body.format);
     const watermark = false; // no forced badge on any plan
     const hash = await versionHash(video, scenes, cardRow?.cards ?? null, { quality, format, watermark });
     const cost = exportCost(quality);
-    const balance = Number(bal ?? 0);
+    const balance = account.balance;
 
     await expireStale(db, video.id);
     const { data: hit } = await db.from("video_exports").select("id, path, content_type").eq("video_id", video.id).eq("version_hash", hash).eq("quality", quality).eq("format", format).eq("status", "completed").order("completed_at", { ascending: false }).limit(1);
@@ -99,7 +95,7 @@ Deno.serve(async (req) => {
     const decision = exportDecision({ hasCompleted: !!completed, rendering: !!inflight?.length, isAdmin: admin, balance, cost });
 
     if (action === "check") return json({ decision, cost: admin ? 0 : cost, quality, format, watermark });
-    if (decision === "download") return json({ decision, url: await signed(db, completed!.path), contentType: completed!.content_type });
+    if (decision === "download" && completed) return json({ decision, url: await signed(db, completed.path), contentType: completed.content_type });
     if (decision === "busy") return json({ error: "An export of this video is already in progress.", decision }, 409);
 
     const denied = await charge(uid, cost, "video_export");
@@ -138,8 +134,7 @@ async function exists(db: Db, path: string | null) {
   return !!data?.some((f: { name: string }) => f.name === path.slice(i + 1));
 }
 async function isPaid(db: Db, uid: string) {
-  const [{ data: a }, { data: s }] = await Promise.all([db.rpc("has_role", { _user_id: uid, _role: "admin" }), db.rpc("has_active_subscription", { _user_id: uid })]);
-  return a === true || s === true;
+  return (await effectiveAccount(uid)).pro;
 }
 /** Abandoned renders are failed and refunded exactly once (atomic status flip). */
 async function expireStale(db: Db, videoId: string) {
