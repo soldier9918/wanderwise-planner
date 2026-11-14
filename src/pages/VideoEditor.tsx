@@ -37,6 +37,8 @@ import { VIDEO_LENGTHS } from "@/lib/durations";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
 import { scenesAllowedForTier } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function LookSelect<T extends string>({ label, value, options, onChange, swatch, disabled }: {
   label: string; value: string; options: readonly { value: T; label: string; css?: string; textValue?: string }[]; onChange: (v: T) => void; swatch?: boolean; disabled?: boolean;
@@ -58,6 +60,28 @@ function LookSelect<T extends string>({ label, value, options, onChange, swatch,
         </SelectContent>
       </Select>
     </label>
+  );
+}
+
+function SettingsCard({ id, title, hint, headerRight, defaultOpen = false, contentClassName, children }: {
+  id?: string; title: string; hint?: string; headerRight?: React.ReactNode; defaultOpen?: boolean; contentClassName?: string; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const toggle = () => setOpen((o) => !o);
+  return (
+    <div id={id} className="mt-4 scroll-mt-24 rounded-xl border border-border bg-card p-3 transition-shadow">
+      <div className="flex items-center justify-between gap-3">
+        <button type="button" onClick={toggle} aria-expanded={open} className="flex-1 text-left">
+          <span className="text-sm font-semibold">{title}</span>
+          {hint && <span className="block text-xs font-normal text-muted-foreground">{hint}</span>}
+        </button>
+        {headerRight}
+        <button type="button" onClick={toggle} aria-label={open ? `Collapse ${title}` : `Expand ${title}`} className="shrink-0 rounded p-1 hover:bg-accent/20">
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+        </button>
+      </div>
+      {open && <div className={cn("mt-3 grid gap-3", contentClassName)}>{children}</div>}
+    </div>
   );
 }
 
@@ -917,7 +941,7 @@ export default function VideoEditor() {
                 ); })()}
               </div>
             )}
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-3 sm:grid-cols-3">
+            <SettingsCard title="Look, format & voice" hint="Captions, picture shape, quality, scenes, narrator and tone." defaultOpen contentClassName="grid-cols-2 sm:grid-cols-3">
               <LookSelect label="Caption" value={captionStyle} options={CAPTION_STYLES} onChange={(v) => saveLook({ caption_style: v })} />
               <LookSelect label="Font" value={video.caption_font} options={CAPTION_FONTS} onChange={(v) => saveLook({ caption_font: v })} />
               <LookSelect label="Colour" value={safeColor(video.caption_color)} options={CAPTION_COLORS} onChange={(v) => saveLook({ caption_color: v })} swatch />
@@ -970,9 +994,8 @@ export default function VideoEditor() {
                   toast.success("All voiceovers now use the new tone.");
                 }}
               />
-            </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
-              <p className="text-sm font-semibold">Narration speed & accent</p>
+            </SettingsCard>
+            <SettingsCard title="Narration speed & accent" hint="Speed up the voice or change how it sounds.">
               <div className="grid gap-1 text-xs font-semibold text-muted-foreground">
                 Speed: {speed}×
                 <div className="flex gap-2">
@@ -997,10 +1020,8 @@ export default function VideoEditor() {
                   toast.success("All voiceovers now use the new accent.");
                 }}
               />
-            </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
-              <p className="text-sm font-semibold">Channel logo / watermark</p>
-              <p className="-mt-2 text-xs text-muted-foreground">Shows semi-transparent in a corner of the preview and download. PNG recommended (transparent background) • Max 2 MB.</p>
+            </SettingsCard>
+            <SettingsCard title="Channel logo / watermark" hint="Shows semi-transparent in a corner of the preview and download. PNG recommended (transparent background) • Max 2 MB.">
               <div className="flex flex-wrap items-center gap-2">
                 {video.logo_path && urls[video.logo_path] && <img src={urls[video.logo_path]} alt="Your logo" className="h-10 w-10 rounded object-contain bg-muted" />}
                 <label className="inline-flex cursor-pointer items-center rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent/20">
@@ -1035,18 +1056,14 @@ export default function VideoEditor() {
                   onValueChange={([v]) => qc.setQueryData(["video", id], { ...data, video: { ...video, logo_opacity: v } })}
                   onValueCommit={([v]) => saveLook({ logo_opacity: v })} />
               </div>
-            </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
-              <label className="flex items-center justify-between gap-3 text-sm">
-                <span>
-                  <span className="font-semibold">Background music</span>
-                  <span className="block text-xs text-muted-foreground">Plays under the narration in preview and download. Your own track: MP3 or WAV, max 20 MB. It loops if shorter than the video and stops when the video ends. Only use music you own or have a licence for.</span>
-                </span>
+            </SettingsCard>
+            <SettingsCard title="Background music" hint="Plays under the narration in preview and download. Your own track: MP3 or WAV, max 20 MB. It loops if shorter than the video and stops when the video ends. Only use music you own or have a licence for."
+              headerRight={
                 <Switch
                   checked={video.music_enabled ?? true}
                   onCheckedChange={(v) => { saveLook({ music_enabled: v }); if (!v) { stopMusic(); setListening(false); } }}
                 />
-              </label>
+              }>
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[180px] flex-1">
                   <LookSelect
@@ -1106,15 +1123,9 @@ export default function VideoEditor() {
                 </span>
                 <Switch checked={video.music_ducking} disabled={video.music_enabled === false} onCheckedChange={(v) => saveLook({ music_ducking: v })} />
               </label>
-            </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
-              <label className="flex items-center justify-between gap-3 text-sm">
-                <span>
-                  <span className="font-semibold">Camera motion (pan & zoom)</span>
-                  <span className="block text-xs text-muted-foreground">Gently moves each picture so scenes feel alive.</span>
-                </span>
-                <Switch checked={video.motion_enabled} onCheckedChange={(v) => saveLook({ motion_enabled: v })} />
-              </label>
+            </SettingsCard>
+            <SettingsCard title="Camera motion (pan & zoom)" hint="Gently moves each picture so scenes feel alive."
+              headerRight={<Switch checked={video.motion_enabled} onCheckedChange={(v) => saveLook({ motion_enabled: v })} />}>
               <LookSelect
                 label="Movement"
                 value={video.motion_type}
@@ -1122,15 +1133,9 @@ export default function VideoEditor() {
                 disabled={!video.motion_enabled}
                 onChange={(v) => saveLook({ motion_type: v })}
               />
-            </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
-              <label className="flex items-center justify-between gap-3 text-sm">
-                <span>
-                  <span className="font-semibold">Scene transitions</span>
-                  <span className="block text-xs text-muted-foreground">Blends one scene into the next instead of a hard cut.</span>
-                </span>
-                <Switch checked={video.transition_enabled} onCheckedChange={(v) => saveLook({ transition_enabled: v })} />
-              </label>
+            </SettingsCard>
+            <SettingsCard title="Scene transitions" hint="Blends one scene into the next instead of a hard cut."
+              headerRight={<Switch checked={video.transition_enabled} onCheckedChange={(v) => saveLook({ transition_enabled: v })} />}>
               <LookSelect
                 label="Style"
                 value={video.transition_type}
@@ -1138,15 +1143,9 @@ export default function VideoEditor() {
                 disabled={!video.transition_enabled}
                 onChange={(v) => saveLook({ transition_type: v })}
               />
-            </div>
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-3">
-              <label className="flex items-center justify-between gap-3 text-sm">
-                <span>
-                  <span className="font-semibold">Transition sound effects</span>
-                  <span className="block text-xs text-muted-foreground">A short sound as each new scene begins.</span>
-                </span>
-                <Switch checked={video.sfx_enabled} onCheckedChange={(v) => saveLook({ sfx_enabled: v })} />
-              </label>
+            </SettingsCard>
+            <SettingsCard title="Transition sound effects" hint="A short sound as each new scene begins."
+              headerRight={<Switch checked={video.sfx_enabled} onCheckedChange={(v) => saveLook({ sfx_enabled: v })} />}>
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[180px] flex-1">
                   <LookSelect
@@ -1167,9 +1166,8 @@ export default function VideoEditor() {
                   onValueCommit={([v]) => saveLook({ sfx_volume: v })}
                 />
               </div>
-            </div>
-            <div id="thumbnail-section" className="mt-4 scroll-mt-24 rounded-xl border border-border bg-card p-3 transition-shadow">
-              <p className="text-xs font-semibold text-muted-foreground">Thumbnail</p>
+            </SettingsCard>
+            <SettingsCard id="thumbnail-section" title="Thumbnail" hint="The picture viewers see before they press play." defaultOpen>
               {video.thumbnail_path && urls[video.thumbnail_path] ? (
                 <img src={urls[video.thumbnail_path]} alt="Video thumbnail" className="mt-2 w-full rounded-lg border border-border" />
               ) : (
@@ -1199,9 +1197,8 @@ export default function VideoEditor() {
                   <Button size="sm" type="submit" disabled={thumbBusy || !thumbText.trim()}>Add text · {CREDIT_COSTS.thumbnail} cr</Button>
                 </form>
               )}
-            </div>
-            <div id="seo-section" className="mt-4 scroll-mt-24 rounded-xl border border-border bg-card p-3 transition-shadow">
-              <p className="text-xs font-semibold text-muted-foreground">SEO — titles, description & tags</p>
+            </SettingsCard>
+            <SettingsCard id="seo-section" title="Title, description & tags" hint="Helps viewers find your video on YouTube." defaultOpen>
               {(() => {
                 const seo = (video.seo as unknown as Seo | null);
                 if (!seo) return <p className="mt-2 text-sm text-muted-foreground">One click drafts 3 click-worthy titles, a search-friendly description, hashtags and tags.</p>;
@@ -1231,9 +1228,9 @@ export default function VideoEditor() {
                 );
               })()}
               <Button size="sm" variant="outline" className="mt-3" onClick={makeSeo} disabled={seoBusy || !scenes.length}>
-                {seoBusy ? "Writing…" : (video.seo as unknown as Seo | null) ? "Regenerate SEO" : "Generate SEO"} · {CREDIT_COSTS.seo} cr
+                {seoBusy ? "Writing…" : (video.seo as unknown as Seo | null) ? "Regenerate title, description & tags" : "Generate title, description & tags"} · {CREDIT_COSTS.seo} cr
               </Button>
-            </div>
+            </SettingsCard>
             <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
               <YouTubePublish videoId={id!} hasExport={!!lastExport} hasThumbnail={!!video.thumbnail_path} disabled={!lengthOk || exportPct !== null} autoOpen={false}
                 onEnsureExport={() => renderVideo(false)}
