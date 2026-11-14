@@ -63,11 +63,13 @@ function LookSelect<T extends string>({ label, value, options, onChange, swatch,
   );
 }
 
-function SettingsCard({ id, title, hint, headerRight, defaultOpen = false, contentClassName, children }: {
-  id?: string; title: string; hint?: string; headerRight?: React.ReactNode; defaultOpen?: boolean; contentClassName?: string; children: React.ReactNode;
+function SettingsCard({ id, title, hint, headerRight, defaultOpen = false, contentClassName, open: controlledOpen, onToggle, children }: {
+  id?: string; title: string; hint?: string; headerRight?: React.ReactNode; defaultOpen?: boolean; contentClassName?: string;
+  open?: boolean; onToggle?: (open: boolean) => void; children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const toggle = () => setOpen((o) => !o);
+  const [innerOpen, setInnerOpen] = useState(defaultOpen);
+  const open = controlledOpen ?? innerOpen;
+  const toggle = () => (onToggle ? onToggle(!open) : setInnerOpen((o) => !o));
   return (
     <div id={id} className="mt-4 scroll-mt-24 rounded-xl border border-border bg-card p-3 transition-shadow">
       <div className="flex items-center justify-between gap-3">
@@ -550,9 +552,13 @@ export default function VideoEditor() {
       setSeoBusy(false);
     }
   };
-  // From the publish popup's "Yes": scroll to the thumbnail box if that's missing, otherwise the SEO box.
+  // From the publish popup's "Yes": expand and scroll to the thumbnail box if that's missing, otherwise the title/description box.
+  const [thumbOpen, setThumbOpen] = useState(true);
+  const [seoOpen, setSeoOpen] = useState(true);
   const scrollToSeoOrThumb = () => {
     const target = !data?.video?.thumbnail_path ? "thumbnail-section" : "seo-section";
+    setThumbOpen(true);
+    setSeoOpen(true);
     const el = document.getElementById(target);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1167,7 +1173,7 @@ export default function VideoEditor() {
                 />
               </div>
             </SettingsCard>
-            <SettingsCard id="thumbnail-section" title="Thumbnail" hint="The picture viewers see before they press play." defaultOpen>
+            <SettingsCard id="thumbnail-section" title="Thumbnail" hint="The picture viewers see before they press play." open={thumbOpen} onToggle={setThumbOpen}>
               {video.thumbnail_path && urls[video.thumbnail_path] ? (
                 <img src={urls[video.thumbnail_path]} alt="Video thumbnail" className="mt-2 w-full rounded-lg border border-border" />
               ) : (
@@ -1198,7 +1204,7 @@ export default function VideoEditor() {
                 </form>
               )}
             </SettingsCard>
-            <SettingsCard id="seo-section" title="Title, description & tags" hint="Helps viewers find your video on YouTube." defaultOpen>
+            <SettingsCard id="seo-section" title="Title, description & tags" hint="Helps viewers find your video on YouTube." open={seoOpen} onToggle={setSeoOpen}>
               {(() => {
                 const seo = (video.seo as unknown as Seo | null);
                 if (!seo) return <p className="mt-2 text-sm text-muted-foreground">One click drafts 3 click-worthy titles, a search-friendly description, hashtags and tags.</p>;
