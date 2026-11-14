@@ -813,7 +813,7 @@ export default function VideoEditor() {
             {scenes.length > 0 && (
               <div className="mt-3 flex items-center gap-3">
                 <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{formatClock(elapsedSecs)}{playing !== null ? ` · Scene ${playing + 1}/${scenes.length}` : ""}</span>
-                <div className="relative flex-1 pb-5">
+                <div className="relative flex-1 pb-8">
                   <Slider
                     aria-label="Video position"
                     min={0}
@@ -829,16 +829,17 @@ export default function VideoEditor() {
                     const active = (playing ?? 0) === i && playing !== null;
                     return (
                       <div key={i}>
-                        {i > 0 && <span className="pointer-events-none absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-[calc(50%+10px)] rounded bg-foreground/60" style={{ left }} />}
+                        {i > 0 && <span className="pointer-events-none absolute top-0.5 h-3 w-0.5 -translate-x-1/2 rounded bg-foreground/60" style={{ left }} />}
                         <button
                           type="button"
-                          aria-label={`Jump to scene ${i + 1}`}
-                          title={`Scene ${i + 1}`}
+                          aria-label={`Jump to scene ${i + 1}, ${Math.round(sceneSecs[i])} seconds`}
+                          title={`Scene ${i + 1} · ${formatSecsBadge(sceneSecs[i])}`}
                           onClick={() => seekTo(start)}
-                          className={`absolute bottom-0 rounded px-1 text-[10px] font-semibold leading-4 tabular-nums transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          className={`absolute bottom-0 flex flex-col items-center gap-0.5 rounded px-1 text-[10px] font-semibold leading-4 tabular-nums transition-colors ${active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                           style={{ left: `calc(${left} + ${(sceneSecs[i] / Math.max(1, totalSecs)) * 50}%)`, transform: "translateX(-50%)" }}
                         >
-                          {i + 1}
+                          <span className={active ? "rounded bg-primary px-1" : ""}>{i + 1}</span>
+                          <span className="text-[9px] font-normal leading-3">{formatSecsBadge(sceneSecs[i])}</span>
                         </button>
                       </div>
                     );
