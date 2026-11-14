@@ -316,6 +316,13 @@
       "when": 1794612122240,
       "tag": "0044_autopilot",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794635424488,
+      "tag": "0045_autopilot_plan_settings",
+      "breakpoints": true
     }
   ]
 }

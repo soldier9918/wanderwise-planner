@@ -1,5 +1,5 @@
 import { SCENE_COUNTS } from "@/lib/sceneCount";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, Link2, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -24,18 +24,23 @@ import { useAccount } from "@/lib/account";
 import { voiceAllowed, scenesAllowedForTier, lengthAllowedForPlan, qualityAllowedForPlan, FREE_MAX_SCENES } from "@/lib/tiers";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene, minScenesForSeconds, maxScenesForSeconds } from "@/lib/durations";
 
-export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
+export type PlanSettings = Record<string, string | boolean>;
+const initialSettings = (): PlanSettings => { try { return JSON.parse(new URLSearchParams(window.location.search).get("settings") || "{}"); } catch { return {}; } };
+
+export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl?: boolean; onPlan?: (topic: string, settings: PlanSettings) => Promise<boolean>; planExtra?: ReactNode }) {
   const navigate = useNavigate();
+  const [init] = useState(initialSettings);
+  const g = (k: string, d: string) => (typeof init[k] === "string" ? (init[k] as string) : d);
   const [topic, setTopic] = useState(() => new URLSearchParams(window.location.search).get("idea") ?? "");
-  const [style, setStyle] = useState<string>("Cinematic");
-  const [voice, setVoice] = useState<string>("Kore");
-  const [tone, setTone] = useState<string>("engaging");
-  const [scenes, setScenes] = useState("6");
-  const [caption, setCaption] = useState<string>("typewriter");
-  const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
-  const [quality, setQuality] = useState<string>(DEFAULT_QUALITY);
-  const [mood, setMood] = useState<string>("none");
-  const [length, setLength] = useState("60");
+  const [style, setStyle] = useState<string>(g("style", "Cinematic"));
+  const [voice, setVoice] = useState<string>(g("voice", "Kore"));
+  const [tone, setTone] = useState<string>(g("tone", "engaging"));
+  const [scenes, setScenes] = useState(g("scenes", "6"));
+  const [caption, setCaption] = useState<string>(g("caption", "typewriter"));
+  const [ratio, setRatio] = useState<string>(g("ratio", DEFAULT_RATIO));
+  const [quality, setQuality] = useState<string>(g("quality", DEFAULT_QUALITY));
+  const [mood, setMood] = useState<string>(g("mood", "none"));
+  const [length, setLength] = useState(g("length", "60"));
   const { data: account } = useAccount();
   const pro = account?.pro ?? false;
   const tier = account?.tier ?? "free";
@@ -43,11 +48,11 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
   const qualityAllowedForTier = (q: string, _p: boolean) => qualityAllowedForPlan(q, tier);
   const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForTier(Number(scenes), pro) && qualityAllowedForTier(quality, pro);
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
-  const [useFacts, setUseFacts] = useState(false);
+  const [useFacts, setUseFacts] = useState(init.useFacts === true);
   const [url, setUrl] = useState("");
   const [template, setTemplate] = useState<string | null>(null);
-  const [accent, setAccent] = useState("none");
-  const [speed, setSpeed] = useState("1");
+  const [accent, setAccent] = useState(g("accent", "none"));
+  const [speed, setSpeed] = useState(g("speed", "1"));
   const [busy, setBusy] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
 
@@ -65,6 +70,13 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (onPlan) {
+      setBusy(true);
+      const ok = await onPlan(topic, { style, voice, tone, scenes, caption, ratio, quality, mood, length, accent, speed, useFacts });
+      setBusy(false);
+      if (ok) setTopic("");
+      return;
+    }
     setBusy(true);
     const started = new Date(Date.now() - 5000).toISOString();
     let moved = false;
@@ -92,26 +104,8 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
     }
   };
 
-  return (
-    <div className="min-h-screen">
-      <SiteHeader />
-      <main className="container max-w-4xl py-10">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-4xl font-extrabold">{fromUrl ? "Article to video" : "Create video"}</h1>
-            <p className="mt-2 text-muted-foreground">{fromUrl ? "Paste a link to a blog post, news story or Wikipedia article. AI reads it, summarises it and writes a ready-to-render scene script." : "Describe your idea. AI writes the script, then makes the scenes and voiceover."}</p>
-          </div>
-          <Button variant="outline" asChild className="shrink-0">
-            <Link to="/dashboard" className="inline-flex items-center gap-1.5"><Play className="h-4 w-4" />My videos</Link>
-          </Button>
-        </div>
-
-        <div className="mt-4 flex gap-2 text-sm">
-          <Link to="/create" className={`rounded-full border px-3 py-1 ${!fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>From an idea</Link>
-          <Link to="/from-url" className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 ${fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}><Link2 className="h-3.5 w-3.5" />From a link</Link>
-        </div>
-
-        <form onSubmit={create} className="mt-6 grid gap-5 rounded-xl border border-border bg-card p-6">
+  const formEl = (
+        <form onSubmit={create} className={`${onPlan ? "" : "mt-6 "}grid gap-5 rounded-xl border border-border bg-card p-6`}>
           {fromUrl ? (
             <div className="grid gap-2">
               <Label htmlFor="url">Article link</Label>
@@ -239,13 +233,37 @@ export default function Create({ fromUrl = false }: { fromUrl?: boolean }) {
           <p className="-mt-3 text-xs text-muted-foreground">
             Longer videos need more scenes — greyed-out lengths show how many scenes they need.
           </p>
+          {planExtra}
           <p className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
             <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
           </p>
           {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator and longer videos (Creator: 20 minutes, Pro: 60 minutes + 1080p).</p>}
-          <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{busy ? "Writing your script…" : "Generate video"}</Button>
+          <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{onPlan ? (busy ? "Adding…" : "Add to plan") : busy ? "Writing your script…" : "Generate video"}</Button>
         </form>
+  );
+  if (onPlan) return formEl;
+
+  return (
+    <div className="min-h-screen">
+      <SiteHeader />
+      <main className="container max-w-4xl py-10">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-4xl font-extrabold">{fromUrl ? "Article to video" : "Create video"}</h1>
+            <p className="mt-2 text-muted-foreground">{fromUrl ? "Paste a link to a blog post, news story or Wikipedia article. AI reads it, summarises it and writes a ready-to-render scene script." : "Describe your idea. AI writes the script, then makes the scenes and voiceover."}</p>
+          </div>
+          <Button variant="outline" asChild className="shrink-0">
+            <Link to="/dashboard" className="inline-flex items-center gap-1.5"><Play className="h-4 w-4" />My videos</Link>
+          </Button>
+        </div>
+
+        <div className="mt-4 flex gap-2 text-sm">
+          <Link to="/create" className={`rounded-full border px-3 py-1 ${!fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>From an idea</Link>
+          <Link to="/from-url" className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 ${fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}><Link2 className="h-3.5 w-3.5" />From a link</Link>
+        </div>
+
+        {formEl}
         {fromUrl && (
           <section className="mt-6 rounded-xl border border-border bg-card p-6 text-sm">
             <h2 className="font-display text-lg font-bold">Troubleshooting</h2>

@@ -7,9 +7,9 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import Create, { type PlanSettings } from "@/pages/Create";
 
 const fmt = (d: string) => new Date(d).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const localMin = (ms = 0) => new Date(Date.now() + ms - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
@@ -17,10 +17,8 @@ const localMin = (ms = 0) => new Date(Date.now() + ms - new Date().getTimezoneOf
 export default function Autopilot() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [topic, setTopic] = useState("");
   const [createOn, setCreateOn] = useState("");
   const [publishOn, setPublishOn] = useState("");
-  const [busy, setBusy] = useState(false);
 
   const { data: plans = [] } = useQuery({
     queryKey: ["autopilot-plans"], enabled: !!user,
@@ -35,16 +33,15 @@ export default function Autopilot() {
   const released = uploads.filter((u) => u.status === "uploaded" && new Date(u.publish_at!).getTime() <= now);
   const due = plans.filter((p) => p.status === "planned" && new Date(p.create_on).getTime() <= now);
 
-  const addPlan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || topic.trim().length < 3 || !createOn) return;
-    setBusy(true);
-    const { error } = await supabase.from("autopilot_plans").insert({ user_id: user.id, topic: topic.trim(), create_on: new Date(createOn).toISOString(), publish_on: publishOn ? new Date(publishOn).toISOString() : null });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    setTopic(""); setCreateOn(""); setPublishOn("");
+  const addPlan = async (topic: string, settings: PlanSettings) => {
+    if (!user || topic.trim().length < 3) { toast.error("Describe your video idea first."); return false; }
+    if (!createOn) { toast.error("Choose when to make it."); return false; }
+    const { error } = await supabase.from("autopilot_plans").insert({ user_id: user.id, topic: topic.trim(), settings, create_on: new Date(createOn).toISOString(), publish_on: publishOn ? new Date(publishOn).toISOString() : null });
+    if (error) { toast.error(error.message); return false; }
+    setCreateOn(""); setPublishOn("");
     toast.success("Added to your Autopilot plan.");
     qc.invalidateQueries({ queryKey: ["autopilot-plans"] });
+    return true;
   };
   const remove = async (id: string) => {
     await supabase.from("autopilot_plans").delete().eq("id", id);
@@ -70,21 +67,21 @@ export default function Autopilot() {
 
         <section className="mt-10">
           <h2 className="flex items-center gap-2 text-xl font-bold"><Clapperboard className="h-5 w-5 text-primary" />Video plan</h2>
-          <form onSubmit={addPlan} className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-4">
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Video idea
-              <Textarea rows={2} required minLength={3} maxLength={500} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. 5 forgotten inventions that changed the world" />
-            </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Make it on
-                <Input type="datetime-local" required min={localMin()} value={createOn} onChange={(e) => setCreateOn(e.target.value)} />
-              </label>
-              <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Go live on YouTube (optional)
-                <Input type="datetime-local" min={createOn || localMin()} value={publishOn} onChange={(e) => setPublishOn(e.target.value)} />
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground">Planning is free. Credits are only used when you press “Make video” and create it.</p>
-            <Button type="submit" disabled={busy} className="justify-self-start">Add to plan</Button>
-          </form>
+          <div className="mt-4">
+            <Create onPlan={addPlan} planExtra={
+              <div className="grid gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Make it on
+                    <Input type="datetime-local" min={localMin()} value={createOn} onChange={(e) => setCreateOn(e.target.value)} />
+                  </label>
+                  <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Go live on YouTube (optional)
+                    <Input type="datetime-local" min={createOn || localMin()} value={publishOn} onChange={(e) => setPublishOn(e.target.value)} />
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground">Planning is free. Credits are only used when you press “Make video” and create it.</p>
+              </div>
+            } />
+          </div>
           <ul className="mt-4 grid gap-2">
             {plans.length === 0 && <li className="text-sm text-muted-foreground">No planned videos yet.</li>}
             {plans.map((p) => (
@@ -94,7 +91,7 @@ export default function Autopilot() {
                   <p className="text-xs text-muted-foreground">Make: {fmt(p.create_on)}{p.publish_on && ` · Go live: ${fmt(p.publish_on)}`}</p>
                 </div>
                 {p.status === "made" ? <span className="text-xs font-semibold text-primary">Made</span> : (
-                  <Button asChild size="sm" onClick={() => markMade(p.id)}><Link to={`/create?idea=${encodeURIComponent(p.topic)}`}>Make video</Link></Button>
+                  <Button asChild size="sm" onClick={() => markMade(p.id)}><Link to={`/create?idea=${encodeURIComponent(p.topic)}&settings=${encodeURIComponent(JSON.stringify(p.settings ?? {}))}`}>Make video</Link></Button>
                 )}
                 <Button size="icon" variant="ghost" aria-label="Remove" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4" /></Button>
               </li>

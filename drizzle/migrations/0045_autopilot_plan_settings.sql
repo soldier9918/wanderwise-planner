@@ -1,0 +1,1 @@
+ALTER TABLE public.autopilot_plans ADD COLUMN settings jsonb NOT NULL DEFAULT '{}'::jsonb;
