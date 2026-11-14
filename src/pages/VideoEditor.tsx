@@ -433,10 +433,12 @@ export default function VideoEditor() {
     enabled: !!id,
   });
 
-  const download = async () => {
+  // Renders the video in-browser and stores it. saveFile=true also saves it to the user's device (Download);
+  // saveFile=false is used by Publish to YouTube so publishing never requires a download first.
+  const renderVideo = async (saveFile: boolean) => {
     if (!data) return;
     const missing = data.scenes.some((s) => !s.image_path);
-    if (missing) return toast.error("Every scene needs an image before exporting.");
+    if (missing) { toast.error("Every scene needs an image before exporting."); throw new Error("missing images"); }
     setPlaying(null);
     setExportPct(0);
     const name = `${(data.video?.title ?? "video").replace(/[^\w\s-]/g, "").trim() || "video"}`;
@@ -445,8 +447,8 @@ export default function VideoEditor() {
       // Server decides: identical stored export = free download; otherwise it charges and reserves an upload slot.
       const start = await startExport(id!, exportFormat);
       if (start.decision === "download") {
-        const a = document.createElement("a"); a.href = start.url; a.download = name; a.click();
-        toast.success("Downloaded your saved export — no credits used.");
+        if (saveFile) { const a = document.createElement("a"); a.href = start.url; a.download = name; a.click(); }
+        toast.success(saveFile ? "Downloaded your saved export — no credits used." : "Using your saved export — no credits used.");
         return;
       }
       job = start;
@@ -490,19 +492,26 @@ export default function VideoEditor() {
       await completeExport(job.exportId);
       refetchLastExport();
       job = null;
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${name}.${ext}`;
-      a.click();
-      toast.success("Video downloaded and saved — downloading it again is free until you change it.");
+      if (saveFile) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${name}.${ext}`;
+        a.click();
+        toast.success("Video downloaded and saved — downloading it again is free until you change it.");
+      } else {
+        toast.success("Video rendered and saved — publishing can use it now.");
+      }
       qc.invalidateQueries({ queryKey: ["export-check", id] });
     } catch (e) {
       if (job) { await failExport(job.exportId).catch(() => {}); toast.error(`Export failed: ${(e as Error).message}. Please try again.`); }
       else toast.error(`Export failed: ${(e as Error).message}`);
+      if (!saveFile) throw e;
     } finally {
       setExportPct(null);
     }
   };
+
+  const download = () => renderVideo(true);
 
   const [seoBusy, setSeoBusy] = useState(false);
   const makeSeo = async () => {
@@ -870,6 +879,7 @@ export default function VideoEditor() {
                 {exportPct !== null ? `Exporting ${Math.round(exportPct * 100)}%` : exportInfo?.decision === "busy" ? "Export in progress…" : "Download video"}
               </Button>
               <YouTubePublish videoId={id!} hasExport={!!lastExport} disabled={!lengthOk || exportPct !== null}
+                onEnsureExport={() => renderVideo(false)}
                 onSeoRequested={() => { const el = document.getElementById("seo-section"); if (!el) return; el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("ring-2", "ring-primary"); setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000); }}
                 {...youtubeDefaults(video.seo as unknown as Seo | null, video.title, video.aspect_ratio === "9:16")} />
               <Button variant="outline" onClick={() => generateMissing(scenes)} disabled={busyAny || readOnly || done === scenes.length}>

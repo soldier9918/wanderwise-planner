@@ -55,8 +55,8 @@ export function youtubeDefaults(seo: { titles?: string[]; description?: string; 
   return { title, description, tags: tagList.join(", ") };
 }
 
-export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled, onSeoRequested }: {
-  videoId: string; title: string; description: string; tags: string; hasExport: boolean; disabled?: boolean; onSeoRequested?: () => void;
+export default function YouTubePublish({ videoId, title, description, tags, hasExport, disabled, onSeoRequested, onEnsureExport }: {
+  videoId: string; title: string; description: string; tags: string; hasExport: boolean; disabled?: boolean; onSeoRequested?: () => void; onEnsureExport?: () => Promise<void>;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -64,6 +64,7 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   const { data: status } = useQuery({ queryKey: ["youtube-status"], queryFn: youtubeStatus, staleTime: 60_000, retry: false });
   const [form, setForm] = useState({ title, description, tags, privacy: "private", synthetic: true, kids: false, when: "now", at: "" });
   const [busy, setBusy] = useState(false);
+  const [rendering, setRendering] = useState(false);
   const [result, setResult] = useState<{ url: string; studioUrl: string } | null>(null);
 
   useEffect(() => {
@@ -101,6 +102,8 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
   const publish = async () => {
     setBusy(true);
     try {
+      // No download needed: if there's no rendered video yet, render it first (same as Download, without saving a file).
+      if (!hasExport && onEnsureExport) { setRendering(true); try { await onEnsureExport(); } finally { setRendering(false); } }
       const r = await call<{ url: string; studioUrl: string; thumbnail?: string }>({ action: "publish", videoId, title: form.title, description: form.description, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), privacy: form.privacy, publishAt: form.when === "later" && form.at ? new Date(form.at).toISOString() : undefined, synthetic: form.synthetic, madeForKids: form.kids });
       setResult(r);
       qc.invalidateQueries({ queryKey: ["youtube-upload", videoId] });
@@ -164,7 +167,7 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
                 </div>
                 <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
               </div>
-              {!hasExport && <p role="alert" className="rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">Download the video first — we publish your latest download.</p>}
+              {!hasExport && <p className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">No download needed — when you publish, we'll render your video first. Keep this tab open while it renders.</p>}
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Title
                 <Input maxLength={100} value={form.title} onChange={(e) => { edited.current.title = true; setForm({ ...form, title: e.target.value }); }} />
               </label>
@@ -192,7 +195,7 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
               </div>
               <label className="flex items-start gap-2 text-sm"><Checkbox checked={form.synthetic} onCheckedChange={(v) => setForm({ ...form, synthetic: v === true })} /> <span>Mark as altered or synthetic content (YouTube's AI disclosure)</span></label>
               <label className="flex items-start gap-2 text-sm"><Checkbox checked={form.kids} onCheckedChange={(v) => setForm({ ...form, kids: v === true })} /> <span>Made for kids</span></label>
-              <Button onClick={publish} disabled={busy || !hasExport || !form.title.trim() || (form.when === "later" && !form.at)}>{busy ? "Uploading to YouTube…" : form.when === "later" ? "Schedule" : "Publish"}</Button>
+              <Button onClick={publish} disabled={busy || !form.title.trim() || (form.when === "later" && !form.at)}>{busy ? (rendering ? "Rendering your video…" : "Uploading to YouTube…") : form.when === "later" ? "Schedule" : "Publish"}</Button>
             </div>
           )}
         </DialogContent>

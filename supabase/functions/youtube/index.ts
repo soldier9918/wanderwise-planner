@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
       const { data: video } = await auth.client.from("videos").select("id, thumbnail_path").eq("id", videoId).maybeSingle();
       if (!video) return json({ error: "Video not found." }, 404);
       const { data: exp } = await db.from("video_exports").select("path, content_type, size_bytes").eq("video_id", videoId).eq("user_id", uid).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle();
-      if (!exp?.path) return json({ error: "Download the video first, then publish it." }, 400);
+      if (!exp?.path) return json({ error: "Your video isn't rendered yet — please try publishing again." }, 400);
       const token = await freshToken(db, uid);
       if (!token) return json({ error: "Please connect your YouTube channel again.", reconnect: true }, 401);
 
