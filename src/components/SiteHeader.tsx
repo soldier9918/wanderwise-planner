@@ -117,6 +117,7 @@ export default function SiteHeader() {
                 <Link to="/library" onClick={close} className={`${mobileLink} ${on("/library")}`}>My Library</Link>
                 <Link to="/pricing" onClick={close} className={`${mobileLink} ${on("/pricing")}`}>Pricing</Link>
                 <Link to="/billing" onClick={close} className={`${mobileLink} ${on("/billing")}`}>Plans &amp; Billing</Link>
+                <Link to="/profile" onClick={close} className={`${mobileLink} ${on("/profile")}`}>My profile &amp; YouTube</Link>
                 <div className="mb-2 flex items-center gap-2">
                   <Link to="/billing" onClick={close} className={`${balancePill} min-w-0 flex-1 justify-center ${low ? "border-primary/60 text-primary" : ""}`}>
                     <Coins className="h-4 w-4 text-primary" />

@@ -18,6 +18,7 @@ import Legal from "./pages/Legal";
 import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import Library from "./pages/Library";
+import Profile from "./pages/Profile";
 import Series from "./pages/Series";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/series" element={<ProtectedRoute><Series /></ProtectedRoute>} />
             <Route path="/ads" element={<ProtectedRoute><Create key="ads" adMode /></ProtectedRoute>} />
             <Route path="/autopilot" element={<ProtectedRoute><Autopilot /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
             <Route path="/admin-kb20" element={<ProtectedRoute><Admin /></ProtectedRoute>} />

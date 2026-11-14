@@ -33,8 +33,12 @@ export async function youtubeStatus(): Promise<Status> {
 }
 
 export async function connectYouTube() {
-  const { url } = await call<{ url: string }>({ action: "auth_url", returnTo: window.location.href.split("?")[0] });
+  const { url } = await call<{ url: string }>({ action: "auth_url", returnTo: window.location.href.split(/[?#]/)[0] });
   window.location.href = url;
+}
+
+export async function disconnectYouTube() {
+  await call({ action: "disconnect" });
 }
 
 /** Builds publish defaults from the video's saved SEO pack only (no regeneration). Hashtags are appended to the description if missing. Vertical (9:16) videos get #Shorts in the title, description and tags so YouTube picks them up as Shorts. */

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { CreditCard, Film, Gift, LogOut, Shield } from "lucide-react";
+import { CreditCard, Film, Gift, LogOut, Shield, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "@/lib/account";
@@ -73,6 +73,7 @@ export default function ProfileMenu({ onSignOut }: { onSignOut: () => void }) {
           <Gift className="mr-2 h-4 w-4" />Invite friends
           {acct?.code && <span className="ml-auto font-mono text-xs text-primary">{acct.code}</span>}
         </DropdownMenuItem>
+        <DropdownMenuItem asChild><Link to="/profile" className="cursor-pointer"><UserRound className="mr-2 h-4 w-4" />My profile &amp; YouTube</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link to="/billing" className="cursor-pointer"><CreditCard className="mr-2 h-4 w-4" />Plans &amp; Billing</Link></DropdownMenuItem>
         {acct?.adminAccess && <DropdownMenuItem asChild><Link to="/admin-kb20" className="cursor-pointer"><Shield className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
         <DropdownMenuSeparator />
