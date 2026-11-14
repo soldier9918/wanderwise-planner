@@ -1,7 +1,7 @@
 import { SCENE_COUNTS } from "@/lib/sceneCount";
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Sparkles, Link2, Play } from "lucide-react";
+import { Sparkles, Link2, Play, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { TEMPLATES } from "@/lib/templates";
 import { VoiceSelect } from "@/components/VoiceSelect";
@@ -27,7 +27,15 @@ import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene, minScen
 export type PlanSettings = Record<string, string | boolean>;
 const initialSettings = (): PlanSettings => { try { return JSON.parse(new URLSearchParams(window.location.search).get("settings") || "{}"); } catch { return {}; } };
 
-export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl?: boolean; onPlan?: (topic: string, settings: PlanSettings) => Promise<boolean>; planExtra?: ReactNode }) {
+export const AD_FRAMEWORKS = [
+  { id: "problem-solution", label: "Problem → Solution" },
+  { id: "feature-tour", label: "Feature tour" },
+  { id: "launch", label: "Launch or special offer" },
+  { id: "before-after", label: "Before & after" },
+];
+const AD_IMG_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+export default function Create({ fromUrl = false, adMode = false, onPlan, planExtra }: { fromUrl?: boolean; adMode?: boolean; onPlan?: (topic: string, settings: PlanSettings) => Promise<boolean>; planExtra?: ReactNode }) {
   const navigate = useNavigate();
   const [init] = useState(initialSettings);
   const g = (k: string, d: string) => (typeof init[k] === "string" ? (init[k] as string) : d);
@@ -54,6 +62,17 @@ export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl
   const [accent, setAccent] = useState(g("accent", "none"));
   const [speed, setSpeed] = useState(g("speed", "1"));
   const [busy, setBusy] = useState(false);
+  const [framework, setFramework] = useState("problem-solution");
+  const [cta, setCta] = useState("");
+  const [adImages, setAdImages] = useState<File[]>([]);
+  const addAdImages = (files: FileList | null) => {
+    const ok = Array.from(files ?? []).filter((f) => {
+      if (!AD_IMG_TYPES.includes(f.type)) { toast.error(`${f.name}: use PNG, JPEG or WebP.`); return false; }
+      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} is over 10 MB.`); return false; }
+      return true;
+    });
+    setAdImages((cur) => [...cur, ...ok].slice(0, Number(scenes)));
+  };
   const [suggesting, setSuggesting] = useState(false);
 
   const suggest = async () => {
@@ -89,10 +108,22 @@ export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl
       const n = (v as { video_scenes?: { count: number }[] } | null)?.video_scenes?.[0]?.count ?? 0;
       return v && n > 0 ? v.id : null;
     };
-    const poll = setInterval(async () => { const vid = await findNew().catch(() => null); if (vid) go(vid); }, 4000);
+    const poll = setInterval(async () => { if (adMode) return; const vid = await findNew().catch(() => null); if (vid) go(vid); }, 4000);
     try {
-      const { videoId } = await generateScript({ topic, sourceUrl: fromUrl ? url.trim() : undefined, narrationSpeed: Number(speed), accent, style, voice, tone, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
+      const { videoId } = await generateScript({ topic, sourceUrl: (fromUrl || adMode) && url.trim() ? url.trim() : undefined, ad: adMode ? { framework, cta } : undefined, narrationSpeed: Number(speed), accent, style, voice, tone, sceneCount: Number(scenes), captionStyle: caption, aspectRatio: ratio, quality, targetSeconds: Number(length), useFacts });
       await supabase.from("videos").update({ music_mood: mood, music_enabled: mood !== "none" }).eq("id", videoId);
+      if (adMode && adImages.length) {
+        // Put the user's product photos/screenshots on the scenes in order; the rest get AI images.
+        const { data: u } = await supabase.auth.getUser();
+        const { data: sc } = await supabase.from("video_scenes").select("id, position").eq("video_id", videoId).order("position");
+        await Promise.all((sc ?? []).slice(0, adImages.length).map(async (row, i) => {
+          const f = adImages[i];
+          const ext = f.type === "image/png" ? "png" : f.type === "image/webp" ? "webp" : "jpg";
+          const path = `${u.user!.id}/${videoId}/${row.id}-upload-${Date.now()}.${ext}`;
+          const { error } = await supabase.storage.from("video-assets").upload(path, f, { contentType: f.type });
+          if (!error) await supabase.from("video_scenes").update({ image_path: path }).eq("id", row.id);
+        }));
+      }
       go(videoId);
     } catch (err) {
       const vid = await findNew().catch(() => null);
@@ -106,7 +137,44 @@ export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl
 
   const formEl = (
         <form onSubmit={create} className={`${onPlan ? "" : "mt-6 "}grid gap-5 rounded-xl border border-border bg-card p-6`}>
-          {fromUrl ? (
+          {adMode ? (
+            <div className="grid gap-2">
+              <Label htmlFor="url">Website or product page link (optional)</Label>
+              <Input id="url" type="url" placeholder="https://yourshop.com/product" value={url} onChange={(e) => setUrl(e.target.value)} />
+              <Label htmlFor="product" className="mt-2">About your product</Label>
+              <Textarea id="product" rows={4} required={!url.trim()} placeholder="e.g. GlowBrew — a smart coffee mug that keeps drinks at your perfect temperature for 3 hours. For busy remote workers." value={topic} onChange={(e) => setTopic(e.target.value)} />
+              <div className="mt-2 grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>Advert style</Label>
+                  <Select value={framework} onValueChange={setFramework}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{AD_FRAMEWORKS.map((f) => <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="cta">Call to action</Label>
+                  <Input id="cta" maxLength={120} placeholder="e.g. Visit glowbrew.com today" value={cta} onChange={(e) => setCta(e.target.value)} />
+                </div>
+              </div>
+              <Label className="mt-2">Product photos or website screenshots (optional)</Label>
+              <div className="flex flex-wrap gap-2">
+                {adImages.map((f, i) => (
+                  <div key={i} className="relative h-20 w-20 overflow-hidden rounded-md border border-border">
+                    <img src={URL.createObjectURL(f)} alt={`Upload ${i + 1}`} className="h-full w-full object-cover" />
+                    <span className="absolute left-1 top-1 rounded bg-background/80 px-1 text-[10px]">Scene {i + 1}</span>
+                    <button type="button" aria-label="Remove image" onClick={() => setAdImages((cur) => cur.filter((_, j) => j !== i))} className="absolute right-1 top-1 rounded bg-background/80 p-0.5"><X className="h-3 w-3" /></button>
+                  </div>
+                ))}
+                {adImages.length < Number(scenes) && (
+                  <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground hover:border-primary">
+                    + Add
+                    <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => { addAdImages(e.target.files); e.target.value = ""; }} />
+                  </label>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">PNG, JPEG or WebP, up to 10 MB each. Your images are used on the first scenes in order; the rest get AI images. Only describe real features — the AI won't invent prices or reviews.</p>
+            </div>
+          ) : fromUrl ? (
             <div className="grid gap-2">
               <Label htmlFor="url">Article link</Label>
               <Input id="url" type="url" required placeholder="https://en.wikipedia.org/wiki/Octopus" value={url} onChange={(e) => setUrl(e.target.value)} />
@@ -236,7 +304,7 @@ export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl
           {planExtra}
           <p className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
             <span className="text-muted-foreground">Estimated cost (script, images, voiceovers, quality)</span>
-            <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl, quality })} credits</Link>
+            <Link to="/pricing" className="font-display font-bold text-primary hover:underline">⚡ {estimateCredits({ scenes: Number(scenes), useFacts: useFacts || fromUrl || (adMode && !!url.trim()), quality })} credits</Link>
           </p>
           {!pro && <p className="text-xs text-muted-foreground">Free plan: 4 narrators, up to {FREE_MAX_SCENES} scenes, 2-minute videos and 720p. <Link to="/billing" className="text-primary underline">Subscribe to a plan</Link> to unlock every narrator and longer videos (Creator: 20 minutes, Pro: 60 minutes + 1080p).</p>}
           <Button type="submit" size="lg" disabled={busy || !lengthOk || !tierOk}>{onPlan ? (busy ? "Adding…" : "Add to plan") : busy ? "Writing your script…" : "Generate video"}</Button>
@@ -250,18 +318,18 @@ export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl
       <main className="container max-w-4xl py-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-4xl font-extrabold">{fromUrl ? "Article to video" : "Create video"}</h1>
-            <p className="mt-2 text-muted-foreground">{fromUrl ? "Paste a link to a blog post, news story or Wikipedia article. AI reads it, summarises it and writes a ready-to-render scene script." : "Describe your idea. AI writes the script, then makes the scenes and voiceover."}</p>
+            <h1 className="text-4xl font-extrabold">{adMode ? "Product ads" : fromUrl ? "Article to video" : "Create video"}</h1>
+            <p className="mt-2 text-muted-foreground">{adMode ? "Add your website link or product details, plus photos or screenshots. AI writes a persuasive advert script with a narrator and builds the scenes." : fromUrl ? "Paste a link to a blog post, news story or Wikipedia article. AI reads it, summarises it and writes a ready-to-render scene script." : "Describe your idea. AI writes the script, then makes the scenes and voiceover."}</p>
           </div>
           <Button variant="outline" asChild className="shrink-0">
             <Link to="/dashboard" className="inline-flex items-center gap-1.5"><Play className="h-4 w-4" />My videos</Link>
           </Button>
         </div>
 
-        <div className="mt-4 flex gap-2 text-sm">
+        {!adMode && <div className="mt-4 flex gap-2 text-sm">
           <Link to="/create" className={`rounded-full border px-3 py-1 ${!fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>From an idea</Link>
           <Link to="/from-url" className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 ${fromUrl ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}><Link2 className="h-3.5 w-3.5" />From a link</Link>
-        </div>
+        </div>}
 
         {formEl}
         {fromUrl && (
@@ -276,7 +344,7 @@ export default function Create({ fromUrl = false, onPlan, planExtra }: { fromUrl
             </ul>
           </section>
         )}
-        {!fromUrl && (
+        {!fromUrl && !adMode && (
           <section className="mt-6 rounded-xl border border-border bg-card p-6 text-sm">
             <h2 className="font-display text-lg font-bold">Troubleshooting</h2>
             <ul className="mt-3 grid list-disc gap-2 pl-5 text-muted-foreground">

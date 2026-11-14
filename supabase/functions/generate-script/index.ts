@@ -51,7 +51,10 @@ Deno.serve(async (req) => {
     const auth = await getUserClient(req);
     if (!auth) return json({ error: "Please sign in first." }, 401);
 
-    const { topic: topicIn, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn, sourceUrl, narrationSpeed, accent: accentIn } = await req.json();
+    const { topic: topicIn, style = "Documentary", voice = "Kore", sceneCount = 6, captionStyle = "typewriter", aspectRatio = "16:9", quality = "720p", targetSeconds, useFacts, tone: toneIn, sourceUrl, narrationSpeed, accent: accentIn, ad } = await req.json();
+    const adMode = !!ad && typeof ad === "object";
+    const adFramework = adMode ? String((ad as { framework?: unknown }).framework ?? "problem-solution").slice(0, 40) : "";
+    const adCta = adMode ? String((ad as { cta?: unknown }).cta ?? "").slice(0, 120).trim() : "";
     const [{ data: sub }, { data: isAdmin }, { data: subRow }] = await Promise.all([
       auth.client.rpc("has_active_subscription", { _user_id: auth.user.id }),
       auth.client.rpc("has_role", { _user_id: auth.user.id, _role: "admin" }),
@@ -147,13 +150,22 @@ Deno.serve(async (req) => {
       if (proseWords(md) < 40) return json({ error: "That page doesn't have enough readable text to make a video from." }, 422);
       research = `[Article] ${title} (${srcUrl})\n${md.slice(0, 20000)}` + (research ? `\n\n${research}` : "");
       sources = [{ title: title.slice(0, 200), url: srcUrl }, ...(sources ?? [])];
-      if (topic.trim().length < 3) topic = `Summarise this article as a video: ${title}`;
+      if (topic.trim().length < 3) topic = adMode ? `Advertise this product/website: ${title}` : `Summarise this article as a video: ${title}`;
     }
 
     const factRules = research
-      ? `${srcUrl ? " ARTICLE MODE: Summarise the provided article into the scenes, keeping its key points in order, in your own words. Always write the full number of scenes requested — never return an empty list or ask for more text; if the article is short, expand on its main points and the requested angle without inventing specific facts." : ""} FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
+      ? `${srcUrl && !adMode ? " ARTICLE MODE: Summarise the provided article into the scenes, keeping its key points in order, in your own words. Always write the full number of scenes requested — never return an empty list or ask for more text; if the article is short, expand on its main points and the requested angle without inventing specific facts." : ""} FACT MODE: Base every factual claim ONLY on the research sources provided. Never invent quotes, names, numbers, dates or events. If something is unknown or disputed, say so plainly instead of guessing. Do not present theories as fact.`
       : "";
 
+    const frameworks: Record<string, string> = {
+      "problem-solution": "Hook -> the customer's problem -> the product as the solution -> key benefits -> call to action",
+      "feature-tour": "Hook -> a quick tour of the 3-4 best features, one per scene, each with its benefit -> call to action",
+      "launch": "High-energy launch or offer announcement: bold hook, what's new, why now, call to action",
+      "before-after": "Before (the frustrating old way) -> after (life with the product) -> proof -> call to action",
+    };
+    const adRules = adMode
+      ? ` AD MODE: This is a persuasive product/website advertisement, not a faceless documentary. Structure: ${frameworks[adFramework] ?? frameworks["problem-solution"]}. Grab attention in the first 3 seconds, speak directly to the viewer ("you"), focus on benefits, keep sentences punchy. Only describe features, prices and claims that appear in the product details or page provided — never invent prices, reviews, awards or statistics. Do NOT ask viewers to subscribe. End the final scene with this call to action: ${adCta || "a clear invitation to visit the website"}. visual_prompts show the product, its users and its benefits in polished commercial style.`
+      : "";
     const provider = createOpenAI({
       baseURL: `${GATEWAY_URL}/v1`,
       apiKey,
@@ -174,9 +186,9 @@ Deno.serve(async (req) => {
       const result = streamText({
       model: provider.responses("openai/gpt-6-astra"),
       system:
-        `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. Open with a strong hook in scene 1 and end with a call to subscribe. Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never more than that. The whole video must not run over its target length. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}`,
+        `You are a YouTube scriptwriter. Write faceless-channel scripts in ${toneOf(tone).script}. ${adMode ? "" : "Open with a strong hook in scene 1 and end with a call to subscribe. "} Each scene's narration lasts about ${per} seconds spoken aloud — roughly ${words} words, never more than that. The whole video must not run over its target length. Each visual_prompt describes one striking cinematic ${framing} still image for that scene, with no text or letters in the image. The title is a click-worthy YouTube title under 70 characters; description is a 2-3 sentence YouTube description.${factRules}${adRules}`,
       messages: [
-        { role: "user", content: `Video idea: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${uniqueRule}${lengthNote}${research ? `\n\nResearch sources:\n${research}` : ""}` },
+        { role: "user", content: `${adMode ? "Product / website details" : "Video idea"}: ${topic.trim()}\nVisual style: ${style}\nNumber of scenes: exactly ${count}${uniqueRule}${lengthNote}${research ? `\n\nResearch sources:\n${research}` : ""}` },
       ],
       output: Output.object({ schema }),
       abortSignal: req.signal,

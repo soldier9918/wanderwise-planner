@@ -30,5 +30,7 @@
 - Refunds/disputes reverse credits proportionally (`_shared/refunds.ts`), idempotent, capped at balance; won disputes restore. Why: no negative balances.
 - Live activation: one-time admin `activate-live-billing` (checks, typed confirm, audited); owner sets STRIPE_MODE. Why: both switches must agree.
 - YouTube: `youtube` fn keeps tokens. Why: server-side.
-- `voice-sample`: free narrator previews cached in `samples/`.
+- `voice-sample`: free previews cached in `samples/`.
 - Autopilot: `autopilot_plans` is free planning only; YouTube scheduling uses native `publishAt`. Why: no unattended credit spend.
+
+- Product Ads: `/ads` = Create `adMode` + `ad` brief to `generate-script`. Why: one pipeline.

@@ -55,6 +55,7 @@ const App = () => (
             <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
             <Route path="/from-url" element={<ProtectedRoute><Create key="url" fromUrl /></ProtectedRoute>} />
             <Route path="/series" element={<ProtectedRoute><Series /></ProtectedRoute>} />
+            <Route path="/ads" element={<ProtectedRoute><Create key="ads" adMode /></ProtectedRoute>} />
             <Route path="/autopilot" element={<ProtectedRoute><Autopilot /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/video/:id" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
