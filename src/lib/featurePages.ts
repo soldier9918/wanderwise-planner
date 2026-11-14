@@ -166,6 +166,58 @@ export const FEATURE_PAGES: FeaturePage[] = [
     ],
     cta: { label: "Make a documentary free", to: "/auth?mode=signup" },
   },
+  {
+    slug: "youtube-autopilot", eyebrow: "YouTube autopilot",
+    title: "YouTube Autopilot – Plan & Schedule AI Videos | Vydora",
+    description: "Plan AI YouTube videos ahead with saved settings and schedule releases with YouTube's own scheduled publishing. Planning is free.",
+    h1: "Put your YouTube channel on autopilot, keep full control",
+    intro: "Plan a month of videos in one sitting, make them when they're due and schedule each release on YouTube. You never miss an upload day, and no credits are spent without you pressing the button.",
+    steps: [
+      { title: "Plan your topics", text: "Add topics with a make-it date, an optional go-live date and all your usual video settings." },
+      { title: "Make the video", text: "On the day, press Make video. Your saved settings open ready to go." },
+      { title: "Schedule on YouTube", text: "Choose Schedule for later and YouTube publishes it at your chosen time." },
+    ],
+    sections: [
+      { heading: "Scheduling that works while you sleep", paras: [
+        "Scheduled releases use YouTube's own scheduled publishing. The video uploads as private, then YouTube makes it public on time, even if Vydora and your browser are closed.",
+      ]},
+      { heading: "No surprise credit spend", paras: [
+        "Plans are free. Credits are only used when you choose to make a video, so your balance never drains unattended.",
+      ]},
+    ],
+    faqs: [
+      ["Does Autopilot cost credits?", "Planning and scheduling are free. Making a video costs the usual credits."],
+      ["Do I need to keep my computer on?", "No. Once scheduled, YouTube publishes the video itself."],
+      ["How far ahead can I schedule?", "From a few minutes up to six months ahead."],
+    ],
+    cta: { label: "Open Autopilot", to: "/autopilot" },
+  },
+  {
+    slug: "ai-product-ads", eyebrow: "Product ads",
+    title: "AI Product Video Ad Maker – Website to Video Ad | Vydora",
+    description: "Turn your website link or product photos into a narrated video ad for YouTube, Shorts, TikTok and Reels with proven ad frameworks.",
+    h1: "Turn your website or product photos into a video ad",
+    intro: "Paste your product page or describe your product, add your photos and pick an ad style. Vydora writes a persuasive script with a fast hook and your call to action, then builds the narrated video.",
+    steps: [
+      { title: "Add your product", text: "Paste a website link or type a short description, and upload product photos or screenshots." },
+      { title: "Pick an ad style", text: "Problem → Solution, Feature tour, Launch offer or Before & after, plus your own call to action." },
+      { title: "Edit and export", text: "Review the script in the editor, then download or publish in 16:9 or 9:16." },
+    ],
+    sections: [
+      { heading: "Your real product on screen", paras: [
+        "Uploaded photos and screenshots go on the first scenes in order, so viewers see exactly what you sell. AI creates visuals for the rest.",
+      ]},
+      { heading: "Copy based on your own page", paras: [
+        "The script uses the features and prices from your page or description and is told not to make up reviews or prices. You can edit every line before anything is generated.",
+      ]},
+    ],
+    faqs: [
+      ["How much does an ad cost?", "The same credits as a normal video of the same length."],
+      ["Which formats are supported?", "16:9 for YouTube and websites, and 9:16 for Shorts, TikTok and Reels."],
+      ["Can I use my own photos?", "Yes, upload product photos or website screenshots and they're used in your scenes."],
+    ],
+    cta: { label: "Make a product ad", to: "/ads" },
+  },
 ];
 
 export const findFeaturePage = (slug: string) => FEATURE_PAGES.find((p) => p.slug === slug);

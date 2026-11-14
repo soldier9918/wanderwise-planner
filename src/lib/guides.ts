@@ -100,4 +100,64 @@ export const GUIDES: Guide[] = [
     ],
     related: { label: "Plan a series", to: "/youtube-series-generator" },
   },
+  {
+    slug: "automate-youtube-channel-with-ai", readMins: 6,
+    title: "How to Automate a YouTube Channel with AI (2026 Guide) – Vydora",
+    description: "Plan videos in advance, batch-produce them and schedule YouTube releases so your channel posts consistently, without losing quality or control.",
+    h1: "How to automate a YouTube channel with AI (without losing control)",
+    intro: "Consistency is one of the biggest drivers of channel growth, but posting on time every week is hard. Automation helps most with planning and publishing, while you keep the final say on every video.",
+    sections: [
+      { heading: "What to automate, and what not to", paras: [
+        "Good automation removes repetitive work: remembering what to make next, uploading files, filling in titles and tags and pressing publish at the right hour.",
+        "It should not remove your judgement. Fully unattended channels that upload near-identical videos risk YouTube's reused and inauthentic content rules. Keep a human check on every script.",
+      ]},
+      { heading: "Step 1: Build a content plan", paras: [
+        "Write down a month of topics at once. Batch planning gives you a clearer channel direction and means you never sit in front of a blank page on upload day.",
+        "In Vydora's Autopilot page you add each topic with a date to make it and an optional date to go live. Every Create setting, such as voice, style, length and music, is saved with the plan. Planning is free and uses no credits.",
+      ]},
+      { heading: "Step 2: Batch-produce your videos", paras: [
+        "When a plan's date arrives, press Make video. The Create page opens with your saved settings filled in, so you review the script and generate. Credits are only spent at this point, never automatically.",
+      ]},
+      { heading: "Step 3: Schedule your YouTube releases", paras: [
+        "Publish to YouTube from the editor and choose Schedule for later. The video uploads as private straight away and YouTube makes it public at the time you picked, even if your computer is off.",
+      ], list: [
+        "Pick a regular slot, for example every Tuesday and Friday at 6 pm in your audience's time zone.",
+        "Schedule at least a few days ahead so you have a buffer.",
+        "Check YouTube Studio analytics to find when your viewers are online.",
+      ]},
+      { heading: "Keep quality high", paras: [
+        "Edit each script so it has your angle, switch on real facts for factual topics and keep your branding consistent with intro and outro cards. Automation should give you more time for these steps, not replace them.",
+      ]},
+    ],
+    related: { label: "Try Autopilot", to: "/youtube-autopilot" },
+  },
+  {
+    slug: "ai-product-video-ads", readMins: 6,
+    title: "How to Make AI Product Video Ads from a Website or Photo – Vydora",
+    description: "Turn a product page, website or product photos into a narrated video ad for YouTube, Shorts, TikTok and Reels. Frameworks, lengths and CTA tips.",
+    h1: "How to make product video ads with AI from your website or photos",
+    intro: "Video ads used to need a script writer, a voice artist and an editor. Now you can start from your own product page or a few photos and get a narrated advert in minutes. Here is how to make one that actually sells.",
+    sections: [
+      { heading: "Start from what you already have", paras: [
+        "Your product page already explains what you sell, who it is for and why it is better. Vydora's Product Ads reads the page you link and writes the ad from those details, or you can type a short description instead.",
+        "Upload your own product photos or website screenshots and they appear on the first scenes in order, so viewers see the real product. AI fills the remaining scenes.",
+      ]},
+      { heading: "Pick an ad framework", paras: ["Proven structures make ads easier to follow:"], list: [
+        "Problem → Solution: name a frustration, then show your product fixing it.",
+        "Feature tour: walk through three or four key features.",
+        "Launch or special offer: short, energetic and built around news.",
+        "Before & after: show the change your customer experiences.",
+      ]},
+      { heading: "Choose the right shape and length", paras: [
+        "Use 9:16 for YouTube Shorts, TikTok and Reels, and 16:9 for YouTube in-stream ads and websites. Short ads of 15 to 45 seconds usually hold attention best; longer explainers suit warmer audiences.",
+      ]},
+      { heading: "Hook fast, end with one clear action", paras: [
+        "The first three seconds decide whether people keep watching, so open with a benefit or a question. End on one call to action, such as visiting your site or starting a free trial.",
+      ]},
+      { heading: "Stay honest", paras: [
+        "Only claim what your product really does. Vydora is told to use features and prices from your page or description and not invent reviews, but always read the script before publishing and follow each ad platform's policies.",
+      ]},
+    ],
+    related: { label: "Make a product ad", to: "/ai-product-ads" },
+  },
 ];

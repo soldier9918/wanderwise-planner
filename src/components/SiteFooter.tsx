@@ -10,6 +10,8 @@ const GUIDE_LABELS: Record<string, string> = {
   "youtube-shorts-hooks": "Hooks for Shorts",
   "turn-blog-posts-into-youtube-videos": "Blog posts to videos",
   "how-to-plan-a-youtube-series": "Planning a series",
+  "automate-youtube-channel-with-ai": "Automating your channel",
+  "ai-product-video-ads": "AI product video ads",
 };
 
 export default function SiteFooter() {
