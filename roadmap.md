@@ -1,3 +1,3 @@
 - [x] Add admin-only Free / Creator / Pro / ADMIN testing controls with separate adjustable credits.
 - [x] Apply effective test access to frontend, database write limits and AI/export authorization.
-- [ ] Verify signed-in plan switching, zero-credit restrictions, restoration, and server enforcement.
+- [x] Verify signed-in plan switching, zero-credit restrictions, restoration, and server enforcement.
