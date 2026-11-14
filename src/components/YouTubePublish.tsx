@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -147,6 +148,10 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
             <AlertDialogDescription>{askText}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
+            {/* Back: close the popup and stay on the editor — nothing generated, nothing published. */}
+            <AlertDialogCancel className="border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setAskSeo(false)}>
+              <ArrowLeft className="mr-1 h-4 w-4" />Back
+            </AlertDialogCancel>
             <AlertDialogCancel onClick={() => { setAskSeo(false); setOpen(true); }}>No</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setAskSeo(false); onSeoRequested?.(); }}>Yes</AlertDialogAction>
           </AlertDialogFooter>
