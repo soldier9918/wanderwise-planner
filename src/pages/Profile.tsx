@@ -49,7 +49,14 @@ export default function Profile() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={connect}>Switch channel</Button>
-                  <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={disconnect}
+                  >
+                    Disconnect
+                  </Button>
                 </div>
               </div>
             ) : (

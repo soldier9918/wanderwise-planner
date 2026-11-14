@@ -178,7 +178,14 @@ export default function YouTubePublish({ videoId, title, description, tags, hasE
                   {conn.channel_thumbnail && <img src={conn.channel_thumbnail} alt="" className="h-8 w-8 rounded-full" />}
                   <span className="font-semibold">{conn.channel_title}</span>
                 </div>
-                <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={disconnect}
+                >
+                  Disconnect
+                </Button>
               </div>
               {!hasExport && <p className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">No download needed — when you publish, we'll render your video first. Keep this tab open while it renders.</p>}
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">Title
