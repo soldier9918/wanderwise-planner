@@ -12,6 +12,9 @@ export type PlanTier = "free" | "creator" | "pro";
 export const MAX_SECONDS_BY_TIER: Record<PlanTier, number> = { free: 120, creator: 1200, pro: 3600 };
 export const planTierOf = (isAdmin: unknown, hasActiveSub: unknown, planTier: unknown): PlanTier =>
   isAdmin === true ? "pro" : hasActiveSub === true ? (planTier === "pro" ? "pro" : "creator") : "free";
+export const MAX_SCENES_BY_TIER: Record<PlanTier, number> = { free: 6, creator: 22, pro: 50 };
+export const scenesAllowedForPlan = (scenes: number, tier: PlanTier) => scenes <= MAX_SCENES_BY_TIER[tier];
+export const scenesLimitMessage = (tier: PlanTier) => tier === "free" ? "Free plan videos can have up to 6 scenes. Subscribe to unlock more." : "Creator videos can have up to 22 scenes. Upgrade to Pro for up to 50.";
 export const lengthAllowedForPlan = (seconds: number, tier: PlanTier) => seconds <= MAX_SECONDS_BY_TIER[tier];
 export const qualityAllowedForPlan = (quality: string, tier: PlanTier) => quality !== "1080p" || tier === "pro";
 /** Spoken characters per second, used to turn seconds into a per-scene text limit. */

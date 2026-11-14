@@ -35,7 +35,7 @@ import { remixToShorts } from "@/lib/shorts";
 import { maxVideoSeconds, narrationEdited, CHARS_PER_SECOND, nextFittingLength } from "@/lib/tiers";
 import { VIDEO_LENGTHS } from "@/lib/durations";
 import { duplicateVideo, useAccount, isReadOnlyAccount } from "@/lib/account";
-import { scenesAllowedForTier } from "@/lib/tiers";
+import { scenesAllowedForPlan } from "@/lib/tiers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -961,7 +961,7 @@ export default function VideoEditor() {
                 label={`Scenes · ${formatSeconds(totalSecs)} total`}
                 value={String(scenes.length)}
                 disabled={sceneBusy || busyAny}
-                options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForTier(n, account?.pro ?? false)).map((n) => ({ value: String(n), label: n > scenes.length ? `${n} scenes · ${CREDIT_COSTS.script + (n - scenes.length) * (CREDIT_COSTS.image + CREDIT_COSTS.voice)} cr` : `${n} scenes` }))}
+                options={sceneCountOptions(scenes.length).filter((n) => n === scenes.length || scenesAllowedForPlan(n, account?.tier ?? "free")).map((n) => ({ value: String(n), label: n > scenes.length ? `${n} scenes · ${CREDIT_COSTS.script + (n - scenes.length) * (CREDIT_COSTS.image + CREDIT_COSTS.voice)} cr` : `${n} scenes` }))}
                 onChange={(v) => changeScenes(Number(v))}
               />
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">

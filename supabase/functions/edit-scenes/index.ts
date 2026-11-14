@@ -1,7 +1,7 @@
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
 import { z } from "npm:zod@3";
-import { sceneChangeAllowed, FREE_MAX_SCENES } from "../_shared/tiers.ts";
+import { sceneChangeAllowed, scenesLimitMessage } from "../_shared/tiers.ts";
 import { effectiveAccount } from "../_shared/account.ts";
 import { corsHeaders, GATEWAY_URL, json, getUserClient, adminClient } from "../_shared/common.ts";
 import { charge, refund, requireMutable, COSTS } from "../_shared/credits.ts";
@@ -49,9 +49,9 @@ Deno.serve(async (req) => {
 
     // Tier comes only from server-side lookups for the signed-in user; request fields are ignored.
     if (target > current) {
-      const { pro } = await effectiveAccount(user.id);
-      if (!sceneChangeAllowed(current, target, pro)) {
-        return json({ error: `Free plan videos can have up to ${FREE_MAX_SCENES} scenes. Subscribe to unlock more.` }, 403);
+      const { tier } = await effectiveAccount(user.id);
+      if (!sceneChangeAllowed(current, target, tier)) {
+        return json({ error: scenesLimitMessage(tier) }, 403);
       }
     }
 

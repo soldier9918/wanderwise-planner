@@ -14,7 +14,7 @@ import { VoiceSelect } from "@/components/VoiceSelect";
 import { STYLES, TONES, generateScript, generateSeries, type SeriesPlan } from "@/lib/videoApi";
 import { estimateCredits } from "@/lib/credits";
 import { useAccount } from "@/lib/account";
-import { FREE_MAX_SCENES, lengthAllowedForPlan } from "@/lib/tiers";
+import { MAX_SCENES_BY_TIER, lengthAllowedForPlan } from "@/lib/tiers";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, minScenesForSeconds, maxScenesForSeconds } from "@/lib/durations";
 
 export default function Series() {
@@ -34,7 +34,7 @@ export default function Series() {
   const [made, setMade] = useState<Record<number, string>>({});
 
   const perEpisode = estimateCredits({ scenes: Number(scenes) });
-  const sceneOptions = (pro ? [4, 6, 8, 10, 12] : [4, 5, 6]).filter((n) => pro || n <= FREE_MAX_SCENES);
+  const sceneOptions = (pro ? [4, 6, 8, 10, 12, 14, 16, 18, 20, 22] : [4, 5, 6]).filter((n) => n <= MAX_SCENES_BY_TIER[tier]);
 
   const outline = async () => {
     if (topic.trim().length < 3) return toast.error("Enter a topic for your series.");

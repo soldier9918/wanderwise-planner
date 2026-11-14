@@ -1,5 +1,5 @@
 import { charge, refund, COSTS } from "../_shared/credits.ts";
-import { voiceAllowed, scenesAllowedForTier, lengthAllowedForPlan, qualityAllowedForPlan } from "../_shared/tiers.ts";
+import { voiceAllowed, scenesAllowedForPlan, scenesLimitMessage, lengthAllowedForPlan, qualityAllowedForPlan } from "../_shared/tiers.ts";
 import { effectiveAccount } from "../_shared/account.ts";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, NoObjectGeneratedError } from "npm:ai@6";
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const adCta = adMode ? String((ad as { cta?: unknown }).cta ?? "").slice(0, 120).trim() : "";
     const { pro, tier } = await effectiveAccount(auth.user.id);
     if (!voiceAllowed(String(voice), pro)) return json({ error: "That narrator is on paid plans. Subscribe to unlock it." }, 403);
-    if (!scenesAllowedForTier(Number(sceneCount) || 6, pro)) return json({ error: "Free plan videos can have up to 6 scenes. Subscribe to unlock more." }, 403);
+    if (!scenesAllowedForPlan(Number(sceneCount) || 6, tier)) return json({ error: scenesLimitMessage(tier) }, 403);
     if (targetSeconds && !lengthAllowedForPlan(Number(targetSeconds), tier)) return json({ error: tier === "free" ? "Free plan videos can be up to 2 minutes. Subscribe to unlock longer videos." : "Creator videos can be up to 20 minutes. Upgrade to Pro for up to 60 minutes." }, 403);
     const tone = typeof toneIn === "string" && TONES[toneIn] ? toneIn : "engaging";
     if (!qualityAllowedForPlan(String(quality), tier)) return json({ error: "1080p Full HD is a Pro feature. Upgrade to Pro to unlock it." }, 403);

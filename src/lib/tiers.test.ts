@@ -16,3 +16,10 @@ describe("1080p tier lock", () => {
   it("free users can pick 720p", () => expect(qualityAllowedForTier("720p", false)).toBe(true));
   it("pro users can pick 1080p", () => expect(qualityAllowedForTier("1080p", true)).toBe(true));
 });
+
+import { scenesAllowedForPlan } from "./tiers";
+describe("scene caps by plan", () => {
+  it("creator capped at 22 scenes", () => { expect(scenesAllowedForPlan(22, "creator")).toBe(true); expect(scenesAllowedForPlan(30, "creator")).toBe(false); });
+  it("pro allows 50 scenes", () => expect(scenesAllowedForPlan(50, "pro")).toBe(true));
+  it("free capped at 6 scenes", () => expect(scenesAllowedForPlan(8, "free")).toBe(false));
+});

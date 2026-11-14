@@ -21,7 +21,7 @@ import { DEFAULT_QUALITY, QUALITIES } from "@/lib/quality";
 import { MUSIC_MOODS } from "@/lib/music";
 import { estimateCredits } from "@/lib/credits";
 import { useAccount } from "@/lib/account";
-import { voiceAllowed, scenesAllowedForTier, lengthAllowedForPlan, qualityAllowedForPlan, FREE_MAX_SCENES } from "@/lib/tiers";
+import { voiceAllowed, scenesAllowedForPlan, lengthAllowedForPlan, qualityAllowedForPlan, FREE_MAX_SCENES } from "@/lib/tiers";
 import { VIDEO_LENGTHS, formatSeconds, isLengthAllowed, secondsPerScene, minScenesForSeconds, maxScenesForSeconds } from "@/lib/durations";
 
 export type PlanSettings = Record<string, string | boolean>;
@@ -54,7 +54,7 @@ export default function Create({ fromUrl = false, adMode = false, onPlan, planEx
   const tier = account?.tier ?? "free";
   const lengthAllowedForTier = (sec: number, _p: boolean) => lengthAllowedForPlan(sec, tier);
   const qualityAllowedForTier = (q: string, _p: boolean) => qualityAllowedForPlan(q, tier);
-  const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForTier(Number(scenes), pro) && qualityAllowedForTier(quality, pro);
+  const tierOk = voiceAllowed(voice, pro) && lengthAllowedForTier(Number(length), pro) && scenesAllowedForPlan(Number(scenes), tier) && qualityAllowedForTier(quality, pro);
   const lengthOk = isLengthAllowed(Number(length), Number(scenes));
   const [useFacts, setUseFacts] = useState(init.useFacts === true);
   const [url, setUrl] = useState("");
@@ -257,7 +257,7 @@ export default function Create({ fromUrl = false, adMode = false, onPlan, planEx
               <Label>Scenes</Label>
               <Select value={scenes} onValueChange={setScenes}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n} disabled={!scenesAllowedForTier(Number(n), pro) || !isLengthAllowed(Number(length), Number(n))}>{!scenesAllowedForTier(Number(n), pro) ? `🔒 ${n} scenes · PRO` : !isLengthAllowed(Number(length), Number(n)) ? `${n} scenes · ${Number(n) > maxScenesForSeconds(Number(length)) ? "too many" : "too few"} for ${formatSeconds(Number(length))}` : `${n} scenes`}</SelectItem>)}</SelectContent>
+                <SelectContent>{SCENE_COUNTS.map(String).map((n) => <SelectItem key={n} value={n} disabled={!scenesAllowedForPlan(Number(n), tier) || !isLengthAllowed(Number(length), Number(n))}>{!scenesAllowedForPlan(Number(n), tier) ? `🔒 ${n} scenes · ${tier === "free" ? "upgrade" : "PRO"}` : !isLengthAllowed(Number(length), Number(n)) ? `${n} scenes · ${Number(n) > maxScenesForSeconds(Number(length)) ? "too many" : "too few"} for ${formatSeconds(Number(length))}` : `${n} scenes`}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">

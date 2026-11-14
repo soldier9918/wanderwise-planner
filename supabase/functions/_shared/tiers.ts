@@ -13,8 +13,8 @@ export const subscriptionUnlocksPaid = (status: string | null | undefined, planT
 /** Paid tier comes only from server lookups (RPC results), never from the request body. */
 export const resolvePaidTier = (hasActiveSub: unknown, isAdmin: unknown) => isAdmin === true || hasActiveSub === true;
 /** Adding scenes must respect the tier cap; shrinking is always allowed. */
-export const sceneChangeAllowed = (current: number, target: number, paid: boolean) =>
-  target <= current || scenesAllowedForTier(target, paid);
+export const sceneChangeAllowed = (current: number, target: number, tier: PlanTier) =>
+  target <= current || scenesAllowedForPlan(target, tier);
 /** Mirrors DB `can_mutate_project`: Free accounts with no credits have read-only projects. */
 export const canMutateProject = (isAdmin: unknown, hasActiveSub: unknown, balance: number) =>
   resolvePaidTier(hasActiveSub, isAdmin) || balance > 0;
@@ -25,5 +25,8 @@ export type PlanTier = "free" | "creator" | "pro";
 export const MAX_SECONDS_BY_TIER: Record<PlanTier, number> = { free: 120, creator: 1200, pro: 3600 };
 export const planTierOf = (isAdmin: unknown, hasActiveSub: unknown, planTier: unknown): PlanTier =>
   isAdmin === true ? "pro" : hasActiveSub === true ? (planTier === "pro" ? "pro" : "creator") : "free";
+export const MAX_SCENES_BY_TIER: Record<PlanTier, number> = { free: 6, creator: 22, pro: 50 };
+export const scenesAllowedForPlan = (scenes: number, tier: PlanTier) => scenes <= MAX_SCENES_BY_TIER[tier];
+export const scenesLimitMessage = (tier: PlanTier) => tier === "free" ? "Free plan videos can have up to 6 scenes. Subscribe to unlock more." : "Creator videos can have up to 22 scenes. Upgrade to Pro for up to 50.";
 export const lengthAllowedForPlan = (seconds: number, tier: PlanTier) => seconds <= MAX_SECONDS_BY_TIER[tier];
 export const qualityAllowedForPlan = (quality: string, tier: PlanTier) => quality !== "1080p" || tier === "pro";
